@@ -1,0 +1,23 @@
+{
+    "relevance": {
+        "template": "Evaluate how relevant the following response is to the given prompt.\n\nPrompt: {prompt}\n\nResponse: {response}\n\nRate the relevance on a scale of 1-5, where:\n1: Completely irrelevant\n2: Mostly irrelevant\n3: Somewhat relevant\n4: Mostly relevant\n5: Completely relevant\n\nProvide a brief explanation for your rating.",
+        "output_format": {
+            "score": "float",
+            "rationale": "string"
+        }
+    },
+    "hallucination": {
+        "template": "Evaluate whether the following response contains any hallucinations (made-up or incorrect information).\n\nPrompt: {prompt}\n\nResponse: {response}\n\nRate the response on a scale of 1-5, where:\n1: Contains many hallucinations\n2: Contains some hallucinations\n3: Contains minor hallucinations\n4: Contains very few hallucinations\n5: No hallucinations\n\nList any specific hallucinations you identify.",
+        "output_format": {
+            "score": "float",
+            "hallucinations": "array"
+        }
+    },
+    "clarity": {
+        "template": "Evaluate the clarity of the following response.\n\nPrompt: {prompt}\n\nResponse: {response}\n\nRate the clarity on a scale of 1-5, where:\n1: Very unclear\n2: Somewhat unclear\n3: Moderately clear\n4: Very clear\n5: Extremely clear\n\nExplain your rating, focusing on:\n- Organization of ideas\n- Use of language\n- Conciseness\n- Logical flow",
+        "output_format": {
+            "score": "float",
+            "rationale": "string"
+        }
+    }
+} 

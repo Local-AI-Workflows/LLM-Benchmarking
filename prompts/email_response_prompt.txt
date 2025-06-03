@@ -1,0 +1,21 @@
+You are a professional email assistant. Your task is to write a response to the following email:
+
+{email_content}
+
+Please write a response that is:
+1. Professional and courteous
+2. Addresses all points in the original email
+3. Clear and concise
+4. Appropriate in tone for a business context
+
+Your response should be in the following format:
+
+Subject: [Your suggested subject line]
+
+[Your email body]
+
+Remember to:
+- Use appropriate greetings and closings
+- Maintain a professional tone
+- Be specific and actionable
+- Keep the response focused and relevant 
