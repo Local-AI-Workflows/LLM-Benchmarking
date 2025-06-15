@@ -1,7 +1,7 @@
 import asyncio
 from models.ollama_model import OllamaModel, OllamaConfig
 from metrics.relevance import RelevanceMetric
-from metrics.benchmark_runner import BenchmarkRunner
+from benchmark.runner import BenchmarkRunner
 from visualizations.evaluation_visualizer import EvaluationVisualizer
 
 
@@ -13,7 +13,7 @@ async def main():
     metrics = [RelevanceMetric()]
     
     # Create benchmark runner
-    runner = BenchmarkRunner([test_model], metrics)
+    runner = BenchmarkRunner(metrics)
     
     # Test prompts
     prompts = [
@@ -37,7 +37,7 @@ async def main():
     
     # Visualize results
     print("\nGenerating visualizations...")
-    visualizer = EvaluationVisualizer()
+    visualizer = EvaluationVisualizer(results_dir="results")
     
     # Plot overall results
     figure = visualizer.plot_benchmark_results(benchmark_result, "Local Ollama Models Benchmark")
@@ -48,7 +48,7 @@ async def main():
         figure = visualizer.plot_metric_details(benchmark_result, metric.name)
         visualizer.save_plot(figure, f"{metric.name}_details.png")
     
-    print("\nBenchmark completed. Check the generated PNG files for results.")
+    print("\nBenchmark completed. Check the results directory for visualization files.")
 
 
 if __name__ == "__main__":

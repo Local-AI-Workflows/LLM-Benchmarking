@@ -2,13 +2,23 @@ from typing import List, Dict, Any
 import matplotlib.pyplot as plt
 import numpy as np
 from metrics.responses import EvaluatorResponse, BenchmarkResult
+from datetime import datetime
+import os
 
 
 class EvaluationVisualizer:
     """Visualizes evaluation results using matplotlib."""
 
-    def __init__(self, figsize=(12, 6)):
-        self.figsize = figsize
+    def __init__(self, results_dir: str = "results"):
+        """
+        Initialize the visualizer.
+        
+        Args:
+            results_dir: Directory to save visualization results
+        """
+        self.results_dir = results_dir
+        os.makedirs(results_dir, exist_ok=True)
+        self.timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
 
     def plot_benchmark_results(self, benchmark_result: BenchmarkResult, title: str = "Benchmark Results"):
         """
@@ -18,7 +28,7 @@ class EvaluationVisualizer:
             benchmark_result: BenchmarkResult containing all evaluation data
             title: Title for the plot
         """
-        plt.figure(figsize=self.figsize)
+        plt.figure(figsize=(12, 6))
         
         # Get average scores by metric
         avg_scores = benchmark_result.get_average_scores_by_metric()
@@ -72,7 +82,7 @@ class EvaluationVisualizer:
             metric_name: Name of the metric to plot
             title: Optional title for the plot
         """
-        plt.figure(figsize=self.figsize)
+        plt.figure(figsize=(12, 6))
         
         # Get scores for this metric
         model_scores = benchmark_result.get_model_scores_by_metric()
@@ -113,5 +123,12 @@ class EvaluationVisualizer:
 
     def save_plot(self, figure, filename: str):
         """Save the plot to a file."""
-        figure.savefig(filename, bbox_inches='tight', dpi=300)
-        plt.close(figure) 
+        # Add timestamp to filename
+        base, ext = os.path.splitext(filename)
+        timestamped_filename = f"{base}_{self.timestamp}{ext}"
+        
+        # Save to results directory
+        filepath = os.path.join(self.results_dir, timestamped_filename)
+        figure.savefig(filepath, bbox_inches='tight', dpi=300)
+        plt.close(figure)
+        print(f"Saved plot to {filepath}") 

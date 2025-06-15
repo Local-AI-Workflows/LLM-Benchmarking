@@ -19,6 +19,7 @@ lib64/
 parts/
 sdist/
 var/
+wheels/
 *.egg-info/
 .installed.cfg
 *.egg
@@ -84,4 +85,18 @@ Thumbs.db
 ehthumbs.db
 Desktop.ini
 
+# IDE
+.idea/
+.vscode/
+*.swp
+*.swo
+
+# Results and outputs
 results/
+*.png
+*.csv
+*.json
+*.log
+
+# Environment variables
+.env

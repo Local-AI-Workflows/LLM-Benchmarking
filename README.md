@@ -1,132 +1,157 @@
-# LLM Benchmarking System
+# LLM Benchmark Framework
 
-This repository contains the design and implementation of a modular benchmarking system for evaluating Large Language Models (LLMs) using both qualitative and quantitative metrics.
+A flexible framework for benchmarking and evaluating Large Language Models (LLMs) using multiple evaluator models and metrics.
 
-## 📌 Overview
+## Overview
 
-The system allows users (AI researchers, engineers, etc.) to:
+This framework allows you to:
+- Evaluate LLM responses using multiple evaluator models
+- Define custom evaluation metrics
+- Run benchmarks across multiple prompts
+- Visualize evaluation results
+- Support for both OpenAI and Ollama models
 
-* Evaluate LLMs like GPT, LLaMA, Mistral, etc.
-* Apply various metrics (e.g., relevance, hallucination, bias, robustness).
-* Use datasets or generate synthetic test cases.
-* Automatically evaluate outputs using another LLM or optionally human input.
-* View and export evaluation results.
+## Setup
 
----
-
-## 🧩 Architecture Diagram
-
-![LLM Benchmarking System Architecture](img/llm_benchmarking_architecture.png)
-
----
-
-## 🧱 System Modules
-
-### 1. Dataset Loader
-
-* Loads JSONL, CSV, or HuggingFace datasets.
-* Generates synthetic prompts if needed.
-
-### 2. Test Case Engine
-
-* Converts datasets into LLM-ready prompts.
-* Applies augmentations for robustness testing.
-
-### 3. LLM Connector
-
-* Interfaces with OpenAI, HuggingFace, Ollama, etc.
-* Manages API keys, batching, and retries.
-
-### 4. Prompt Executor
-
-* Dispatches prompts to selected LLMs.
-* Stores prompt-response metadata (model, latency, etc).
-
-### 5. Evaluation Engine
-
-* Scores responses using:
-
-  * LLM evaluators via prompt templates.
-  * Optional human validators.
-* Pluggable metrics architecture.
-
-### 6. Storage Layer
-
-* **Prompt-Response Store**: Stores all interactions.
-* **Results Store**: Contains metric evaluations.
-
-### 7. Visualization & Exporter
-
-* Dashboards using Streamlit or Plotly.
-* Export formats: JSON, CSV.
-
----
-
-## ⚙️ Technologies Used
-
-* **Backend**: Python
-* **LLM APIs**: OpenAI SDK, Transformers, Ollama
-* **Data Handling**: HuggingFace Datasets, Pandas
-* **Storage**: SQLite/PostgreSQL, JSONL
-* **Evaluation**: Custom LLM prompt templates
-* **Visualization**: Streamlit, Plotly, Dash
-* **Orchestration**: Prefect or Celery (for async tasks)
-
----
-
-## 📦 Data Formats
-
-### Prompt-Response Example
-
-```json
-{
-  "id": "uuid",
-  "prompt": "...",
-  "model": "gpt-4",
-  "response": "...",
-  "metadata": {
-    "timestamp": "2025-05-30T12:00:00Z",
-    "task_type": "email_response",
-    "latency_ms": 1500
-  }
-}
+1. Clone the repository:
+```bash
+git clone <repository-url>
+cd llm_benchmark
 ```
 
-### Evaluation Result
-
-```json
-{
-  "response_id": "uuid",
-  "metric": "relevance",
-  "score": 4.5,
-  "evaluator_model": "gpt-4",
-  "rationale": "The response directly answers the prompt.",
-  "evaluator_type": "LLM"
-}
+2. Create and activate a virtual environment:
+```bash
+python3 -m venv venv
+source venv/bin/activate  # On Windows: venv\Scripts\activate
 ```
 
----
+3. Install dependencies:
+```bash
+pip install -r requirements.txt
+```
 
-## 🔌 Extensibility
+4. Set up environment variables (create a `.env` file):
+```env
+OPENAI_API_KEY=your_openai_api_key
+```
 
-* **LLM Plugins**: Easily add new models via config or adapter classes.
-* **Metric Definitions**: Add new metrics using a JSON + prompt template format.
-* **Evaluation Templates**: Custom templates for each evaluation type (scoring, classification, etc).
+## Usage
 
----
+### Basic Benchmark Example
 
-## ⚖️ Scalability
+```python
+import asyncio
+from models.ollama_model import OllamaModel, OllamaConfig
+from metrics.relevance import RelevanceMetric
+from benchmark.runner import BenchmarkRunner
+from visualizations.evaluation_visualizer import EvaluationVisualizer
 
-* Async job dispatching with Celery/Prefect.
-* Batch execution to reduce API token usage.
-* Dockerized services for running multiple model or evaluation workers.
-* Metrics and logging integration with Prometheus or Weights & Biases.
+async def main():
+    # Initialize test model
+    test_model = OllamaModel(config=OllamaConfig(model_name="llama3.2:latest"))
+    
+    # Initialize metrics
+    metrics = [RelevanceMetric()]
+    
+    # Create benchmark runner
+    runner = BenchmarkRunner(metrics)
+    
+    # Define test prompts
+    prompts = [
+        "What is the capital of France?",
+        "Explain the concept of quantum computing in simple terms.",
+        "Write a short poem about artificial intelligence."
+    ]
+    
+    # Get model responses
+    model_responses = {}
+    for prompt in prompts:
+        response = await test_model.generate(prompt)
+        model_responses[prompt] = response.text
+    
+    # Run benchmark
+    benchmark_result = await runner.run_benchmark(prompts, model_responses)
+    
+    # Visualize results
+    visualizer = EvaluationVisualizer(results_dir="results")
+    figure = visualizer.plot_benchmark_results(benchmark_result, "Benchmark Results")
+    visualizer.save_plot(figure, "benchmark_results.png")
 
----
+if __name__ == "__main__":
+    asyncio.run(main())
+```
 
-## 📈 Future Work
+### Model Configuration
 
-* Leaderboards for model comparisons.
-* Support for multi-turn evaluations.
+Both Ollama and OpenAI models can be configured using their respective config classes:
 
----
+```python
+# Ollama configuration
+ollama_config = OllamaConfig(
+    model_name="llama3.2:latest",
+    temperature=0.7,
+    num_ctx=2048
+)
+ollama_model = OllamaModel(config=ollama_config)
+
+# OpenAI configuration
+openai_config = OpenAIConfig(
+    model_name="gpt-4",
+    temperature=0.9,
+    max_tokens=1000
+)
+openai_model = OpenAIModel(config=openai_config)
+```
+
+### Creating Custom Metrics
+
+To create a custom metric, inherit from `BaseMetric`:
+
+```python
+from metrics.metric_base import BaseMetric
+from metrics.responses import EvaluatorResponse
+
+class CustomMetric(BaseMetric):
+    def __init__(self):
+        super().__init__("custom_metric", "Description of the metric")
+    
+    async def evaluate(self, prompt: str, response: str, evaluator: BaseEvaluator) -> EvaluatorResponse:
+        # Implement your evaluation logic here
+        evaluation = await evaluator.evaluate(prompt, response, self.name)
+        return evaluation
+```
+
+## Components
+
+### Models
+- `BaseLLMModel`: Abstract base class for all LLM implementations
+- `OllamaModel`: Implementation for local Ollama models
+- `OpenAIModel`: Implementation for OpenAI models
+
+### Metrics
+- `BaseMetric`: Abstract base class for evaluation metrics
+- `RelevanceMetric`: Implementation of relevance evaluation
+- `BaseEvaluator`: Base class for model evaluators
+
+### Benchmark
+- `BenchmarkRunner`: Orchestrates the benchmark process using multiple evaluator models
+  - Uses three local Ollama models (deepseek-r1:1.5b, gemma3:1b, llama3.2:latest) for evaluation
+  - Aggregates results across multiple prompts and metrics
+
+### Visualization
+- `EvaluationVisualizer`: Generates plots for benchmark results
+  - Overall benchmark results
+  - Detailed metric comparisons
+  - Results are saved to the `results` directory with timestamps
+
+## Contributing
+
+1. Fork the repository
+2. Create a feature branch
+3. Commit your changes
+4. Push to the branch
+5. Create a Pull Request
+
+## License
+
+[Your chosen license]
