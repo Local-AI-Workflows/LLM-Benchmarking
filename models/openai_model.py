@@ -1,26 +1,32 @@
 from typing import Dict, Any, Optional
 import openai
 from pydantic import BaseModel
+from .base_model import BaseLLMModel
+from .model_config import OpenAIConfig
 
 class ModelResponse(BaseModel):
     """Container for model responses."""
     text: str
     metadata: Dict[str, Any]
 
-class OpenAIModel:
+class OpenAIModel(BaseLLMModel):
     """Wrapper for OpenAI API interactions."""
     
-    def __init__(self, model_name: str = "gpt-3.5-turbo", api_key: Optional[str] = None):
+    def __init__(self, config: OpenAIConfig = None):
         """
         Initialize the OpenAI model wrapper.
         
         Args:
-            model_name: The OpenAI model to use
-            api_key: Optional API key (will use environment variable if not provided)
+            config: Configuration for the OpenAI model. If None, default config will be used.
         """
-        self.model_name = model_name
-        if api_key:
-            openai.api_key = api_key
+        self.config = config or OpenAIConfig()
+        self._model_name = self.config.model_name
+        if self.config.api_key:
+            openai.api_key = self.config.api_key
+    
+    @property
+    def model_name(self) -> str:
+        return self._model_name
     
     async def generate(self, prompt: str, **kwargs) -> ModelResponse:
         """
@@ -28,16 +34,21 @@ class OpenAIModel:
         
         Args:
             prompt: The input prompt
-            **kwargs: Additional arguments for the OpenAI API
+            **kwargs: Additional parameters to override config settings
             
         Returns:
             ModelResponse containing the generated text and metadata
         """
         try:
+            # Merge config with any overrides from kwargs
+            params = self.config.dict(exclude={'model_name', 'api_key', 'additional_params'})
+            params.update(self.config.additional_params)
+            params.update(kwargs)
+            
             response = await openai.ChatCompletion.acreate(
                 model=self.model_name,
                 messages=[{"role": "user", "content": prompt}],
-                **kwargs
+                **params
             )
             
             return ModelResponse(
@@ -45,7 +56,8 @@ class OpenAIModel:
                 metadata={
                     "model": self.model_name,
                     "usage": response.usage.dict(),
-                    "finish_reason": response.choices[0].finish_reason
+                    "finish_reason": response.choices[0].finish_reason,
+                    "config": self.config.dict()
                 }
             )
         except Exception as e:

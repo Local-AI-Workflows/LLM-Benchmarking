@@ -1,62 +1,46 @@
 from abc import ABC, abstractmethod
 from typing import List, Union, Dict, Any
 
-from pydantic import BaseModel
+from models.base_model import BaseLLMModel
+from .responses import EvaluatorResponse
+
 
 class BaseEvaluator(ABC):
     @abstractmethod
-    async def evaluate(self, evaluation: str) -> "EvaluatorResponse":
+    async def evaluate(self, evaluation: str, metric_name: str, metric_description: str) -> EvaluatorResponse:
         raise NotImplementedError()
 
 
-class EvaluatorResponse:
-    def __init__(self):
-        self.individual_responses: List[Dict[str, Any]] = []  # list of {"score": float, "rationale": str, "model_name": str}
-        self.metadata: Dict[str, Any] = {}
-        self.average_score: float = 0.0
-
-    def add_result(self, score: float, rationale: str = None, model_name: str = None):
-        self.individual_responses.append({
-            "score": score,
-            "rationale": rationale,
-            "model_name": model_name
-        })
-        self._update_average_score()
-
-    def _update_average_score(self):
-        if not self.individual_responses:
-            self.average_score = 0.0
-            return
-        self.average_score = sum(r["score"] for r in self.individual_responses) / len(self.individual_responses)
-
-    def to_dict(self) -> Dict[str, Any]:
-        return {
-            "average_score": self.average_score,
-            "individual_responses": self.individual_responses,
-            "metadata": self.metadata
-        }
-
-
 class _SingleEvaluator(BaseEvaluator):
-    def __init__(self, model: BaseModel):
+    def __init__(self, model: BaseLLMModel):
         self.model = model
 
-    async def evaluate(self, evaluation: str) -> EvaluatorResponse:
+    async def evaluate(self, evaluation: str, metric_name: str, metric_description: str) -> EvaluatorResponse:
         raw = await self.model.generate(evaluation)
         score = float(raw.text.split()[0])
         rationale = " ".join(raw.text.split()[1:])
-        response = EvaluatorResponse()
-        response.add_result(score, rationale, model_name=self.model.model_name)
-        response.metadata = raw.metadata
-        return response
+        
+        return EvaluatorResponse(
+            metric_name=metric_name,
+            metric_description=metric_description,
+            average_score=score,
+            individual_responses=[{
+                "score": score,
+                "rationale": rationale,
+                "model_name": self.model.model_name
+            }],
+            metadata=raw.metadata
+        )
 
 
 class _MultiEvaluator(BaseEvaluator):
-    def __init__(self, models: List[BaseModel]):
+    def __init__(self, models: List[BaseLLMModel]):
         self.models = models
 
-    async def evaluate(self, evaluation: str) -> EvaluatorResponse:
-        response = EvaluatorResponse()
+    async def evaluate(self, evaluation: str, metric_name: str, metric_description: str) -> EvaluatorResponse:
+        individual_responses = []
+        total_score = 0.0
+        
         for model in self.models:
             raw = await model.generate(evaluation)
             print(f"Raw response from {model.model_name} :", raw.text)
@@ -67,14 +51,29 @@ class _MultiEvaluator(BaseEvaluator):
                 score = 0.0
                 rationale = "Failed to parse: " + raw.text
 
-            response.add_result(score, rationale, model_name=model.model_name)
-        return response
+            individual_responses.append({
+                "score": score,
+                "rationale": rationale,
+                "model_name": model.model_name
+            })
+            total_score += score
+
+        average_score = total_score / len(self.models) if self.models else 0.0
+        
+        return EvaluatorResponse(
+            metric_name=metric_name,
+            metric_description=metric_description,
+            average_score=average_score,
+            individual_responses=individual_responses,
+            metadata={}
+        )
+
 
 class EvaluatorFactory:
     @staticmethod
-    def create_evaluator(models: Union[BaseModel, List[BaseModel]]) -> BaseEvaluator:
+    def create_evaluator(models: Union[BaseLLMModel, List[BaseLLMModel]]) -> BaseEvaluator:
         if isinstance(models, list):
             return _MultiEvaluator(models)
-        elif isinstance(models, BaseModel):
+        elif isinstance(models, BaseLLMModel):
             return _SingleEvaluator(models)
-        raise ValueError("Invalid model type. Must be BaseModel or List[BaseModel].")
+        raise ValueError("Invalid model type. Must be BaseLLMModel or List[BaseLLMModel].")
