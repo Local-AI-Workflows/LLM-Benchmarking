@@ -1,19 +1,24 @@
 import asyncio
 from models.ollama_model import OllamaModel, OllamaConfig
 from metrics.relevance import RelevanceMetric
+from metrics.evaluator import EvaluatorFactory
 from benchmark.runner import BenchmarkRunner
 from visualizations.evaluation_visualizer import EvaluationVisualizer
 
 
 async def main():
-    # Initialize a test model (we'll use llama3.2 as our test model)
+    # Initialize the model to evaluate
     test_model = OllamaModel(config=OllamaConfig(model_name="llama3.2:latest"))
+    
+    # Initialize evaluator model
+    evaluator_model = OllamaModel(config=OllamaConfig(model_name="deepseek-r1:1.5b"))
+    evaluator = EvaluatorFactory.create_evaluator([evaluator_model])
     
     # Initialize metrics
     metrics = [RelevanceMetric()]
     
     # Create benchmark runner
-    runner = BenchmarkRunner(metrics)
+    runner = BenchmarkRunner(evaluator, metrics)
     
     # Test prompts
     prompts = [
@@ -22,18 +27,9 @@ async def main():
         "Write a short poem about artificial intelligence."
     ]
     
-    # Get responses from the test model
-    print("Getting responses from test model...")
-    model_responses = {}
-    for prompt in prompts:
-        print(f"\nProcessing prompt: {prompt}")
-        response = await test_model.generate(prompt)
-        model_responses[prompt] = response.text
-        print(f"Response: {response.text[:100]}...")
-    
     # Run benchmark
     print("\nRunning benchmark...")
-    benchmark_result = await runner.run_benchmark(prompts, model_responses)
+    benchmark_result = await runner.run_benchmark(test_model, prompts)
     
     # Visualize results
     print("\nGenerating visualizations...")

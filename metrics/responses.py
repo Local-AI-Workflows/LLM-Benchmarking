@@ -1,5 +1,6 @@
 from typing import Dict, Any, List, Optional
 from pydantic import BaseModel
+from dataclasses import dataclass
 
 
 class ModelResponse(BaseModel):
@@ -8,57 +9,99 @@ class ModelResponse(BaseModel):
     metadata: Dict[str, Any]
 
 
-class EvaluatorResponse(BaseModel):
-    """Container for evaluator responses."""
+@dataclass
+class EvaluatorResponse:
+    """Response from an evaluator model."""
     metric_name: str
-    metric_description: str
-    average_score: float
-    individual_responses: List[Dict[str, Any]]  # list of {"score": float, "rationale": str, "model_name": str}
-    metadata: Dict[str, Any] = {}
+    score: float
+    rationale: str
+    metadata: Dict[str, Any] = None
 
 
-class PromptEvaluation(BaseModel):
-    """Container for evaluation results of a single prompt."""
+@dataclass
+class PromptEvaluation:
+    """Evaluation results for a single prompt."""
     prompt: str
     response: str
-    evaluations: List[EvaluatorResponse]  # List of evaluations from different metrics
+    evaluations: List[EvaluatorResponse]
 
 
-class BenchmarkResult(BaseModel):
-    """Container for complete benchmark results."""
+@dataclass
+class BenchmarkResult:
+    """Results from running a benchmark."""
     prompt_evaluations: List[PromptEvaluation]
-    metadata: Dict[str, Any] = {}
+    metadata: Dict[str, Any]
+
+    @classmethod
+    def combine(cls, results: List['BenchmarkResult'], model_name: str) -> 'BenchmarkResult':
+        """
+        Combine results from multiple metrics into a single benchmark result.
+        
+        Args:
+            results: List of BenchmarkResults from different metrics
+            model_name: Name of the model being evaluated
+            
+        Returns:
+            Combined BenchmarkResult
+        """
+        if not results:
+            raise ValueError("No results to combine")
+        
+        # Combine prompt evaluations
+        combined_evaluations = []
+        for prompt_eval in results[0].prompt_evaluations:
+            # Get all evaluations for this prompt from all metrics
+            all_evaluations = []
+            for result in results:
+                matching_eval = next(
+                    (e for e in result.prompt_evaluations if e.prompt == prompt_eval.prompt),
+                    None
+                )
+                if matching_eval:
+                    all_evaluations.extend(matching_eval.evaluations)
+            
+            combined_evaluations.append(PromptEvaluation(
+                prompt=prompt_eval.prompt,
+                response=prompt_eval.response,
+                evaluations=all_evaluations
+            ))
+        
+        # Combine metadata
+        combined_metadata = {
+            "model_name": model_name,
+            "num_prompts": len(combined_evaluations),
+            "num_metrics": len(results),
+            "metrics": [metric for result in results for metric in result.metadata["metrics"]],
+            "evaluator_models": results[0].metadata["evaluator_models"]  # All results should have same evaluators
+        }
+        
+        return cls(
+            prompt_evaluations=combined_evaluations,
+            metadata=combined_metadata
+        )
 
     def get_average_scores_by_metric(self) -> Dict[str, float]:
-        """Calculate average scores for each metric across all prompts."""
+        """Get average scores for each metric."""
         metric_scores = {}
-        for prompt_eval in self.prompt_evaluations:
-            for evaluation in prompt_eval.evaluations:
-                metric_name = evaluation.metric_name
-                if metric_name not in metric_scores:
-                    metric_scores[metric_name] = []
-                metric_scores[metric_name].append(evaluation.average_score)
+        for evaluation in self.prompt_evaluations:
+            for eval_result in evaluation.evaluations:
+                if eval_result.metric_name not in metric_scores:
+                    metric_scores[eval_result.metric_name] = []
+                metric_scores[eval_result.metric_name].append(eval_result.score)
         
         return {
             metric: sum(scores) / len(scores)
             for metric, scores in metric_scores.items()
         }
 
-    def get_model_scores_by_metric(self) -> Dict[str, Dict[str, List[float]]]:
-        """Get scores for each model by metric across all prompts."""
-        model_scores = {}
-        for prompt_eval in self.prompt_evaluations:
-            for evaluation in prompt_eval.evaluations:
-                metric_name = evaluation.metric_name
-                for individual_response in evaluation.individual_responses:
-                    model_name = individual_response["model_name"]
-                    if model_name not in model_scores:
-                        model_scores[model_name] = {}
-                    if metric_name not in model_scores[model_name]:
-                        model_scores[model_name][metric_name] = []
-                    model_scores[model_name][metric_name].append(individual_response["score"])
-        
-        return model_scores
+    def get_model_scores_by_metric(self, metric_name: str) -> List[float]:
+        """Get all scores for a specific metric."""
+        scores = []
+        for evaluation in self.prompt_evaluations:
+            for eval_result in evaluation.evaluations:
+                if eval_result.metric_name == metric_name:
+                    scores.append(eval_result.score)
+        return scores
 
 
 class MetricResult(BaseModel):

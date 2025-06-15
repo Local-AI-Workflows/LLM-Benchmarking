@@ -1,3 +1,5 @@
+from llm_benchmark import evaluator_modelfrom llm_benchmark import evaluator
+
 # LLM Benchmark Framework
 
 A flexible framework for benchmarking and evaluating Large Language Models (LLMs) using multiple evaluator models and metrics.
@@ -53,8 +55,14 @@ async def main():
     # Initialize metrics
     metrics = [RelevanceMetric()]
     
+    evaluator_models = [
+        OllamaModel(config=OllamaConfig(model_name="deepseek-r1:1.5b")),
+        OllamaModel(config=OllamaConfig(model_name="gemma3:1b")),
+        OllamaModel(config=OllamaConfig(model_name="llama3.2:latest"))
+    ]
+    
     # Create benchmark runner
-    runner = BenchmarkRunner(metrics)
+    runner = BenchmarkRunner(metrics, evaluator_models)
     
     # Define test prompts
     prompts = [
