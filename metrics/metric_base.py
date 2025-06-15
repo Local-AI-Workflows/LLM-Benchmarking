@@ -2,6 +2,9 @@ from abc import ABC, abstractmethod
 from typing import Dict, Any, Optional
 from pydantic import BaseModel
 
+from .evaluator import BaseEvaluator
+
+
 class MetricResult(BaseModel):
     """Container for metric evaluation results."""
     score: float
@@ -16,15 +19,15 @@ class BaseMetric(ABC):
         self.description = description
     
     @abstractmethod
-    async def evaluate(self, prompt: str, response: str, **kwargs) -> MetricResult:
+    async def evaluate(self, prompt: str, response: str, evaluator: BaseEvaluator) -> MetricResult:
         """
         Evaluate a response against a prompt using this metric.
         
         Args:
             prompt: The input prompt
             response: The model's response
-            **kwargs: Additional arguments specific to the metric
-            
+            evaluator: The evaluator to use for evaluation
+
         Returns:
             MetricResult containing the score and optional rationale
         """

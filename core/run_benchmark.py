@@ -42,7 +42,7 @@ class BenchmarkRunner:
                 metric_result = await metric.evaluate(
                     prompt, 
                     response.text,
-                    evaluator_model=self.evaluator
+                    evaluator=self.evaluator
                 )
                 metric_results[metric.name] = metric_result.dict()
             
