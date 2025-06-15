@@ -1,5 +1,6 @@
 from .evaluator import BaseEvaluator
-from .metric_base import BaseMetric, MetricResult
+from .metric_base import BaseMetric
+from .responses import EvaluatorResponse
 
 
 class RelevanceMetric(BaseMetric):
@@ -11,7 +12,7 @@ class RelevanceMetric(BaseMetric):
             description="Measures how well the response addresses the prompt's intent"
         )
 
-    async def evaluate(self, prompt: str, response: str, evaluator: BaseEvaluator) -> MetricResult:
+    async def evaluate(self, prompt: str, response: str, evaluator: BaseEvaluator) -> EvaluatorResponse:
         eval_prompt = f"""You are evaluating how relevant a model's response is to the given prompt.
 
         ### Prompt:
@@ -37,16 +38,16 @@ class RelevanceMetric(BaseMetric):
 
         ### Now, your evaluation:
         """
-        eval_response = await evaluator.evaluate(eval_prompt)
-
-        return MetricResult(
-            score=eval_response.average_score(),
-            rationale=eval_response.combined_rationale(),
-            metadata={
-                "evaluation_method": "ollama_llm",
-                "num_evaluators": len(eval_response.results),
-                **eval_response.metadata,
-                "prompt_length": len(prompt),
-                "response_length": len(response)
-            }
+        eval_response = await evaluator.evaluate(
+            evaluation=eval_prompt,
+            metric_name=self.name,
+            metric_description=self.description
         )
+
+        # Add additional metadata
+        eval_response.metadata.update({
+            "prompt_length": len(prompt),
+            "response_length": len(response)
+        })
+
+        return eval_response
