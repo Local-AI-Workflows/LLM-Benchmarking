@@ -3,38 +3,10 @@ from typing import List, Union, Dict, Any, Optional
 import re
 
 from models.base_model import BaseLLMModel
-from .responses import EvaluatorResponse
+from .responses import EvaluatorResponse, IndividualResponse
 
 
 class BaseEvaluator(ABC):
-    @abstractmethod
-    async def evaluate(self, evaluation: str, metric_name: str, metric_description: str) -> EvaluatorResponse:
-        raise NotImplementedError()
-
-
-class _SingleEvaluator(BaseEvaluator):
-    def __init__(self, model: BaseLLMModel):
-        self.model = model
-
-    async def evaluate(self, evaluation: str, metric_name: str, metric_description: str) -> EvaluatorResponse:
-        raw = await self.model.generate(evaluation)
-        score = float(raw.text.split()[0])
-        rationale = " ".join(raw.text.split()[1:])
-        
-        return EvaluatorResponse(
-            metric_name=metric_name,
-            metric_description=metric_description,
-            average_score=score,
-            individual_responses=[{
-                "score": score,
-                "rationale": rationale,
-                "model_name": self.model.model_name
-            }],
-            metadata=raw.metadata
-        )
-
-
-class BaseEvaluator:
     """Base class for evaluators."""
     
     def __init__(self, model: BaseLLMModel):
@@ -68,10 +40,18 @@ class BaseEvaluator:
         score = self._extract_score(text)
         rationale = self._extract_rationale(text)
         
+        # Create individual response
+        individual_response = IndividualResponse(
+            model_name=self.model.model_name,
+            score=score,
+            rationale=rationale
+        )
+        
         return EvaluatorResponse(
             metric_name=metric_name,
-            score=score,
+            score=score,  # For single evaluator, this is the same as the individual score
             rationale=rationale,
+            individual_responses=[individual_response],
             metadata={
                 "model_name": self.model.model_name,
                 "metric_description": metric_description
@@ -155,17 +135,17 @@ class _MultiEvaluator(BaseEvaluator):
             rationale = self._extract_rationale(text)
             
             total_score += score
-            individual_responses.append({
-                "score": score,
-                "rationale": rationale,
-                "model_name": model.model_name
-            })
+            individual_responses.append(IndividualResponse(
+                model_name=model.model_name,
+                score=score,
+                rationale=rationale
+            ))
         
         average_score = total_score / len(self.models) if self.models else 0.0
         
         # Combine rationales from all models
         combined_rationale = "\n\n".join([
-            f"Evaluation from {resp['model_name']}:\n{resp['rationale']}"
+            f"Evaluation from {resp.model_name}:\n{resp.rationale}"
             for resp in individual_responses
         ])
         
@@ -173,10 +153,10 @@ class _MultiEvaluator(BaseEvaluator):
             metric_name=metric_name,
             score=average_score,
             rationale=combined_rationale,
+            individual_responses=individual_responses,
             metadata={
                 "model_name": "multi-evaluator",
-                "metric_description": metric_description,
-                "individual_responses": individual_responses
+                "metric_description": metric_description
             }
         )
 
@@ -187,5 +167,5 @@ class EvaluatorFactory:
         if isinstance(models, list):
             return _MultiEvaluator(models)
         elif isinstance(models, BaseLLMModel):
-            return _SingleEvaluator(models)
+            return BaseEvaluator(models)
         raise ValueError("Invalid model type. Must be BaseLLMModel or List[BaseLLMModel].")

@@ -4,6 +4,7 @@ import numpy as np
 from metrics.responses import EvaluatorResponse, BenchmarkResult
 from datetime import datetime
 import os
+import seaborn as sns
 
 
 class EvaluationVisualizer:
@@ -20,115 +21,128 @@ class EvaluationVisualizer:
         os.makedirs(results_dir, exist_ok=True)
         self.timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
 
-    def plot_benchmark_results(self, benchmark_result: BenchmarkResult, title: str = "Benchmark Results"):
+    def plot_benchmark_results(self, benchmark_result: BenchmarkResult, title: str) -> plt.Figure:
         """
-        Plot benchmark results across all prompts and metrics.
+        Create a bar plot of average scores by metric, showing both overall and individual model scores.
         
         Args:
-            benchmark_result: BenchmarkResult containing all evaluation data
+            benchmark_result: The benchmark results to visualize
             title: Title for the plot
+            
+        Returns:
+            matplotlib Figure object
         """
-        plt.figure(figsize=(12, 6))
-        
         # Get average scores by metric
         avg_scores = benchmark_result.get_average_scores_by_metric()
-        model_scores = benchmark_result.get_model_scores_by_metric()
         
         # Prepare data for plotting
         metric_names = list(avg_scores.keys())
-        model_names = list(model_scores.keys())
+        overall_scores = list(avg_scores.values())
+        
+        # Get individual model scores for each metric
+        model_scores = {}
+        for metric in metric_names:
+            scores = benchmark_result.get_model_scores_by_metric(metric)
+            model_scores[metric] = scores
+        
+        # Create figure and axis
+        fig, ax = plt.subplots(figsize=(12, 6))
+        
+        # Set up bar positions
         x = np.arange(len(metric_names))
-        width = 0.8 / len(model_names)
+        width = 0.8 / (len(model_scores[metric_names[0]]) + 1)  # +1 for overall score
         
-        # Plot bars for each model
-        for i, model_name in enumerate(model_names):
-            scores = []
-            for metric in metric_names:
-                if metric in model_scores[model_name]:
-                    # Calculate average score for this model and metric
-                    scores.append(sum(model_scores[model_name][metric]) / len(model_scores[model_name][metric]))
-                else:
-                    scores.append(0)
+        # Plot overall scores
+        overall_bars = ax.bar(x, overall_scores, width, label='Overall Average', color='black', alpha=0.7)
+        
+        # Plot individual model scores
+        colors = plt.cm.Set3(np.linspace(0, 1, len(model_scores[metric_names[0]])))
+        for i, (model_name, scores) in enumerate(model_scores[metric_names[0]].items()):
+            model_avg_scores = [np.mean(model_scores[metric][model_name]) for metric in metric_names]
+            offset = (i + 1) * width
+            model_bars = ax.bar(x + offset, model_avg_scores, width, label=model_name, color=colors[i])
             
-            # Calculate offset for bar position
-            offset = (i - len(model_names) / 2 + 0.5) * width
-            plt.bar(x + offset, scores, width, label=model_name)
+            # Add value labels for individual model scores
+            for bar in model_bars:
+                height = bar.get_height()
+                ax.text(bar.get_x() + bar.get_width()/2., height,
+                       f'{height:.2f}',
+                       ha='center', va='bottom', fontsize=8)
         
-        # Plot overall average scores
-        plt.plot(x, [avg_scores[metric] for metric in metric_names], 
-                'r--', label='Overall Average', linewidth=2)
+        # Add value labels for overall scores
+        for bar in overall_bars:
+            height = bar.get_height()
+            ax.text(bar.get_x() + bar.get_width()/2., height,
+                   f'{height:.2f}',
+                   ha='center', va='bottom', fontsize=9, weight='bold')
         
-        # Customize the plot
-        plt.xlabel('Metrics')
-        plt.ylabel('Average Score')
-        plt.title(title)
-        plt.xticks(x, metric_names, rotation=45, ha='right')
-        plt.legend()
-        plt.grid(True, axis='y', linestyle='--', alpha=0.7)
+        # Customize plot
+        ax.set_title(title)
+        ax.set_xlabel("Metrics")
+        ax.set_ylabel("Average Score")
+        ax.set_ylim(0, 10)  # Assuming scores are on a 0-10 scale
+        ax.set_xticks(x + width * (len(model_scores[metric_names[0]]) / 2))
+        ax.set_xticklabels(metric_names, rotation=45, ha='right')
+        ax.legend(bbox_to_anchor=(1.05, 1), loc='upper left')
         
-        # Add metadata to the plot
-        metadata_text = f"Number of prompts: {benchmark_result.metadata['num_prompts']}"
-        plt.figtext(0.02, 0.02, metadata_text, fontsize=8)
+        # Add grid for better readability
+        ax.grid(True, axis='y', linestyle='--', alpha=0.7)
         
+        # Adjust layout to prevent label cutoff
         plt.tight_layout()
-        return plt.gcf()
+        
+        return fig
 
-    def plot_metric_details(self, benchmark_result: BenchmarkResult, metric_name: str, title: str = None):
+    def plot_metric_details(self, benchmark_result: BenchmarkResult, metric_name: str) -> plt.Figure:
         """
-        Plot detailed comparison for a specific metric across all prompts.
+        Create a detailed plot for a specific metric showing score distribution for each model.
         
         Args:
-            benchmark_result: BenchmarkResult containing all evaluation data
+            benchmark_result: The benchmark results to visualize
             metric_name: Name of the metric to plot
-            title: Optional title for the plot
+            
+        Returns:
+            matplotlib Figure object
         """
-        plt.figure(figsize=(12, 6))
+        # Get scores for the metric by model
+        model_scores = benchmark_result.get_model_scores_by_metric(metric_name)
         
-        # Get scores for this metric
-        model_scores = benchmark_result.get_model_scores_by_metric()
+        # Create figure and axis
+        fig, ax = plt.subplots(figsize=(12, 6))
         
-        # Prepare data
-        model_names = []
-        scores = []
-        std_devs = []
+        # Plot distribution for each model
+        for model_name, scores in model_scores.items():
+            sns.kdeplot(scores, label=model_name, ax=ax)
         
-        for model_name, metric_scores in model_scores.items():
-            if metric_name in metric_scores:
-                model_names.append(model_name)
-                scores.append(np.mean(metric_scores[metric_name]))
-                std_devs.append(np.std(metric_scores[metric_name]))
+        # Add mean lines for each model
+        for model_name, scores in model_scores.items():
+            mean_score = np.mean(scores)
+            ax.axvline(mean_score, linestyle='--', alpha=0.5,
+                      label=f'{model_name} Mean: {mean_score:.2f}')
         
-        # Create bar plot with error bars
-        bars = plt.bar(model_names, scores, yerr=std_devs, capsize=5)
+        # Customize plot
+        ax.set_title(f"Score Distribution for {metric_name}")
+        ax.set_xlabel("Score")
+        ax.set_ylabel("Density")
+        ax.set_xlim(0, 10)  # Assuming scores are on a 0-10 scale
+        ax.legend(bbox_to_anchor=(1.05, 1), loc='upper left')
         
-        # Add score labels on top of bars
-        for bar in bars:
-            height = bar.get_height()
-            plt.text(bar.get_x() + bar.get_width()/2., height,
-                    f'{height:.2f}',
-                    ha='center', va='bottom')
+        # Add grid for better readability
+        ax.grid(True, linestyle='--', alpha=0.7)
         
-        # Customize the plot
-        plt.title(title or f"{metric_name} Comparison Across {benchmark_result.metadata['num_prompts']} Prompts")
-        plt.xlabel('Models')
-        plt.ylabel('Average Score')
-        plt.grid(True, axis='y', linestyle='--', alpha=0.7)
-        
-        # Rotate x-axis labels if needed
-        if len(model_names) > 3:
-            plt.xticks(rotation=45, ha='right')
-        
+        # Adjust layout
         plt.tight_layout()
-        return plt.gcf()
-
-    def save_plot(self, figure, filename: str):
-        """Save the plot to a file."""
-        # Add timestamp to filename
-        base, ext = os.path.splitext(filename)
-        timestamped_filename = f"{base}_{self.timestamp}{ext}"
         
-        # Save to results directory
-        filepath = os.path.join(self.results_dir, timestamped_filename)
-        figure.savefig(filepath, bbox_inches='tight', dpi=300)
-        plt.close(figure)
-        print(f"Saved plot to {filepath}") 
+        return fig
+
+    def save_plot(self, figure: plt.Figure, filename: str):
+        """
+        Save a plot to a file.
+        
+        Args:
+            figure: The matplotlib Figure to save
+            filename: Name of the file to save to
+        """
+        filepath = os.path.join(self.results_dir, filename)
+        figure.savefig(filepath, dpi=300, bbox_inches='tight')
+        plt.close(figure) 

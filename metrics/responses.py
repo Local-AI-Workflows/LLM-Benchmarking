@@ -10,11 +10,20 @@ class ModelResponse(BaseModel):
 
 
 @dataclass
+class IndividualResponse:
+    """Individual response from a single evaluator model."""
+    model_name: str
+    score: float
+    rationale: str
+
+
+@dataclass
 class EvaluatorResponse:
     """Response from an evaluator model."""
     metric_name: str
-    score: float
+    score: float  # Average score across all evaluators
     rationale: str
+    individual_responses: List[IndividualResponse]
     metadata: Dict[str, Any] = None
 
 
@@ -94,14 +103,25 @@ class BenchmarkResult:
             for metric, scores in metric_scores.items()
         }
 
-    def get_model_scores_by_metric(self, metric_name: str) -> List[float]:
-        """Get all scores for a specific metric."""
-        scores = []
+    def get_model_scores_by_metric(self, metric_name: str) -> Dict[str, List[float]]:
+        """
+        Get all scores for a specific metric, broken down by evaluator model.
+        
+        Args:
+            metric_name: Name of the metric to get scores for
+            
+        Returns:
+            Dictionary mapping evaluator model names to their scores
+        """
+        model_scores = {}
         for evaluation in self.prompt_evaluations:
             for eval_result in evaluation.evaluations:
                 if eval_result.metric_name == metric_name:
-                    scores.append(eval_result.score)
-        return scores
+                    for individual in eval_result.individual_responses:
+                        if individual.model_name not in model_scores:
+                            model_scores[individual.model_name] = []
+                        model_scores[individual.model_name].append(individual.score)
+        return model_scores
 
 
 class MetricResult(BaseModel):

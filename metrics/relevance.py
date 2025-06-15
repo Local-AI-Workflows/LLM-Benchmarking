@@ -1,15 +1,16 @@
+from typing import Dict, Any
 from .evaluator import BaseEvaluator
 from .metric_base import BaseMetric
 from .responses import EvaluatorResponse
 
 
 class RelevanceMetric(BaseMetric):
-    """Evaluates how relevant a response is to the given prompt."""
+    """Metric for evaluating the relevance of a response to a prompt."""
 
     def __init__(self):
         super().__init__(
             name="relevance",
-            description="Measures how well the response addresses the prompt's intent"
+            description="Measures how well the response addresses the prompt's requirements and stays on topic"
         )
 
     async def evaluate(self, prompt: str, response: str, evaluator: BaseEvaluator) -> EvaluatorResponse:
@@ -21,22 +22,15 @@ class RelevanceMetric(BaseMetric):
         ### Response:
         {response}
 
-        ### Scoring Instructions:
-        Rate the relevance of the response on a scale from **1 to 5**, where:
+        Please evaluate the relevance of the response to the prompt on a scale of 0-10, where:
+        - 0: Completely irrelevant or off-topic
+        - 5: Somewhat relevant but missing key points or going off-topic
+        - 10: Perfectly relevant and directly addresses all aspects of the prompt
 
-        1 = Not relevant at all  
-        2 = Slightly relevant  
-        3 = Moderately relevant  
-        4 = Very relevant  
-        5 = Extremely relevant
+        Your response must follow this exact format:
+        Score: [your score out of 10]
 
-        ### Format:
-        Please respond with your score as **a single digit followed by a space**, then **a short sentence justifying your rating**.
-
-        ### Example Response:
-        5 The response directly and fully answers the question.
-
-        ### Now, your evaluation:
+        Rationale: [your explanation of the score, including what aspects were relevant or irrelevant]
         """
         eval_response = await evaluator.evaluate(
             evaluation=eval_prompt,
