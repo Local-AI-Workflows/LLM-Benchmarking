@@ -81,4 +81,61 @@ class BaseMetric(ABC):
         )
     
     def __str__(self) -> str:
-        return f"{self.name}: {self.description}" 
+        return f"{self.name}: {self.description}"
+
+
+class StandardMetric(BaseMetric):
+    """Base class for standard metrics that follow a common evaluation pattern."""
+    
+    def __init__(self, name: str, description: str, evaluation_instructions: str):
+        """
+        Initialize the metric.
+        
+        Args:
+            name: Name of the metric
+            description: Description of what the metric measures
+            evaluation_instructions: Instructions for the evaluator model
+        """
+        super().__init__(name, description)
+        self.evaluation_instructions = evaluation_instructions
+    
+    async def evaluate(self, prompt: str, response: str, evaluator: BaseEvaluator) -> EvaluatorResponse:
+        """
+        Evaluate a response using the standard evaluation pattern.
+        
+        Args:
+            prompt: The input prompt
+            response: The model's response
+            evaluator: The evaluator to use
+            
+        Returns:
+            EvaluatorResponse containing the evaluation results
+        """
+        eval_prompt = f"""You are evaluating {self.name} in a model's response.
+
+        ### Prompt:
+        {prompt}
+
+        ### Response:
+        {response}
+
+        {self.evaluation_instructions}
+
+        Your response must follow this exact format:
+        Score: [your score out of 10]
+
+        Rationale: [your explanation of the score, including specific examples]
+        """
+        eval_response = await evaluator.evaluate(
+            evaluation=eval_prompt,
+            metric_name=self.name,
+            metric_description=self.description
+        )
+
+        # Add standard metadata
+        eval_response.metadata.update({
+            "prompt_length": len(prompt),
+            "response_length": len(response)
+        })
+
+        return eval_response 
