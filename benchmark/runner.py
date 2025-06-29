@@ -1,8 +1,9 @@
-from typing import List, Dict, Any
+from typing import List, Dict, Any, Union
 from models.base_model import BaseLLMModel
 from metrics.evaluator import BaseEvaluator
 from metrics.metric_base import BaseMetric
 from metrics.responses import BenchmarkResult
+from dataset import Dataset, Question
 
 
 class BenchmarkRunner:
@@ -22,29 +23,74 @@ class BenchmarkRunner:
     async def run_benchmark(
         self, 
         model: BaseLLMModel,
-        prompts: List[str]
+        prompts: Union[List[str], Dataset]
     ) -> BenchmarkResult:
         """
         Run the benchmark for a specific model across multiple prompts.
         
         Args:
             model: The model to evaluate
-            prompts: List of prompts to evaluate the model on
+            prompts: List of prompt strings or a Dataset object
             
         Returns:
             BenchmarkResult containing all evaluation results
         """
+        # Convert input to standardized format
+        if isinstance(prompts, Dataset):
+            dataset = prompts
+            prompt_strings = dataset.to_prompts()
+            questions = dataset.questions
+        elif isinstance(prompts, list):
+            # Backward compatibility: convert list of strings to Questions
+            prompt_strings = prompts
+            questions = [Question.from_string(prompt) for prompt in prompts]
+            dataset = Dataset(questions=questions, name="Benchmark Questions", description="Questions for benchmark evaluation")
+        else:
+            raise ValueError(f"Unsupported prompts type: {type(prompts)}. Expected List[str] or Dataset.")
+        
         # Get responses from the model
         model_responses = {}
-        for prompt in prompts:
-            response = await model.generate(prompt)
-            model_responses[prompt] = response.text
+        for question, prompt_string in zip(questions, prompt_strings):
+            response = await model.generate(prompt_string)
+            # Store responses using the full prompt string as key for metrics compatibility
+            model_responses[prompt_string] = response.text
         
         # Run each metric
         results = []
         for metric in self.metrics:
-            result = await metric.evaluate_batch(prompts, model_responses, self.evaluator)
+            result = await metric.evaluate_batch(prompt_strings, model_responses, self.evaluator)
             results.append(result)
         
-        # Combine results from all metrics
-        return BenchmarkResult.combine(results, model.model_name) 
+        # Combine results from all metrics and add dataset information
+        benchmark_result = BenchmarkResult.combine(results, model.model_name)
+        
+        # Add dataset metadata to the benchmark result
+        if hasattr(dataset, 'name') and dataset.name:
+            benchmark_result.metadata["dataset_name"] = dataset.name
+        if hasattr(dataset, 'description') and dataset.description:
+            benchmark_result.metadata["dataset_description"] = dataset.description
+        
+        # Add dataset statistics for additional context
+        dataset_stats = dataset.get_statistics()
+        benchmark_result.metadata["dataset_stats"] = dataset_stats
+        
+        return benchmark_result
+
+    async def run_benchmark_with_dataset_info(
+        self,
+        model: BaseLLMModel,
+        dataset: Dataset
+    ) -> BenchmarkResult:
+        """
+        Run benchmark with full dataset integration and enhanced metadata.
+        
+        Args:
+            model: The model to evaluate  
+            dataset: Dataset object containing questions
+            
+        Returns:
+            BenchmarkResult with enhanced dataset metadata
+        """
+        # This method provides explicit dataset support and is the recommended approach
+        # for new code that wants to leverage the full dataset functionality
+        return await self.run_benchmark(model, dataset) 
