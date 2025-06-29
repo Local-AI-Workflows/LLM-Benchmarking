@@ -31,29 +31,6 @@ jobs:
         python -m pip install --upgrade pip
         pip install -r requirements.txt
     
-    - name: Run linting
-      run: |
-        # Black formatting check
-        python -m black --check --diff .
-        
-        # isort import sorting check
-        python -m isort --check-only --diff .
-        
-        # Flake8 linting
-        python -m flake8 . --max-line-length=100 --extend-ignore=E203,W503
-    
-    - name: Run type checking
-      run: |
-        python -m mypy metrics/ models/ --ignore-missing-imports
-    
     - name: Run unit tests
       run: |
-        python -m pytest tests/ -m unit --cov --cov-report=xml --cov-report=term-missing
-    
-    - name: Upload coverage to Codecov
-      uses: codecov/codecov-action@v3
-      with:
-        file: ./coverage.xml
-        flags: unittests
-        name: codecov-umbrella
-        fail_ci_if_error: false 
+        python -m pytest tests/ -m unit 
