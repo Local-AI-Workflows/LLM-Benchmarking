@@ -6,7 +6,7 @@ from typing import List, Dict, Any, Optional, Iterator, Callable
 from collections import Counter
 import json
 import random
-from .question import Question, QuestionCategory, QuestionDifficulty
+from .question import Question
 
 
 class Dataset:
@@ -69,9 +69,6 @@ class Dataset:
     
     def filter_questions(
         self,
-        category: Optional[QuestionCategory] = None,
-        difficulty: Optional[QuestionDifficulty] = None,
-        tags: Optional[List[str]] = None,
         custom_filter: Optional[Callable[[Question], bool]] = None,
         text_contains: Optional[str] = None
     ) -> 'Dataset':
@@ -79,9 +76,6 @@ class Dataset:
         Filter questions based on criteria and return a new dataset.
         
         Args:
-            category: Filter by category
-            difficulty: Filter by difficulty
-            tags: Filter by tags (questions must have all specified tags)
             custom_filter: Custom filter function
             text_contains: Filter by text content (case-insensitive)
             
@@ -91,18 +85,6 @@ class Dataset:
         filtered_questions = []
         
         for question in self.questions:
-            # Check category filter
-            if category and question.category != category:
-                continue
-            
-            # Check difficulty filter
-            if difficulty and question.difficulty != difficulty:
-                continue
-            
-            # Check tags filter
-            if tags and not all(question.has_tag(tag) for tag in tags):
-                continue
-            
             # Check text content filter
             if text_contains and text_contains.lower() not in question.text.lower():
                 continue
@@ -208,9 +190,6 @@ class Dataset:
         """
         stats = {
             "total_questions": len(self.questions),
-            "categories": {},
-            "difficulties": {},
-            "tags": {},
             "languages": {},
             "has_expected_answers": 0,
             "has_context": 0,
@@ -220,21 +199,6 @@ class Dataset:
         
         if not self.questions:
             return stats
-        
-        # Count categories
-        category_counts = Counter(q.category.value if q.category else "unspecified" for q in self.questions)
-        stats["categories"] = dict(category_counts)
-        
-        # Count difficulties
-        difficulty_counts = Counter(q.difficulty.value if q.difficulty else "unspecified" for q in self.questions)
-        stats["difficulties"] = dict(difficulty_counts)
-        
-        # Count tags
-        all_tags = []
-        for question in self.questions:
-            all_tags.extend(question.tags)
-        tag_counts = Counter(all_tags)
-        stats["tags"] = dict(tag_counts.most_common(10))  # Top 10 tags
         
         # Count languages
         language_counts = Counter(q.language for q in self.questions)

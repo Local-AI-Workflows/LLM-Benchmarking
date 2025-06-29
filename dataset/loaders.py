@@ -8,7 +8,7 @@ import yaml
 import os
 from typing import List, Dict, Any, Union, Optional
 from pathlib import Path
-from .question import Question, QuestionCategory, QuestionDifficulty
+from .question import Question
 from .dataset import Dataset
 
 
@@ -112,9 +112,6 @@ class DatasetLoader:
         filepath: str,
         text_column: str = 'text',
         id_column: Optional[str] = None,
-        category_column: Optional[str] = None,
-        difficulty_column: Optional[str] = None,
-        tags_column: Optional[str] = None,
         expected_answer_column: Optional[str] = None,
         context_column: Optional[str] = None,
         instructions_column: Optional[str] = None,
@@ -128,9 +125,6 @@ class DatasetLoader:
             filepath: Path to CSV file
             text_column: Name of column containing question text
             id_column: Name of column containing question IDs
-            category_column: Name of column containing categories
-            difficulty_column: Name of column containing difficulties
-            tags_column: Name of column containing tags (comma-separated)
             expected_answer_column: Name of column containing expected answers
             context_column: Name of column containing context
             instructions_column: Name of column containing instructions
@@ -157,22 +151,6 @@ class DatasetLoader:
                 }
                 
                 # Parse optional fields
-                if category_column and row.get(category_column):
-                    try:
-                        question_data['category'] = QuestionCategory(row[category_column].lower())
-                    except ValueError:
-                        pass
-                
-                if difficulty_column and row.get(difficulty_column):
-                    try:
-                        question_data['difficulty'] = QuestionDifficulty(row[difficulty_column].lower())
-                    except ValueError:
-                        pass
-                
-                if tags_column and row.get(tags_column):
-                    tags = [tag.strip() for tag in row[tags_column].split(',') if tag.strip()]
-                    question_data['tags'] = tags
-                
                 if expected_answer_column and row.get(expected_answer_column):
                     question_data['expected_answer'] = row[expected_answer_column].strip()
                 
@@ -365,43 +343,28 @@ class DatasetLoader:
         questions = [
             Question(
                 text="What is the capital of France?",
-                category=QuestionCategory.FACTUAL,
-                difficulty=QuestionDifficulty.EASY,
-                tags=["geography", "capitals"],
                 expected_answer="Paris",
                 source="sample_generator"
             ),
             Question(
                 text="Explain the concept of recursion in programming.",
-                category=QuestionCategory.CODING,
-                difficulty=QuestionDifficulty.MEDIUM,
-                tags=["programming", "algorithms"],
                 context="You are teaching a beginner programmer.",
                 instructions="Provide a clear explanation with a simple example.",
                 source="sample_generator"
             ),
             Question(
                 text="Write a haiku about artificial intelligence.",
-                category=QuestionCategory.CREATIVE,
-                difficulty=QuestionDifficulty.MEDIUM,
-                tags=["poetry", "ai", "creative"],
                 instructions="Follow the traditional 5-7-5 syllable pattern.",
                 source="sample_generator"
             ),
             Question(
                 text="If you have 3 apples and give away 2, how many do you have left?",
-                category=QuestionCategory.MATHEMATICAL,
-                difficulty=QuestionDifficulty.EASY,
-                tags=["arithmetic", "basic_math"],
                 expected_answer="1",
                 answer_key_points=["subtraction", "3 - 2 = 1"],
                 source="sample_generator"
             ),
             Question(
                 text="Analyze the ethical implications of autonomous vehicles in life-or-death scenarios.",
-                category=QuestionCategory.ETHICAL,
-                difficulty=QuestionDifficulty.EXPERT,
-                tags=["ethics", "ai", "autonomous_vehicles", "philosophy"],
                 context="Consider the trolley problem in the context of self-driving cars.",
                 instructions="Discuss multiple perspectives and potential solutions.",
                 source="sample_generator"

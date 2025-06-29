@@ -9,7 +9,7 @@ A comprehensive framework for benchmarking and evaluating Large Language Models 
 This framework allows you to:
 - Evaluate LLM responses using multiple evaluator models
 - Load datasets from various formats (JSON, CSV, YAML, text files)
-- Create rich question datasets with metadata and categorization
+- Create structured question datasets with metadata
 - Define custom evaluation metrics
 - Run benchmarks across multiple prompts
 - Visualize evaluation results with detailed analytics
@@ -19,9 +19,9 @@ This framework allows you to:
 ## Features
 
 ✅ **Rich Dataset Support**: Load questions from JSON, CSV, YAML, or plain text files
-✅ **Question Metadata**: Categories, difficulty levels, tags, expected answers, and context
+✅ **Question Metadata**: Context, instructions, expected answers, and custom metadata
 ✅ **Flexible Data Loading**: Auto-detection of file formats and custom column mapping
-✅ **Advanced Filtering**: Filter datasets by category, difficulty, tags, or custom criteria
+✅ **Advanced Filtering**: Filter datasets by text content or custom criteria
 ✅ **Result Export/Import**: Save and load benchmark results in JSON format
 ✅ **Comprehensive Visualizations**: Multiple chart types with detailed breakdowns
 ✅ **Backward Compatibility**: Works with existing string-based prompts
@@ -62,7 +62,7 @@ python3 run_benchmark.py --dataset-sample
 python3 run_benchmark.py --dataset-file my_questions.json
 
 # Load from CSV with custom column mapping
-python3 run_benchmark.py --dataset-file questions.csv --text-column question --category-column type
+python3 run_benchmark.py --dataset-file questions.csv --text-column question
 
 # Import and re-analyze existing results
 python3 run_benchmark.py --import-json results/benchmark_results_20241229_120000.json
@@ -119,9 +119,6 @@ if __name__ == "__main__":
     {
       "id": "q001",
       "text": "What is machine learning?",
-      "category": "reasoning",
-      "difficulty": "medium",
-      "tags": ["ai", "technology", "education"],
       "context": "You are explaining to a computer science student.",
       "instructions": "Provide a clear, technical explanation with examples.",
       "expected_answer": "Machine learning is a subset of AI that...",
@@ -146,8 +143,8 @@ if __name__ == "__main__":
     "Explain object-oriented programming.",
     {
       "text": "Write a sorting algorithm",
-      "category": "coding",
-      "difficulty": "hard"
+      "context": "Programming context",
+      "instructions": "Use Python"
     }
   ]
 }
@@ -156,19 +153,15 @@ if __name__ == "__main__":
 ### 2. CSV Format
 
 ```csv
-text,category,difficulty,tags,expected_answer,context
-"What is HTML?","factual","easy","web,html","HyperText Markup Language",""
-"Design a website layout","creative","medium","web,design","","You are a web designer"
-"Explain CSS selectors","reasoning","medium","web,css","","Technical explanation needed"
+text,expected_answer,context,instructions
+"What is HTML?","HyperText Markup Language","","Technical explanation"
+"Design a website layout","","You are a web designer","Be creative"
+"Explain CSS selectors","","","Technical explanation needed"
 ```
 
 **Load with custom columns:**
 ```bash
-python3 run_benchmark.py --dataset-file data.csv \
-  --text-column question \
-  --category-column type \
-  --difficulty-column level \
-  --tags-column topics
+python3 run_benchmark.py --dataset-file data.csv --text-column question
 ```
 
 ### 3. YAML Format
@@ -178,15 +171,11 @@ name: "Programming Questions"
 description: "Questions about programming concepts"
 questions:
   - text: "What is recursion?"
-    category: "coding"
-    difficulty: "medium"
-    tags: ["programming", "algorithms"]
     context: "Computer science fundamentals"
+    instructions: "Provide examples"
   
   - text: "Explain the difference between lists and dictionaries"
-    category: "reasoning"
-    difficulty: "easy"
-    tags: ["python", "data structures"]
+    context: "Python programming"
 ```
 
 ### 4. Plain Text Format
@@ -207,13 +196,10 @@ python3 run_benchmark.py --dataset-file questions.txt
 The `Question` class supports rich metadata:
 
 ```python
-from dataset import Question, QuestionCategory, QuestionDifficulty
+from dataset import Question
 
 question = Question(
     text="Explain machine learning",
-    category=QuestionCategory.REASONING,
-    difficulty=QuestionDifficulty.MEDIUM,
-    tags=["ai", "technology"],
     context="You are teaching a beginner",
     instructions="Use simple language with examples",
     expected_answer="Machine learning is...",
@@ -224,24 +210,6 @@ question = Question(
     metadata={"version": "2.0"}
 )
 ```
-
-### Available Categories
-- `FACTUAL` - Factual questions requiring specific information
-- `REASONING` - Questions requiring logical reasoning
-- `CREATIVE` - Creative tasks like writing poetry or stories
-- `MATHEMATICAL` - Math problems and calculations
-- `CODING` - Programming and code-related questions
-- `COMPREHENSION` - Reading comprehension and text analysis
-- `ANALYSIS` - Analytical questions requiring breakdown of concepts
-- `SYNTHESIS` - Questions requiring combining multiple concepts
-- `ETHICAL` - Ethical dilemmas and moral reasoning
-- `GENERAL` - General purpose questions
-
-### Difficulty Levels
-- `EASY` - Simple questions with straightforward answers
-- `MEDIUM` - Moderate complexity requiring some reasoning
-- `HARD` - Complex questions requiring deep understanding
-- `EXPERT` - Expert-level questions for advanced evaluation
 
 ## Dataset Operations
 
@@ -270,15 +238,6 @@ dataset = DatasetLoader.create_sample_dataset()
 ### Filtering and Manipulation
 
 ```python
-# Filter by category
-coding_questions = dataset.filter_questions(category=QuestionCategory.CODING)
-
-# Filter by difficulty
-easy_questions = dataset.filter_questions(difficulty=QuestionDifficulty.EASY)
-
-# Filter by tags
-ai_questions = dataset.filter_questions(tags=["ai"])
-
 # Custom filter function
 long_questions = dataset.filter_questions(
     custom_filter=lambda q: len(q.text) > 100
@@ -287,11 +246,10 @@ long_questions = dataset.filter_questions(
 # Text content search
 python_questions = dataset.filter_questions(text_contains="python")
 
-# Multiple criteria
+# Multiple criteria with custom filter
 filtered = dataset.filter_questions(
-    category=QuestionCategory.CODING,
-    difficulty=QuestionDifficulty.MEDIUM,
-    tags=["python"]
+    text_contains="programming",
+    custom_filter=lambda q: q.expected_answer is not None
 )
 ```
 
@@ -300,10 +258,10 @@ filtered = dataset.filter_questions(
 ```python
 stats = dataset.get_statistics()
 print(f"Total questions: {stats['total_questions']}")
-print(f"Categories: {stats['categories']}")
-print(f"Difficulties: {stats['difficulties']}")
-print(f"Top tags: {stats['tags']}")
+print(f"Languages: {stats['languages']}")
 print(f"Average text length: {stats['average_text_length']:.1f}")
+print(f"Questions with expected answers: {stats['has_expected_answers']}")
+print(f"Questions with context: {stats['has_context']}")
 ```
 
 ### Sampling and Splitting
@@ -436,9 +394,6 @@ All visualizations are saved to the `results` directory with timestamps.
 
 # CSV-specific options
 --text-column NAME           # Column containing question text
---category-column NAME       # Column containing categories
---difficulty-column NAME     # Column containing difficulty levels
---tags-column NAME           # Column containing comma-separated tags
 
 # Import/Export options
 --import-json PATH           # Import existing results
@@ -465,22 +420,19 @@ dataset = DatasetLoader.from_strings(prompts, name="Simple Questions")
 ### Rich Dataset with Metadata
 
 ```python
-from dataset import Question, QuestionCategory, QuestionDifficulty
+from dataset import Question
 
 questions = [
     Question(
         text="What is machine learning?",
-        category=QuestionCategory.REASONING,
-        difficulty=QuestionDifficulty.MEDIUM,
-        tags=["ai", "technology"],
         context="Educational context",
-        expected_answer="ML is a subset of AI..."
+        expected_answer="ML is a subset of AI...",
+        instructions="Provide a clear explanation"
     ),
     Question(
         text="Write a sorting algorithm",
-        category=QuestionCategory.CODING,
-        difficulty=QuestionDifficulty.HARD,
-        tags=["programming", "algorithms"]
+        context="Programming interview",
+        instructions="Use Python and explain complexity"
     )
 ]
 dataset = Dataset(questions, name="Custom Dataset")
@@ -492,14 +444,11 @@ dataset = Dataset(questions, name="Custom Dataset")
 # Load large dataset
 dataset = DatasetLoader.load_from_file("large_dataset.json")
 
-# Filter for coding questions of medium difficulty
-coding_medium = dataset.filter_questions(
-    category=QuestionCategory.CODING,
-    difficulty=QuestionDifficulty.MEDIUM
-)
+# Filter for questions containing specific terms
+programming_questions = dataset.filter_questions(text_contains="programming")
 
 # Sample 20 questions for quick testing
-sample = coding_medium.sample(20, random_seed=42)
+sample = programming_questions.sample(20, random_seed=42)
 
 # Run benchmark
 result = await runner.run_benchmark(model, sample)

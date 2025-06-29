@@ -13,7 +13,7 @@ from metrics.evaluator import EvaluatorFactory
 from metrics.responses import BenchmarkResult
 from benchmark.runner import BenchmarkRunner
 from visualizations.evaluation_visualizer import EvaluationVisualizer
-from dataset import DatasetLoader, Dataset, Question, QuestionCategory, QuestionDifficulty
+from dataset import DatasetLoader, Dataset, Question
 
 
 def create_default_dataset() -> Dataset:
@@ -28,11 +28,11 @@ def create_default_dataset() -> Dataset:
     
     # Convert to a proper dataset with some metadata
     questions = [
-        Question.from_string(prompts[0], category=QuestionCategory.FACTUAL, difficulty=QuestionDifficulty.EASY, tags=["geography"]),
-        Question.from_string(prompts[1], category=QuestionCategory.REASONING, difficulty=QuestionDifficulty.MEDIUM, tags=["technology", "science"]),
-        Question.from_string(prompts[2], category=QuestionCategory.CREATIVE, difficulty=QuestionDifficulty.MEDIUM, tags=["poetry", "ai"]),
-        Question.from_string(prompts[3], category=QuestionCategory.MATHEMATICAL, difficulty=QuestionDifficulty.EASY, tags=["math", "calculation"]),
-        Question.from_string(prompts[4], category=QuestionCategory.CODING, difficulty=QuestionDifficulty.MEDIUM, tags=["programming", "algorithms"])
+        Question.from_string(prompts[0]),
+        Question.from_string(prompts[1]),
+        Question.from_string(prompts[2]),
+        Question.from_string(prompts[3]),
+        Question.from_string(prompts[4])
     ]
     
     return Dataset(
@@ -75,8 +75,7 @@ async def run_new_benchmark(dataset: Dataset):
     
     # Display dataset statistics
     stats = dataset.get_statistics()
-    print(f"Categories: {list(stats['categories'].keys())}")
-    print(f"Difficulties: {list(stats['difficulties'].keys())}")
+    print(f"Languages: {list(stats['languages'].keys())}")
     
     benchmark_result = await runner.run_benchmark(test_model, dataset)
     
@@ -96,10 +95,7 @@ def load_dataset(args) -> Dataset:
                 elif args.dataset_format == 'csv':
                     dataset = DatasetLoader.from_csv_file(
                         args.dataset_file,
-                        text_column=args.text_column,
-                        category_column=args.category_column,
-                        difficulty_column=args.difficulty_column,
-                        tags_column=args.tags_column
+                        text_column=args.text_column
                     )
                 elif args.dataset_format == 'yaml':
                     dataset = DatasetLoader.from_yaml_file(args.dataset_file)
@@ -201,21 +197,6 @@ async def main():
         default="text",
         help="CSV column name containing question text (default: 'text')"
     )
-    parser.add_argument(
-        "--category-column",
-        type=str,
-        help="CSV column name containing question categories"
-    )
-    parser.add_argument(
-        "--difficulty-column",
-        type=str,
-        help="CSV column name containing question difficulties"
-    )
-    parser.add_argument(
-        "--tags-column",
-        type=str,
-        help="CSV column name containing question tags (comma-separated)"
-    )
     
     # General options
     parser.add_argument(
@@ -294,8 +275,7 @@ async def main():
     if "dataset_stats" in benchmark_result.metadata:
         stats = benchmark_result.metadata["dataset_stats"]
         print(f"\nDataset Statistics:")
-        print(f"  Categories: {', '.join(stats.get('categories', {}).keys())}")
-        print(f"  Difficulties: {', '.join(stats.get('difficulties', {}).keys())}")
+        print(f"  Languages: {', '.join(stats.get('languages', {}).keys())}")
         print(f"  Average text length: {stats.get('average_text_length', 0):.1f} characters")
     
     print("\nAverage scores by metric:")
@@ -311,7 +291,7 @@ async def main():
     print("  # Load from JSON file:")
     print("  python3 run_benchmark.py --dataset-file my_questions.json")
     print("  # Load from CSV file:")
-    print("  python3 run_benchmark.py --dataset-file questions.csv --text-column question --category-column type")
+    print("  python3 run_benchmark.py --dataset-file questions.csv --text-column question")
     print("  # Use sample dataset:")
     print("  python3 run_benchmark.py --dataset-sample")
     
