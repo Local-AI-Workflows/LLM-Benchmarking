@@ -4,6 +4,46 @@ from llm_benchmark import evaluator_modelfrom llm_benchmark import evaluator
 
 A comprehensive framework for benchmarking and evaluating Large Language Models (LLMs) using multiple evaluator models, flexible datasets, and robust evaluation metrics.
 
+## Quick Start Guide
+
+### Interactive Jupyter Notebook
+
+The best way to explore the framework is through our comprehensive Jupyter notebook:
+
+**`llm_benchmark.ipynb`** - A complete guide showcasing all features:
+-  Enhanced Metrics System with factory patterns
+-  Dataset Loading from multiple formats
+-  Model Factory for easy setup
+-  Enhanced Visualizations (6 chart types)
+-  Interactive HTML Dashboard
+-  Advanced analysis capabilities
+
+### Sample Dataset Files
+
+The repository includes sample files for testing different data formats:
+- **`sample_questions.json`** - Comprehensive JSON dataset with rich metadata (10 questions)
+- **`sample_questions.csv`** - CSV format for spreadsheet compatibility
+- **`sample_questions.yaml`** - YAML format for human-readable configuration
+- **`sample_questions.txt`** - Plain text format for simple question lists
+
+### Running the Notebook
+
+```bash
+# Start Jupyter Notebook
+jupyter notebook llm_benchmark.ipynb
+
+# Or use JupyterLab
+jupyter lab llm_benchmark.ipynb
+```
+
+The notebook demonstrates:
+- Loading datasets from different formats
+- Using the enhanced metrics system
+- Creating models with the ModelFactory
+- Running comprehensive benchmarks
+- Generating static and interactive visualizations
+- Advanced dataset operations and filtering
+
 ## Overview
 
 This framework allows you to:
@@ -18,16 +58,22 @@ This framework allows you to:
 
 ## Features
 
-✅ **Enhanced Metrics System**: Factory-based metric creation with comprehensive validation
-✅ **Robust Error Handling**: Graceful failure handling throughout the evaluation process
-✅ **Rich Dataset Support**: Load questions from JSON, CSV, YAML, or plain text files
-✅ **Question Metadata**: Context, instructions, expected answers, and custom metadata
-✅ **Flexible Data Loading**: Auto-detection of file formats and custom column mapping
-✅ **Advanced Filtering**: Filter datasets by text content or custom criteria
-✅ **Result Export/Import**: Enhanced JSON serialization with Pydantic validation
-✅ **Comprehensive Visualizations**: Multiple chart types with detailed breakdowns
-✅ **Improved Logging**: Detailed logging throughout the evaluation process
-✅ **Backward Compatibility**: Works with existing string-based prompts
+- **Dataset Loading** from multiple formats
+- **Model Factory** for easy setup
+- **Enhanced Visualizations** (6 chart types)
+- **Interactive HTML Dashboard** with comprehensive analytics
+- **Advanced analysis capabilities**
+
+ **Enhanced Metrics System**: Factory-based metric creation with comprehensive validation
+ **Robust Error Handling**: Graceful failure handling throughout the evaluation process
+ **Rich Dataset Support**: Load questions from JSON, CSV, YAML, or plain text files
+ **Question Metadata**: Context, instructions, expected answers, and custom metadata
+ **Flexible Data Loading**: Auto-detection of file formats and custom column mapping
+ **Advanced Filtering**: Filter datasets by text content or custom criteria
+ **Result Export/Import**: Enhanced JSON serialization with Pydantic validation
+ **Comprehensive Visualizations**: Multiple chart types with detailed breakdowns
+ **Improved Logging**: Detailed logging throughout the evaluation process
+ **Backward Compatibility**: Works with existing string-based prompts
 
 ## Available Metrics
 
@@ -446,7 +492,7 @@ python3 run_benchmark.py --dataset-file questions.txt
 
 ## Enhanced Results and Statistics
 
-The framework now provides comprehensive statistics:
+The framework now provides comprehensive statistics and **interactive HTML dashboards**:
 
 ```python
 # Get detailed summary statistics
@@ -459,6 +505,39 @@ print(f"Average scores by metric: {stats['average_scores']}")
 
 # Get model-specific scores for a metric
 model_scores = benchmark_result.get_model_scores_by_metric('relevance')
+
+# Generate interactive HTML dashboard
+from dashboard import generate_html_dashboard
+dashboard_path = generate_html_dashboard(benchmark_result, "results/dashboard.html")
+print(f"Dashboard available at: {dashboard_path}")
+```
+
+### Interactive HTML Dashboard
+
+The framework automatically generates a comprehensive HTML dashboard with:
+
+- **Overview Tab**: Key metrics, radar charts, and performance summaries
+- **Metrics Analysis**: Correlation matrices, metric statistics, and detailed breakdowns
+- **Questions Analysis**: Difficulty analysis, per-question heatmaps, and detailed question views
+- **Evaluators Analysis**: Evaluator performance comparison and agreement analysis
+- **Detailed View**: Complete raw data table with all evaluations and rationales
+
+**Features:**
+- **Modern UI**: Clean, responsive design with Tailwind CSS
+- **Interactive Charts**: Chart.js for dynamic visualizations
+- **Detailed Modals**: Click questions for full details
+- **Smart Insights**: Automatic difficulty classification and correlation analysis
+- **Mobile Friendly**: Works on all devices
+- **Standalone**: No server required, works offline
+
+The dashboard is automatically generated when running benchmarks:
+
+```bash
+# Run benchmark and generate dashboard
+python3 run_benchmark.py
+
+# View results
+open results/dashboard.html
 ```
 
 ## Question Structure
@@ -621,63 +700,6 @@ python3 run_benchmark.py --results-dir custom_results/
 - **Comprehensive Logging**: Detailed logging throughout the evaluation process
 - **Error Handling**: Graceful failure handling with informative messages
 
-### Metrics System Improvements
-
-- **Reduced Code Duplication**: Simplified metric implementations
-- **Enhanced Score Extraction**: Multiple patterns with automatic fallbacks
-- **Configurable Scales**: Support for custom scoring scales (0-10, 1-5, etc.)
-- **Rich Metadata**: Comprehensive tracking of evaluation context
-- **Validation**: Automatic score validation and clamping
-- **Logging**: Detailed debugging information
-
-## File Structure
-
-```
-llm_benchmark/
-├── metrics/
-│   ├── __init__.py          # Enhanced module with factory and registry
-│   ├── metric_base.py       # Enhanced base classes with configuration
-│   ├── evaluator.py         # Improved evaluator with better error handling
-│   ├── responses.py         # Pydantic models with validation
-│   ├── relevance.py         # Simplified metric implementation
-│   ├── hallucinations.py    # Simplified metric implementation
-│   ├── bias.py              # Simplified metric implementation
-│   ├── fairness.py          # Simplified metric implementation
-│   ├── robustness.py        # Simplified metric implementation
-│   └── toxicity.py          # Simplified metric implementation
-├── dataset/
-│   ├── __init__.py          # Dataset module exports
-│   ├── question.py          # Question data structure
-│   ├── dataset.py           # Dataset management
-│   └── loaders.py           # Multi-format data loaders
-├── models/                  # LLM model implementations
-├── benchmark/               # Benchmark runner
-├── visualizations/          # Result visualization
-├── run_benchmark.py         # Enhanced CLI with metric selection
-└── requirements.txt         # Updated dependencies
-```
-
-## Contributing
-
-The metrics system is designed to be extensible. To add a new metric:
-
-1. Create a new metric class inheriting from `StandardMetric`
-2. Add it to the metric registry in `metrics/__init__.py`
-3. Implement your evaluation instructions and any custom configuration
-
-```python
-from metrics.metric_base import StandardMetric
-
-class MyCustomMetric(StandardMetric):
-    def __init__(self):
-        super().__init__(
-            name="my_metric",
-            description="Description of what this metric measures",
-            evaluation_instructions="Detailed evaluation criteria...",
-            scale_min=0,
-            scale_max=10
-        )
-```
 
 ## Recent Improvements
 
@@ -748,167 +770,3 @@ python3 run_benchmark.py --dataset-file questions.csv --text-column question
 # Import and re-analyze existing results
 python3 run_benchmark.py --import-json results/benchmark_results_20241229_120000.json
 ```
-
-### Programmatic Usage with Enhanced Features
-
-```python
-import asyncio
-from models import ModelFactory
-from metrics import MetricFactory, EvaluatorFactory
-from benchmark.runner import BenchmarkRunner
-from dataset import DatasetLoader
-
-async def main():
-    # Load dataset from file (auto-detects format)
-    dataset = DatasetLoader.load_from_file("my_questions.json")
-    
-    # Or create from string list (backward compatibility)
-    prompts = ["What is AI?", "Explain quantum computing."]
-    dataset = DatasetLoader.from_strings(prompts, name="Simple Questions")
-    
-    # Initialize models using the enhanced ModelFactory
-    test_model = ModelFactory.create_ollama_model(
-        model_name="llama3.2:latest",
-        temperature=0.7
-    )
-    
-    evaluator_models = [
-        ModelFactory.create_ollama_model(model_name="deepseek-r1:1.5b"),
-        ModelFactory.create_ollama_model(model_name="gemma3:1b")
-    ]
-    evaluator = EvaluatorFactory.create_evaluator(evaluator_models)
-
-    # Create metrics using the enhanced factory
-    metrics = MetricFactory.create_all_metrics()  # All metrics
-    # Or select specific metrics:
-    # metrics = MetricFactory.create_metrics_by_names(['relevance', 'bias'])
-    
-    # Run benchmark with enhanced error handling and logging
-    runner = BenchmarkRunner(evaluator, metrics)
-    result = await runner.run_benchmark(test_model, dataset)
-    
-    # Get comprehensive statistics
-    stats = result.get_summary_statistics()
-    print(f"Overall average: {stats['overall_average']}")
-    print(f"Score distribution: {stats['score_distribution']}")
-    
-    # Export results with enhanced JSON serialization
-    result.save_to_json_file("my_benchmark_results.json")
-
-if __name__ == "__main__":
-    asyncio.run(main())
-```
-
-### Models System Enhancements (New)
-
-**🏭 Factory Pattern Implementation**
-- `ModelFactory` for centralized model creation and discovery
-- Registry-based model discovery with `get_all_models()` and `get_model_by_name()`
-- Convenient factory methods: `create_ollama_model()`, `create_openai_model()`
-- Configuration validation with `validate_model_config()`
-- Batch model creation from configuration dictionaries
-
-**🔍 Enhanced ModelResponse with Pydantic Validation**
-- Comprehensive validation with automatic error detection
-- Enhanced metadata tracking (response time, token count, model info)
-- Usage statistics tracking and cost analysis
-- Error handling with `create_error_response()` factory method
-- Robust JSON serialization/deserialization with datetime handling
-- Response summaries and detailed metadata access
-
-**⚙️ Improved Configuration System**
-- Pydantic-based validation for all configuration parameters
-- Automatic API key detection from environment variables
-- Provider-specific parameter validation (OpenAI vs Ollama constraints)
-- Health check parameter generation for testing
-- Configuration update methods with validation
-- Enhanced error messages with specific validation details
-
-**🎯 Enhanced Base Model Functionality**
-- Performance tracking with request counting and timing
-- Success rate monitoring and error tracking
-- Automatic retry logic with exponential backoff
-- Health checking with detailed status reporting
-- Batch processing capabilities for multiple prompts
-- Model information and capability reporting
-- Statistics tracking and reset functionality
-
-**🔧 Comprehensive Error Handling**
-- Graceful failure handling throughout the pipeline
-- Detailed logging with structured information
-- Provider-specific error handling (OpenAI API errors, Ollama connection issues)
-- Error response creation with context preservation
-- Validation errors with helpful messages
-- Automatic error recovery and retry mechanisms
-
-**📊 Enhanced Logging and Debugging**
-- Structured logging throughout the models system
-- Debug information for troubleshooting API calls
-- Performance insights with timing information
-- Request/response tracking with sanitized parameter logging
-- Error logging with full context and stack traces
-- Model availability and health status monitoring
-
-### Key Benefits of All Improvements
-
-**🚀 Reduced Code Duplication**
-- Models: Eliminated duplicate response handling across providers
-- Metrics: From ~200 lines per metric to ~20 lines with shared functionality
-
-**🛡️ Better Error Handling**
-- Comprehensive validation at all levels (input, processing, output)
-- Graceful failure handling with detailed error messages
-- Automatic error recovery and retry mechanisms
-
-**🔍 Enhanced Usability**
-- Easy model and metric discovery with factory patterns
-- Intuitive APIs with comprehensive documentation
-- Flexible configuration with validation
-
-**🔧 Improved Reliability**
-- Robust score extraction and validation
-- Comprehensive testing and validation
-- Performance tracking and monitoring
-
-**🐛 Better Debugging**
-- Comprehensive logging and metadata tracking
-- Detailed error messages with context
-- Performance insights and statistics
-
-**⚡ Flexible Configuration**
-- Customizable scales, formats, and contexts
-- Provider-specific parameter validation
-- Easy parameter updates with validation
-
-**📈 Consistent Behavior**
-- All models and metrics follow the same patterns
-- Standardized error handling and logging
-- Unified response formats and metadata
-
-**📊 Enhanced Reporting**
-- Rich statistics and analysis capabilities
-- Comprehensive metadata tracking
-- Better visualization and export options
-
-### Backward Compatibility
-
-All improvements maintain full backward compatibility:
-- Existing model creation code continues to work
-- Original metric implementations remain functional
-- Previous configuration formats are still supported
-- Existing benchmark results can be imported and analyzed
-
-The framework now provides a significantly more robust, maintainable, and user-friendly experience for LLM benchmarking with comprehensive error handling, detailed insights, and professional-grade reliability.
-
-## Summary
-
-The LLM Benchmark Framework has been significantly enhanced with comprehensive improvements to both the metrics and models systems. These improvements provide:
-
-- **Professional-grade reliability** with comprehensive error handling
-- **Enhanced usability** with factory patterns and intuitive APIs
-- **Better debugging capabilities** with structured logging and detailed metadata
-- **Improved maintainability** with reduced code duplication and consistent patterns
-- **Flexible configuration** with validation and provider-specific optimizations
-- **Rich analytics** with performance tracking and comprehensive statistics
-
-The framework is now ready for production use with enterprise-grade features while maintaining the simplicity and flexibility that makes it accessible for research and development.

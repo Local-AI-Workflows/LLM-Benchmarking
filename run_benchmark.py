@@ -7,6 +7,7 @@ from metrics import MetricFactory, EvaluatorFactory
 from metrics.responses import BenchmarkResult
 from benchmark.runner import BenchmarkRunner
 from visualizations.evaluation_visualizer import EvaluationVisualizer
+from dashboard import generate_html_dashboard
 from dataset import DatasetLoader, Dataset, Question
 
 
@@ -104,7 +105,7 @@ def load_dataset(args) -> Dataset:
             return dataset
             
         except Exception as e:
-            print(f"❌ Failed to load dataset: {e}")
+            print(f"Failed to load dataset: {e}")
             print("Using default dataset instead...")
             return create_default_dataset()
     
@@ -128,7 +129,7 @@ def parse_metrics(args) -> list:
     # Validate metric names
     invalid_metrics = [m for m in selected_metrics if m not in available_metrics]
     if invalid_metrics:
-        print(f"❌ Invalid metrics: {', '.join(invalid_metrics)}")
+        print(f"Invalid metrics: {', '.join(invalid_metrics)}")
         print(f"Available metrics: {', '.join(available_metrics)}")
         raise ValueError(f"Invalid metrics specified: {', '.join(invalid_metrics)}")
     
@@ -148,23 +149,39 @@ def generate_visualizations(benchmark_result: BenchmarkResult, results_dir: str 
     dataset_name = benchmark_result.metadata.get("dataset_name", "Dataset")
     title_suffix = f"using {dataset_name}"
     
-    # Plot overall results
+    # Plot overall results (bar chart)
     figure = visualizer.plot_benchmark_results(benchmark_result, f"Benchmark Results {title_suffix}")
     visualizer.save_plot(figure, "benchmark_results.png")
     
-    # Plot per-question scores
+    # Plot per-question scores (heatmaps)
     figure = visualizer.plot_per_question_scores(benchmark_result)
     visualizer.save_plot(figure, "per_question_scores.png")
     
-    # Plot model summary
-    figure = visualizer.plot_model_summary(benchmark_result)
-    visualizer.save_plot(figure, "model_summary.png")
+    # Plot radar chart showing overall performance
+    figure = visualizer.plot_radar_chart(benchmark_result)
+    visualizer.save_plot(figure, "performance_radar.png")
     
-    # Plot detailed results for each metric
-    metrics = benchmark_result.metadata.get("metrics", [])
-    for metric_name in metrics:
-        figure = visualizer.plot_metric_details(benchmark_result, metric_name)
-        visualizer.save_plot(figure, f"{metric_name}_details.png")
+    # Plot metric correlation matrix
+    figure = visualizer.plot_metric_correlation_matrix(benchmark_result)
+    visualizer.save_plot(figure, "metric_correlations.png")
+    
+    # Plot question difficulty analysis
+    figure = visualizer.plot_question_difficulty_analysis(benchmark_result)
+    visualizer.save_plot(figure, "question_difficulty.png")
+    
+    # Plot evaluator agreement analysis
+    figure = visualizer.plot_evaluator_agreement(benchmark_result)
+    visualizer.save_plot(figure, "evaluator_agreement.png")
+    
+    # Generate interactive HTML dashboard
+    print("Generating interactive HTML dashboard...")
+    dashboard_path = os.path.join(results_dir, "dashboard.html")
+    try:
+        generated_path = generate_html_dashboard(benchmark_result, dashboard_path)
+        print(f"✓ Interactive dashboard saved to: {generated_path}")
+    except Exception as e:
+        print(f"Failed to generate HTML dashboard: {e}")
+        print("  Static visualizations are still available")
 
 
 async def main():
@@ -266,7 +283,7 @@ async def main():
             print(f"  - Overall average score: {summary['overall_average']}")
             
         except Exception as e:
-            print(f"❌ Failed to import JSON file: {e}")
+            print(f"Failed to import JSON file: {e}")
             return
     else:
         # Load dataset
@@ -290,7 +307,7 @@ async def main():
             benchmark_result.save_to_json_file(export_path)
             print("✓ Successfully exported benchmark results to JSON")
         except Exception as e:
-            print(f"❌ Failed to export to JSON file: {e}")
+            print(f"Failed to export to JSON file: {e}")
     
     # Generate visualizations unless skipped
     if not args.skip_visualizations:
@@ -332,6 +349,7 @@ async def main():
         print(f"\nResults exported to: {export_path}")
     if not args.skip_visualizations:
         print(f"Visualizations saved to: {args.results_dir}/")
+        print(f"Interactive dashboard: {args.results_dir}/dashboard.html")
     
     print(f"\nDataset Loading Examples:")
     print(f"  # Load from JSON file:")
@@ -346,6 +364,12 @@ async def main():
     if export_path:
         print(f"\nTo re-use these results later:")
         print(f"  python3 run_benchmark.py --import-json {export_path}")
+    
+    if not args.skip_visualizations:
+        print(f"\nTo view results:")
+        print(f"  # Open interactive dashboard:")
+        print(f"  open {args.results_dir}/dashboard.html")
+        print(f"  # Or view static charts in: {args.results_dir}/")
 
 
 if __name__ == "__main__":

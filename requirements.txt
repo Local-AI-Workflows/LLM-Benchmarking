@@ -29,13 +29,15 @@ evaluate>=0.4.0
 sacrebleu>=2.3.0
 bleurt>=0.0.2
 
-# Visualization
+# Visualization and Dashboard
 streamlit>=1.22.0
 plotly>=5.14.0
 jupyter>=1.0.0
 seaborn>=0.12.0
 ipywidgets>=8.0.0
 kaleido>=0.2.1
+flask>=2.3.0
+jinja2>=3.1.0
 
 # Async support
 aiohttp>=3.8.0

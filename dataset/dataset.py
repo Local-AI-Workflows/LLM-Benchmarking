@@ -101,6 +101,30 @@ class Dataset:
             description=f"Filtered from: {self.description}"
         )
     
+    def filter(self, custom_filter: Callable[[Question], bool]) -> 'Dataset':
+        """
+        Filter questions using a custom function (convenience method).
+        
+        Args:
+            custom_filter: Function that takes a Question and returns bool
+            
+        Returns:
+            New Dataset containing filtered questions
+        """
+        return self.filter_questions(custom_filter=custom_filter)
+    
+    def filter_by_text(self, text_contains: str) -> 'Dataset':
+        """
+        Filter questions by text content (convenience method).
+        
+        Args:
+            text_contains: Text to search for in question text (case-insensitive)
+            
+        Returns:
+            New Dataset containing filtered questions
+        """
+        return self.filter_questions(text_contains=text_contains)
+    
     def sample(self, n: int, random_seed: Optional[int] = None) -> 'Dataset':
         """
         Get a random sample of questions.

@@ -26,9 +26,8 @@ def run_command(cmd, description=""):
             print("STDERR:", result.stderr)
         return True
     except subprocess.CalledProcessError as e:
-        print(f"❌ Command failed with exit code {e.returncode}")
-        print("STDOUT:", e.stdout)
-        print("STDERR:", e.stderr)
+        print(f"Command failed with exit code {e.returncode}")
+        print(f"Output: {e.output}")
         return False
 
 
@@ -141,7 +140,7 @@ def main():
     
     # CI mode - run all checks
     elif args.ci:
-        print("🚀 Running full CI pipeline")
+        print("Running full CI pipeline")
         print("=" * 50)
         
         # Install dependencies
@@ -192,10 +191,10 @@ def main():
     
     # Final status
     if success:
-        print("\n✅ All checks passed!")
+        print("\nAll checks passed!")
         sys.exit(0)
     else:
-        print("\n❌ Some checks failed!")
+        print("\nSome checks failed!")
         sys.exit(1)
 
 

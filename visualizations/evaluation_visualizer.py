@@ -5,6 +5,8 @@ from metrics.responses import EvaluatorResponse, BenchmarkResult
 from datetime import datetime
 import os
 import seaborn as sns
+from scipy.stats import pearsonr
+import pandas as pd
 
 
 class EvaluationVisualizer:
@@ -66,20 +68,20 @@ class EvaluationVisualizer:
             for bar in model_bars:
                 height = bar.get_height()
                 ax.text(bar.get_x() + bar.get_width()/2., height,
-                       f'{height:.2f}',
+                       f'{height:.1f}',
                        ha='center', va='bottom', fontsize=8)
         
         # Add value labels for overall scores
         for bar in overall_bars:
             height = bar.get_height()
             ax.text(bar.get_x() + bar.get_width()/2., height,
-                   f'{height:.2f}',
+                   f'{height:.1f}',
                    ha='center', va='bottom', fontsize=9, weight='bold')
         
         # Customize plot
-        ax.set_title(title)
-        ax.set_xlabel("Metrics")
-        ax.set_ylabel("Average Score")
+        ax.set_title(title, fontsize=14, fontweight='bold')
+        ax.set_xlabel("Metrics", fontsize=12)
+        ax.set_ylabel("Average Score", fontsize=12)
         ax.set_ylim(0, 10)  # Assuming scores are on a 0-10 scale
         ax.set_xticks(x + width * (len(model_scores[metric_names[0]]) / 2))
         ax.set_xticklabels(metric_names, rotation=45, ha='right')
@@ -145,10 +147,20 @@ class EvaluationVisualizer:
         Returns:
             matplotlib Figure object
         """
-        # Get metrics and model names
+        # Get metrics and determine actual number of evaluators from the data
         metrics = benchmark_result.metadata["metrics"]
-        model_names = benchmark_result.metadata["evaluator_models"]
         prompts = [eval.prompt for eval in benchmark_result.prompt_evaluations]
+        
+        # Determine actual number of evaluators from the first evaluation
+        if benchmark_result.prompt_evaluations and benchmark_result.prompt_evaluations[0].evaluations:
+            first_eval = benchmark_result.prompt_evaluations[0].evaluations[0]
+            num_evaluators = len(first_eval.individual_responses)
+            # Create model names based on actual evaluators
+            model_names = [f"Evaluator {i+1}" for i in range(num_evaluators)]
+        else:
+            # Fallback if no evaluations exist
+            model_names = ["No Evaluators"]
+            num_evaluators = 1
         
         # Calculate number of rows and columns for subplots
         n_metrics = len(metrics)
@@ -161,13 +173,14 @@ class EvaluationVisualizer:
         # Create a heatmap for each metric
         for i, metric in enumerate(metrics):
             # Create a matrix of scores for this metric
-            scores_matrix = np.zeros((len(prompts), len(model_names)))
+            scores_matrix = np.zeros((len(prompts), num_evaluators))
             
             for j, prompt_eval in enumerate(benchmark_result.prompt_evaluations):
                 for eval_result in prompt_eval.evaluations:
                     if eval_result.metric_name == metric:
                         for k, individual in enumerate(eval_result.individual_responses):
-                            scores_matrix[j, k] = individual.score
+                            if k < num_evaluators:  # Safety check
+                                scores_matrix[j, k] = individual.score
             
             # Create subplot
             ax = plt.subplot(n_rows, n_cols, i + 1)
@@ -183,7 +196,7 @@ class EvaluationVisualizer:
                        ax=ax)
             
             # Customize subplot
-            ax.set_title(f"Scores by Question and Evaluator\n{metric}")
+            ax.set_title(f"Scores by Question and Evaluator\n{metric}", fontweight='bold')
             ax.set_xlabel("Evaluator Model")
             ax.set_ylabel("Question")
             
@@ -268,6 +281,240 @@ class EvaluationVisualizer:
         # Adjust layout
         plt.tight_layout()
         
+        return fig
+
+    def plot_radar_chart(self, benchmark_result: BenchmarkResult) -> plt.Figure:
+        """
+        Create a radar chart showing model performance across all metrics.
+        
+        Args:
+            benchmark_result: The benchmark results to visualize
+            
+        Returns:
+            matplotlib Figure object
+        """
+        # Get average scores by metric
+        avg_scores = benchmark_result.get_average_scores_by_metric()
+        metrics = list(avg_scores.keys())
+        scores = list(avg_scores.values())
+        
+        # Number of metrics
+        N = len(metrics)
+        
+        # Calculate angles for each metric
+        angles = [n / float(N) * 2 * np.pi for n in range(N)]
+        angles += angles[:1]  # Complete the circle
+        
+        # Add the first score to the end to complete the circle
+        scores += scores[:1]
+        
+        # Create figure and polar subplot
+        fig, ax = plt.subplots(figsize=(10, 10), subplot_kw=dict(projection='polar'))
+        
+        # Plot the scores
+        ax.plot(angles, scores, 'o-', linewidth=2, label='Average Score', color='blue')
+        ax.fill(angles, scores, alpha=0.25, color='blue')
+        
+        # Add metric labels
+        ax.set_xticks(angles[:-1])
+        ax.set_xticklabels(metrics)
+        
+        # Set y-axis limits and labels
+        ax.set_ylim(0, 10)
+        ax.set_yticks([2, 4, 6, 8, 10])
+        ax.set_yticklabels(['2', '4', '6', '8', '10'])
+        ax.grid(True)
+        
+        # Add title
+        ax.set_title('Model Performance Across All Metrics', size=16, fontweight='bold', pad=20)
+        
+        # Add score values on the chart
+        for angle, score in zip(angles[:-1], scores[:-1]):
+            ax.text(angle, score + 0.3, f'{score:.1f}', 
+                   horizontalalignment='center', fontweight='bold', fontsize=10)
+        
+        return fig
+
+    def plot_metric_correlation_matrix(self, benchmark_result: BenchmarkResult) -> plt.Figure:
+        """
+        Create a correlation matrix showing how different metrics correlate with each other.
+        
+        Args:
+            benchmark_result: The benchmark results to visualize
+            
+        Returns:
+            matplotlib Figure object
+        """
+        # Get all scores for each metric
+        metrics = benchmark_result.metadata["metrics"]
+        metric_scores = {}
+        
+        for metric in metrics:
+            scores = []
+            for evaluation in benchmark_result.prompt_evaluations:
+                for eval_result in evaluation.evaluations:
+                    if eval_result.metric_name == metric:
+                        scores.append(eval_result.score)
+            metric_scores[metric] = scores
+        
+        # Create correlation matrix
+        correlation_matrix = np.zeros((len(metrics), len(metrics)))
+        for i, metric1 in enumerate(metrics):
+            for j, metric2 in enumerate(metrics):
+                if i == j:
+                    correlation_matrix[i, j] = 1.0
+                else:
+                    scores1 = metric_scores[metric1]
+                    scores2 = metric_scores[metric2]
+                    if len(scores1) == len(scores2) and len(scores1) > 1:
+                        corr, _ = pearsonr(scores1, scores2)
+                        correlation_matrix[i, j] = corr
+                    else:
+                        correlation_matrix[i, j] = 0.0
+        
+        # Create figure
+        fig, ax = plt.subplots(figsize=(10, 8))
+        
+        # Create heatmap
+        sns.heatmap(correlation_matrix, 
+                   annot=True, 
+                   fmt='.2f',
+                   cmap='coolwarm',
+                   center=0,
+                   vmin=-1, vmax=1,
+                   xticklabels=metrics,
+                   yticklabels=metrics,
+                   ax=ax)
+        
+        ax.set_title('Metric Correlation Matrix', fontsize=14, fontweight='bold')
+        plt.tight_layout()
+        
+        return fig
+
+    def plot_question_difficulty_analysis(self, benchmark_result: BenchmarkResult) -> plt.Figure:
+        """
+        Create a plot showing question difficulty based on average scores.
+        
+        Args:
+            benchmark_result: The benchmark results to visualize
+            
+        Returns:
+            matplotlib Figure object
+        """
+        # Calculate average score for each question
+        question_scores = []
+        question_labels = []
+        
+        for i, evaluation in enumerate(benchmark_result.prompt_evaluations):
+            scores = []
+            for eval_result in evaluation.evaluations:
+                scores.append(eval_result.score)
+            
+            avg_score = np.mean(scores) if scores else 0
+            question_scores.append(avg_score)
+            question_labels.append(f"Q{i+1}")
+        
+        # Sort by difficulty (lowest scores = most difficult)
+        sorted_data = sorted(zip(question_scores, question_labels))
+        sorted_scores, sorted_labels = zip(*sorted_data)
+        
+        # Create figure
+        fig, ax = plt.subplots(figsize=(12, 6))
+        
+        # Create bar plot with color gradient
+        colors = plt.cm.RdYlGn(np.array(sorted_scores) / 10.0)  # Normalize to 0-1 for colormap
+        bars = ax.bar(range(len(sorted_scores)), sorted_scores, color=colors)
+        
+        # Add value labels on bars
+        for bar, score in zip(bars, sorted_scores):
+            height = bar.get_height()
+            ax.text(bar.get_x() + bar.get_width()/2., height + 0.1,
+                   f'{score:.1f}',
+                   ha='center', va='bottom', fontweight='bold')
+        
+        # Customize plot
+        ax.set_title('Question Difficulty Analysis\n(Lower scores = More difficult)', 
+                    fontsize=14, fontweight='bold')
+        ax.set_xlabel('Questions (sorted by difficulty)', fontsize=12)
+        ax.set_ylabel('Average Score Across All Metrics', fontsize=12)
+        ax.set_xticks(range(len(sorted_labels)))
+        ax.set_xticklabels(sorted_labels)
+        ax.set_ylim(0, 10)
+        ax.grid(True, axis='y', linestyle='--', alpha=0.7)
+        
+        plt.tight_layout()
+        return fig
+
+    def plot_evaluator_agreement(self, benchmark_result: BenchmarkResult) -> plt.Figure:
+        """
+        Create a plot showing how much evaluators agree with each other.
+        
+        Args:
+            benchmark_result: The benchmark results to visualize
+            
+        Returns:
+            matplotlib Figure object
+        """
+        # Calculate standard deviation of scores for each question and metric
+        agreement_data = []
+        
+        for evaluation in benchmark_result.prompt_evaluations:
+            for eval_result in evaluation.evaluations:
+                individual_scores = [resp.score for resp in eval_result.individual_responses]
+                if len(individual_scores) > 1:
+                    std_dev = np.std(individual_scores)
+                    agreement_data.append({
+                        'metric': eval_result.metric_name,
+                        'std_dev': std_dev,
+                        'avg_score': np.mean(individual_scores)
+                    })
+        
+        if not agreement_data:
+            # Create empty plot if no multi-evaluator data
+            fig, ax = plt.subplots(figsize=(10, 6))
+            ax.text(0.5, 0.5, 'No multi-evaluator data available\nfor agreement analysis', 
+                   ha='center', va='center', transform=ax.transAxes, fontsize=14)
+            ax.set_title('Evaluator Agreement Analysis', fontsize=14, fontweight='bold')
+            return fig
+        
+        # Convert to DataFrame for easier plotting
+        df = pd.DataFrame(agreement_data)
+        
+        # Create figure with subplots
+        fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(15, 6))
+        
+        # Plot 1: Agreement by metric (lower std_dev = higher agreement)
+        metric_agreement = df.groupby('metric')['std_dev'].mean().sort_values()
+        bars1 = ax1.bar(range(len(metric_agreement)), metric_agreement.values, 
+                       color=plt.cm.RdYlGn_r(metric_agreement.values / metric_agreement.max()))
+        
+        ax1.set_title('Evaluator Agreement by Metric\n(Lower = More Agreement)', fontweight='bold')
+        ax1.set_xlabel('Metrics')
+        ax1.set_ylabel('Average Standard Deviation')
+        ax1.set_xticks(range(len(metric_agreement)))
+        ax1.set_xticklabels(metric_agreement.index, rotation=45, ha='right')
+        ax1.grid(True, axis='y', linestyle='--', alpha=0.7)
+        
+        # Add value labels
+        for bar, value in zip(bars1, metric_agreement.values):
+            height = bar.get_height()
+            ax1.text(bar.get_x() + bar.get_width()/2., height + 0.01,
+                    f'{value:.2f}',
+                    ha='center', va='bottom', fontweight='bold')
+        
+        # Plot 2: Scatter plot of agreement vs average score
+        ax2.scatter(df['avg_score'], df['std_dev'], alpha=0.6, s=50)
+        ax2.set_xlabel('Average Score')
+        ax2.set_ylabel('Standard Deviation (Disagreement)')
+        ax2.set_title('Score vs Agreement Relationship', fontweight='bold')
+        ax2.grid(True, linestyle='--', alpha=0.7)
+        
+        # Add trend line
+        z = np.polyfit(df['avg_score'], df['std_dev'], 1)
+        p = np.poly1d(z)
+        ax2.plot(df['avg_score'], p(df['avg_score']), "r--", alpha=0.8, linewidth=2)
+        
+        plt.tight_layout()
         return fig
 
     def save_plot(self, figure: plt.Figure, filename: str):
