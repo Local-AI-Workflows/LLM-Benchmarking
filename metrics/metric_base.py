@@ -1,8 +1,12 @@
 from abc import ABC, abstractmethod
-from typing import List, Dict, Any
+from typing import List, Dict, Any, Optional
+import logging
 
 from .evaluator import BaseEvaluator
 from .responses import EvaluatorResponse, BenchmarkResult, PromptEvaluation
+
+# Set up logger for metrics
+logger = logging.getLogger(__name__)
 
 
 class BaseMetric(ABC):
@@ -53,15 +57,41 @@ class BaseMetric(ABC):
         """
         prompt_evaluations = []
         
-        for prompt in prompts:
-            response = responses[prompt]
-            evaluation = await self.evaluate(prompt, response, evaluator)
-            
-            prompt_evaluations.append(PromptEvaluation(
-                prompt=prompt,
-                response=response,
-                evaluations=[evaluation]
-            ))
+        logger.info(f"Starting batch evaluation for {self.name} metric with {len(prompts)} prompts")
+        
+        for i, prompt in enumerate(prompts):
+            try:
+                response = responses[prompt]
+                evaluation = await self.evaluate(prompt, response, evaluator)
+                
+                prompt_evaluations.append(PromptEvaluation(
+                    prompt=prompt,
+                    response=response,
+                    evaluations=[evaluation]
+                ))
+                
+                logger.debug(f"Completed evaluation {i+1}/{len(prompts)} for {self.name}")
+                
+            except Exception as e:
+                logger.error(f"Failed to evaluate prompt {i+1} for {self.name}: {e}")
+                # Create a failed evaluation response
+                from .responses import IndividualResponse
+                failed_response = EvaluatorResponse(
+                    metric_name=self.name,
+                    score=0.0,
+                    rationale=f"Evaluation failed: {str(e)}",
+                    individual_responses=[IndividualResponse(
+                        model_name="error",
+                        score=0.0,
+                        rationale=f"Evaluation failed: {str(e)}"
+                    )],
+                    metadata={"error": str(e)}
+                )
+                prompt_evaluations.append(PromptEvaluation(
+                    prompt=prompt,
+                    response=responses.get(prompt, ""),
+                    evaluations=[failed_response]
+                ))
         
         # Get evaluator model names
         evaluator_models = []
@@ -69,6 +99,8 @@ class BaseMetric(ABC):
             evaluator_models = [model.model_name for model in evaluator.models]
         elif hasattr(evaluator, 'model_name'):
             evaluator_models = [evaluator.model_name]
+        
+        logger.info(f"Completed batch evaluation for {self.name} metric")
         
         return BenchmarkResult(
             prompt_evaluations=prompt_evaluations,
@@ -85,9 +117,18 @@ class BaseMetric(ABC):
 
 
 class StandardMetric(BaseMetric):
-    """Base class for standard metrics that follow a common evaluation pattern."""
+    """Enhanced base class for standard metrics that follow a common evaluation pattern."""
     
-    def __init__(self, name: str, description: str, evaluation_instructions: str):
+    def __init__(
+        self, 
+        name: str, 
+        description: str, 
+        evaluation_instructions: str,
+        scale_min: int = 0,
+        scale_max: int = 10,
+        custom_format: Optional[str] = None,
+        additional_context: Optional[str] = None
+    ):
         """
         Initialize the metric.
         
@@ -95,9 +136,52 @@ class StandardMetric(BaseMetric):
             name: Name of the metric
             description: Description of what the metric measures
             evaluation_instructions: Instructions for the evaluator model
+            scale_min: Minimum score value (default: 0)
+            scale_max: Maximum score value (default: 10)
+            custom_format: Custom response format (optional)
+            additional_context: Additional context for evaluation (optional)
         """
         super().__init__(name, description)
         self.evaluation_instructions = evaluation_instructions
+        self.scale_min = scale_min
+        self.scale_max = scale_max
+        self.custom_format = custom_format or self._default_format()
+        self.additional_context = additional_context
+    
+    def _default_format(self) -> str:
+        """Generate the default response format."""
+        return f"""Your response must follow this exact format:
+Score: [your score from {self.scale_min} to {self.scale_max}]
+
+Rationale: [your explanation of the score, including specific examples]"""
+    
+    def _build_evaluation_prompt(self, prompt: str, response: str) -> str:
+        """Build the complete evaluation prompt."""
+        parts = [
+            f"You are evaluating {self.name} in a model's response.",
+            "",
+            "### Prompt:",
+            prompt,
+            "",
+            "### Response:",
+            response,
+            ""
+        ]
+        
+        if self.additional_context:
+            parts.extend([
+                "### Additional Context:",
+                self.additional_context,
+                ""
+            ])
+        
+        parts.extend([
+            self.evaluation_instructions,
+            "",
+            self.custom_format
+        ])
+        
+        return "\n".join(parts)
     
     async def evaluate(self, prompt: str, response: str, evaluator: BaseEvaluator) -> EvaluatorResponse:
         """
@@ -111,31 +195,63 @@ class StandardMetric(BaseMetric):
         Returns:
             EvaluatorResponse containing the evaluation results
         """
-        eval_prompt = f"""You are evaluating {self.name} in a model's response.
+        eval_prompt = self._build_evaluation_prompt(prompt, response)
+        
+        logger.debug(f"Evaluating {self.name} for prompt: {prompt[:50]}...")
+        
+        try:
+            eval_response = await evaluator.evaluate(
+                evaluation=eval_prompt,
+                metric_name=self.name,
+                metric_description=self.description
+            )
 
-        ### Prompt:
-        {prompt}
+            # Add standard metadata
+            eval_response.metadata.update({
+                "prompt_length": len(prompt),
+                "response_length": len(response),
+                "scale_min": self.scale_min,
+                "scale_max": self.scale_max,
+                "metric_version": "1.0"
+            })
+            
+            # Validate score is within expected range
+            if not (self.scale_min <= eval_response.score <= self.scale_max):
+                logger.warning(
+                    f"Score {eval_response.score} for {self.name} is outside expected range "
+                    f"[{self.scale_min}, {self.scale_max}]. Clamping to valid range."
+                )
+                eval_response.score = max(self.scale_min, min(self.scale_max, eval_response.score))
+            
+            logger.debug(f"Completed {self.name} evaluation with score: {eval_response.score}")
+            return eval_response
+            
+        except Exception as e:
+            logger.error(f"Failed to evaluate {self.name}: {e}")
+            raise
 
-        ### Response:
-        {response}
 
-        {self.evaluation_instructions}
-
-        Your response must follow this exact format:
-        Score: [your score out of 10]
-
-        Rationale: [your explanation of the score, including specific examples]
+class EvaluatorContext:
+    """Context manager for handling evaluator resources."""
+    
+    def __init__(self, evaluator: BaseEvaluator):
         """
-        eval_response = await evaluator.evaluate(
-            evaluation=eval_prompt,
-            metric_name=self.name,
-            metric_description=self.description
-        )
-
-        # Add standard metadata
-        eval_response.metadata.update({
-            "prompt_length": len(prompt),
-            "response_length": len(response)
-        })
-
-        return eval_response 
+        Initialize the context manager.
+        
+        Args:
+            evaluator: The evaluator to manage
+        """
+        self.evaluator = evaluator
+    
+    async def __aenter__(self):
+        """Enter the async context."""
+        logger.debug("Entering evaluator context")
+        return self.evaluator
+    
+    async def __aexit__(self, exc_type, exc_val, exc_tb):
+        """Exit the async context."""
+        logger.debug("Exiting evaluator context")
+        # Cleanup if needed - for now, just log
+        if exc_type:
+            logger.error(f"Exception in evaluator context: {exc_type.__name__}: {exc_val}")
+        return False  # Don't suppress exceptions 

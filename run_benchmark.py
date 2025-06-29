@@ -3,13 +3,7 @@ import argparse
 import os
 from datetime import datetime
 from models.ollama_model import OllamaModel, OllamaConfig
-from metrics.relevance import RelevanceMetric
-from metrics.hallucinations import HallucinationsMetric
-from metrics.fairness import FairnessMetric
-from metrics.robustness import RobustnessMetric
-from metrics.bias import BiasMetric
-from metrics.toxicity import ToxicityMetric
-from metrics.evaluator import EvaluatorFactory
+from metrics import MetricFactory, EvaluatorFactory
 from metrics.responses import BenchmarkResult
 from benchmark.runner import BenchmarkRunner
 from visualizations.evaluation_visualizer import EvaluationVisualizer
@@ -42,7 +36,7 @@ def create_default_dataset() -> Dataset:
     )
 
 
-async def run_new_benchmark(dataset: Dataset):
+async def run_new_benchmark(dataset: Dataset, selected_metrics: list = None):
     """Run a new benchmark and return the results."""
     # Initialize the model to evaluate
     test_model = OllamaModel(config=OllamaConfig(model_name="llama3.2:latest"))
@@ -55,15 +49,13 @@ async def run_new_benchmark(dataset: Dataset):
     ]
     evaluator = EvaluatorFactory.create_evaluator(evaluator_models)
     
-    # Initialize metrics
-    metrics = [
-        RelevanceMetric(),
-        HallucinationsMetric(),
-        FairnessMetric(),
-        RobustnessMetric(),
-        BiasMetric(),
-        ToxicityMetric()
-    ]
+    # Initialize metrics using the factory
+    if selected_metrics:
+        print(f"Using selected metrics: {', '.join(selected_metrics)}")
+        metrics = MetricFactory.create_metrics_by_names(selected_metrics)
+    else:
+        print("Using all available metrics")
+        metrics = MetricFactory.create_all_metrics()
     
     # Create benchmark runner
     runner = BenchmarkRunner(evaluator, metrics)
@@ -72,6 +64,7 @@ async def run_new_benchmark(dataset: Dataset):
     print(f"\nRunning benchmark with dataset: {dataset.name}")
     print(f"Dataset description: {dataset.description}")
     print(f"Number of questions: {len(dataset)}")
+    print(f"Number of metrics: {len(metrics)}")
     
     # Display dataset statistics
     stats = dataset.get_statistics()
@@ -124,6 +117,24 @@ def load_dataset(args) -> Dataset:
         return create_default_dataset()
 
 
+def parse_metrics(args) -> list:
+    """Parse and validate metric selection from command line arguments."""
+    if not args.metrics:
+        return None  # Use all metrics
+    
+    available_metrics = MetricFactory.list_available_metrics()
+    selected_metrics = [m.strip() for m in args.metrics.split(',')]
+    
+    # Validate metric names
+    invalid_metrics = [m for m in selected_metrics if m not in available_metrics]
+    if invalid_metrics:
+        print(f"❌ Invalid metrics: {', '.join(invalid_metrics)}")
+        print(f"Available metrics: {', '.join(available_metrics)}")
+        raise ValueError(f"Invalid metrics specified: {', '.join(invalid_metrics)}")
+    
+    return selected_metrics
+
+
 def generate_visualizations(benchmark_result: BenchmarkResult, results_dir: str = "results"):
     """Generate and save visualizations for the benchmark results."""
     print(f"\nGenerating visualizations in '{results_dir}' directory...")
@@ -158,7 +169,7 @@ def generate_visualizations(benchmark_result: BenchmarkResult, results_dir: str 
 
 async def main():
     """Main function with command line argument support."""
-    parser = argparse.ArgumentParser(description="LLM Benchmark Tool with Dataset Support")
+    parser = argparse.ArgumentParser(description="LLM Benchmark Tool with Enhanced Metrics System")
     
     # JSON import/export options
     parser.add_argument(
@@ -198,6 +209,18 @@ async def main():
         help="CSV column name containing question text (default: 'text')"
     )
     
+    # Metric selection options
+    parser.add_argument(
+        "--metrics",
+        type=str,
+        help=f"Comma-separated list of metrics to use. Available: {', '.join(MetricFactory.list_available_metrics())}"
+    )
+    parser.add_argument(
+        "--list-metrics",
+        action="store_true",
+        help="List all available metrics and exit"
+    )
+    
     # General options
     parser.add_argument(
         "--results-dir", 
@@ -213,6 +236,21 @@ async def main():
     
     args = parser.parse_args()
     
+    # Handle list metrics option
+    if args.list_metrics:
+        print("Available metrics:")
+        for metric_name in MetricFactory.list_available_metrics():
+            metric_class = MetricFactory.create_metric(metric_name)
+            print(f"  {metric_name}: {metric_class.description}")
+        return
+    
+    # Parse metric selection
+    try:
+        selected_metrics = parse_metrics(args)
+    except ValueError as e:
+        print(str(e))
+        return
+    
     # Import existing results or run new benchmark
     if args.import_json:
         print(f"\nImporting benchmark results from: {args.import_json}")
@@ -221,12 +259,11 @@ async def main():
             print("✓ Successfully imported benchmark results from JSON")
             
             # Display basic information about imported results
-            num_prompts = len(benchmark_result.prompt_evaluations)
-            avg_scores = benchmark_result.get_average_scores_by_metric()
-            print(f"  - Number of prompts: {num_prompts}")
-            print(f"  - Metrics: {', '.join(avg_scores.keys())}")
-            print(f"  - Model: {benchmark_result.metadata.get('model_name', 'Unknown')}")
-            print(f"  - Dataset: {benchmark_result.metadata.get('dataset_name', 'Unknown')}")
+            summary = benchmark_result.get_summary_statistics()
+            print(f"  - Number of prompts: {summary['num_prompts']}")
+            print(f"  - Metrics: {', '.join(summary['metrics'])}")
+            print(f"  - Model: {summary['model_name']}")
+            print(f"  - Overall average score: {summary['overall_average']}")
             
         except Exception as e:
             print(f"❌ Failed to import JSON file: {e}")
@@ -236,7 +273,7 @@ async def main():
         dataset = load_dataset(args)
         
         # Run new benchmark
-        benchmark_result = await run_new_benchmark(dataset)
+        benchmark_result = await run_new_benchmark(dataset, selected_metrics)
         print("✓ Benchmark completed successfully")
     
     # Export results to JSON if requested or if running new benchmark
@@ -260,16 +297,17 @@ async def main():
         generate_visualizations(benchmark_result, args.results_dir)
         print(f"✓ Visualizations saved to '{args.results_dir}' directory")
     
-    # Display summary
-    print("\n" + "="*50)
+    # Display enhanced summary
+    print("\n" + "="*60)
     print("BENCHMARK SUMMARY")
-    print("="*50)
+    print("="*60)
     
-    avg_scores = benchmark_result.get_average_scores_by_metric()
-    print(f"Model: {benchmark_result.metadata.get('model_name', 'Unknown')}")
+    summary = benchmark_result.get_summary_statistics()
+    print(f"Model: {summary['model_name']}")
     print(f"Dataset: {benchmark_result.metadata.get('dataset_name', 'Unknown')}")
-    print(f"Number of prompts: {len(benchmark_result.prompt_evaluations)}")
-    print(f"Number of metrics: {len(avg_scores)}")
+    print(f"Number of prompts: {summary['num_prompts']}")
+    print(f"Number of metrics: {summary['num_metrics']}")
+    print(f"Overall average score: {summary['overall_average']}/10")
     
     # Display dataset statistics if available
     if "dataset_stats" in benchmark_result.metadata:
@@ -278,22 +316,32 @@ async def main():
         print(f"  Languages: {', '.join(stats.get('languages', {}).keys())}")
         print(f"  Average text length: {stats.get('average_text_length', 0):.1f} characters")
     
-    print("\nAverage scores by metric:")
-    for metric, score in avg_scores.items():
-        print(f"  {metric}: {score:.2f}/10")
+    print(f"\nAverage scores by metric:")
+    for metric, score in summary['average_scores'].items():
+        print(f"  {metric}: {score}/10")
+    
+    # Display score distribution if available
+    if "score_distribution" in summary:
+        dist = summary["score_distribution"]
+        print(f"\nScore Distribution:")
+        print(f"  Range: {dist['min']:.1f} - {dist['max']:.1f}")
+        print(f"  Median: {dist['median']:.1f}")
+        print(f"  Std Dev: {dist['std_dev']:.2f}")
     
     if export_path:
         print(f"\nResults exported to: {export_path}")
     if not args.skip_visualizations:
         print(f"Visualizations saved to: {args.results_dir}/")
     
-    print("\nDataset Loading Examples:")
-    print("  # Load from JSON file:")
-    print("  python3 run_benchmark.py --dataset-file my_questions.json")
-    print("  # Load from CSV file:")
-    print("  python3 run_benchmark.py --dataset-file questions.csv --text-column question")
-    print("  # Use sample dataset:")
-    print("  python3 run_benchmark.py --dataset-sample")
+    print(f"\nDataset Loading Examples:")
+    print(f"  # Load from JSON file:")
+    print(f"  python3 run_benchmark.py --dataset-file my_questions.json")
+    print(f"  # Load from CSV file:")
+    print(f"  python3 run_benchmark.py --dataset-file questions.csv --text-column question")
+    print(f"  # Use specific metrics:")
+    print(f"  python3 run_benchmark.py --metrics relevance,hallucinations,bias")
+    print(f"  # List available metrics:")
+    print(f"  python3 run_benchmark.py --list-metrics")
     
     if export_path:
         print(f"\nTo re-use these results later:")
