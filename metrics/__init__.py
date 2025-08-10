@@ -23,6 +23,12 @@ from .robustness import RobustnessMetric
 from .bias import BiasMetric
 from .toxicity import ToxicityMetric
 
+# Import email-specific metrics
+from .email_professionalism import EmailProfessionalismMetric
+from .email_responsiveness import EmailResponsivenessMetric
+from .email_clarity import EmailClarityMetric
+from .email_empathy import EmailEmpathyMetric
+
 __all__ = [
     # Base classes
     'BaseMetric',
@@ -37,13 +43,19 @@ __all__ = [
     'PromptEvaluation',
     'BenchmarkResult',
     
-    # Metrics
+    # Standard metrics
     'RelevanceMetric',
     'HallucinationsMetric',
     'FairnessMetric', 
     'RobustnessMetric',
     'BiasMetric',
     'ToxicityMetric',
+    
+    # Email-specific metrics
+    'EmailProfessionalismMetric',
+    'EmailResponsivenessMetric',
+    'EmailClarityMetric',
+    'EmailEmpathyMetric',
     
     # Utilities
     'MetricFactory',
@@ -58,7 +70,11 @@ _METRIC_REGISTRY = {
     'fairness': FairnessMetric,
     'robustness': RobustnessMetric,
     'bias': BiasMetric,
-    'toxicity': ToxicityMetric
+    'toxicity': ToxicityMetric,
+    'email_professionalism': EmailProfessionalismMetric,
+    'email_responsiveness': EmailResponsivenessMetric,
+    'email_clarity': EmailClarityMetric,
+    'email_empathy': EmailEmpathyMetric
 }
 
 def get_all_metrics() -> Dict[str, Type[BaseMetric]]:

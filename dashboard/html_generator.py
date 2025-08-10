@@ -414,6 +414,7 @@ class HTMLDashboardGenerator:
                                 <tr>
                                     <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Q#</th>
                                     <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider" style="min-width: 300px;">Question</th>
+                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider" style="min-width: 400px;">Model Response</th>
                                     <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Metric</th>
                                     <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Evaluator</th>
                                     <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Score</th>
@@ -429,6 +430,15 @@ class HTMLDashboardGenerator:
                                             <span class="short-text">{{ score.question_text[:100] }}{% if score.question_text|length > 100 %}...{% endif %}</span>
                                             <span class="full-text" style="display: none;">{{ score.question_text }}</span>
                                             {% if score.question_text|length > 100 %}
+                                            <button class="text-blue-600 hover:text-blue-800 ml-2 text-xs">Show More</button>
+                                            {% endif %}
+                                        </div>
+                                    </td>
+                                    <td class="px-6 py-4 text-sm text-gray-900" style="max-width: 400px; word-wrap: break-word; white-space: normal;">
+                                        <div class="expandable-text" onclick="toggleText(this)">
+                                            <span class="short-text">{{ score.response[:150] }}{% if score.response|length > 150 %}...{% endif %}</span>
+                                            <span class="full-text" style="display: none;">{{ score.response }}</span>
+                                            {% if score.response|length > 150 %}
                                             <button class="text-blue-600 hover:text-blue-800 ml-2 text-xs">Show More</button>
                                             {% endif %}
                                         </div>
@@ -761,16 +771,17 @@ class HTMLDashboardGenerator:
                     .attr("font-size", "12px")
                     .text(d => d);
                 
-                // Add column labels with better positioning
+                // Add column labels with rotation for better readability
                 g.selectAll(".col-label")
                     .data(metrics)
                     .enter().append("text")
                     .attr("class", "col-label")
                     .attr("x", (d, i) => i * cellSize + cellSize/2)
                     .attr("y", -15) // More space from the heatmap
-                    .attr("text-anchor", "middle")
-                    .attr("dominant-baseline", "end")
+                    .attr("text-anchor", "start") // Changed to start for rotation
+                    .attr("dominant-baseline", "middle")
                     .attr("font-size", "12px")
+                    .attr("transform", (d, i) => `rotate(-45, ${i * cellSize + cellSize/2}, -15)`) // Rotate 45 degrees
                     .text(d => d);
             }
         }
