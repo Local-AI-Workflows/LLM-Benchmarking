@@ -13,6 +13,7 @@ from .responses import ModelResponse
 # Import all model implementations
 from .openai_model import OpenAIModel
 from .ollama_model import OllamaModel
+from .ollama_mcp_model import OllamaWithMCPModel, OllamaMCPConfig, MCPServerConfig
 
 # Set up logger for models
 logger = logging.getLogger(__name__)
@@ -25,10 +26,13 @@ __all__ = [
     # Configuration classes
     'OpenAIConfig',
     'OllamaConfig',
+    'OllamaMCPConfig',
+    'MCPServerConfig',
     
     # Model implementations
     'OpenAIModel',
     'OllamaModel',
+    'OllamaWithMCPModel',
     
     # Utilities
     'ModelFactory',

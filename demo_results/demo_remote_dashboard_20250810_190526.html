@@ -1,0 +1,1754 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>LLM Benchmark Dashboard - mixtral:latest</title>
+    
+    <!-- External Libraries -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/d3@7"></script>
+    <script src="https://cdn.tailwindcss.com"></script>
+    
+    <style>
+        .chart-container {
+            position: relative;
+            height: 400px;
+            margin: 20px 0;
+        }
+        .radar-chart {
+            height: 500px;
+        }
+        .heatmap-container {
+            height: 600px;
+        }
+        .score-excellent { background-color: #10b981; }
+        .score-good { background-color: #3b82f6; }
+        .score-fair { background-color: #f59e0b; }
+        .score-poor { background-color: #ef4444; }
+        .difficulty-easy { color: #10b981; }
+        .difficulty-medium { color: #f59e0b; }
+        .difficulty-hard { color: #ef4444; }
+        .difficulty-very-hard { color: #7c2d12; }
+        
+        /* Custom scrollbar */
+        .custom-scrollbar::-webkit-scrollbar {
+            width: 8px;
+        }
+        .custom-scrollbar::-webkit-scrollbar-track {
+            background: #f1f5f9;
+        }
+        .custom-scrollbar::-webkit-scrollbar-thumb {
+            background: #cbd5e1;
+            border-radius: 4px;
+        }
+        .custom-scrollbar::-webkit-scrollbar-thumb:hover {
+            background: #94a3b8;
+        }
+        
+        /* Tab styling */
+        .tab-content {
+            display: none;
+        }
+        .tab-content.active {
+            display: block;
+        }
+        .tab-button.active {
+            background-color: #3b82f6;
+            color: white;
+        }
+    </style>
+</head>
+<body class="bg-gray-50 font-sans">
+    <!-- Header -->
+    <header class="bg-white shadow-sm border-b">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
+            <div class="flex justify-between items-center">
+                <div>
+                    <h1 class="text-3xl font-bold text-gray-900">LLM Benchmark Dashboard</h1>
+                    <p class="text-gray-600">Model: <span class="font-semibold">mixtral:latest</span></p>
+                </div>
+                <div class="text-right text-sm text-gray-500">
+                    <p>Generated: 2025-08-10 19:05:27</p>
+                    <p>3 questions • 2 metrics • 2 evaluators</p>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <!-- Main Content -->
+    <main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        
+        <!-- Overview Cards -->
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+            <div class="bg-yellow-500 p-3 rounded-lg flex items-center">
+                <span class="text-white font-bold text-sm">⭐</span>
+                <div class="ml-3 text-white">
+                    <div class="font-semibold">Overall Score</div>
+                    <div class="text-2xl font-bold">8.8/10</div>
+                </div>
+            </div>
+            
+            <div class="bg-blue-500 p-3 rounded-lg flex items-center">
+                <span class="text-white font-bold text-sm">📊</span>
+                <div class="ml-3 text-white">
+                    <div class="font-semibold">Total Questions</div>
+                    <div class="text-2xl font-bold">3</div>
+                </div>
+            </div>
+            
+            <div class="bg-green-500 p-3 rounded-lg flex items-center">
+                <span class="text-white font-bold text-sm">🤖</span>
+                <div class="ml-3 text-white">
+                    <div class="font-semibold">Model Used</div>
+                    <div class="text-lg font-bold">mixtral:latest</div>
+                </div>
+            </div>
+            
+            <div class="bg-purple-500 p-3 rounded-lg flex items-center">
+                <span class="text-white font-bold text-sm">📏</span>
+                <div class="ml-3 text-white">
+                    <div class="font-semibold">Metrics</div>
+                    <div class="text-2xl font-bold">2</div>
+                </div>
+            </div>
+            
+            <div class="bg-orange-500 p-3 rounded-lg flex items-center">
+                <span class="text-white font-bold text-sm">👥</span>
+                <div class="ml-3 text-white">
+                    <div class="font-semibold">Evaluators</div>
+                    <div class="text-2xl font-bold">2</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Navigation Tabs -->
+        <div class="bg-white rounded-lg shadow mb-8">
+            <div class="border-b border-gray-200">
+                <nav class="-mb-px flex space-x-8 px-6">
+                    <button class="tab-button active py-4 px-1 border-b-2 border-transparent text-sm font-medium text-gray-500 hover:text-gray-700 hover:border-gray-300" onclick="showTab('overview')">
+                        Overview
+                    </button>
+                    <button class="tab-button py-4 px-1 border-b-2 border-transparent text-sm font-medium text-gray-500 hover:text-gray-700 hover:border-gray-300" onclick="showTab('metrics')">
+                        Metrics Analysis
+                    </button>
+                    <button class="tab-button py-4 px-1 border-b-2 border-transparent text-sm font-medium text-gray-500 hover:text-gray-700 hover:border-gray-300" onclick="showTab('questions')">
+                        Questions Analysis
+                    </button>
+                    <button class="tab-button py-4 px-1 border-b-2 border-transparent text-sm font-medium text-gray-500 hover:text-gray-700 hover:border-gray-300" onclick="showTab('evaluators')">
+                        Evaluators Analysis
+                    </button>
+                    <button class="tab-button py-4 px-1 border-b-2 border-transparent text-sm font-medium text-gray-500 hover:text-gray-700 hover:border-gray-300" onclick="showTab('detailed')">
+                        Detailed View
+                    </button>
+                </nav>
+            </div>
+
+            <!-- Tab Contents -->
+            
+            <!-- Overview Tab -->
+            <div id="overview" class="tab-content active p-6">
+                <h2 class="text-2xl font-bold text-gray-900 mb-6">Performance Overview</h2>
+                
+                <!-- Metrics Bar Chart - Full Width -->
+                <div class="bg-gray-50 rounded-lg p-6 mb-8">
+                    <h3 class="text-lg font-semibold text-gray-900 mb-4">Average Scores by Metric</h3>
+                    <div class="chart-container">
+                        <canvas id="metricsBarChart"></canvas>
+                    </div>
+                </div>
+                
+                <!-- Score Distribution -->
+                
+                <div class="bg-gray-50 rounded-lg p-6">
+                    <h3 class="text-lg font-semibold text-gray-900 mb-4">Score Distribution</h3>
+                    <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
+                        <div class="text-center">
+                            <div class="text-2xl font-bold text-gray-900">8.0</div>
+                            <div class="text-sm text-gray-500">Minimum</div>
+                        </div>
+                        <div class="text-center">
+                            <div class="text-2xl font-bold text-gray-900">9.0</div>
+                            <div class="text-sm text-gray-500">Median</div>
+                        </div>
+                        <div class="text-center">
+                            <div class="text-2xl font-bold text-gray-900">9.0</div>
+                            <div class="text-sm text-gray-500">Maximum</div>
+                        </div>
+                        <div class="text-center">
+                            <div class="text-2xl font-bold text-gray-900">0.38</div>
+                            <div class="text-sm text-gray-500">Std Dev</div>
+                        </div>
+                    </div>
+                </div>
+                
+            </div>
+
+            <!-- Metrics Tab -->
+            <div id="metrics" class="tab-content p-6">
+                <h2 class="text-2xl font-bold text-gray-900 mb-6">Metrics Analysis</h2>
+                
+                <div class="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-8">
+                    <!-- Correlation Matrix -->
+                    <div class="bg-gray-50 rounded-lg p-6">
+                        <h3 class="text-lg font-semibold text-gray-900 mb-4">Metric Correlations</h3>
+                        <div class="heatmap-container">
+                            <div id="correlationHeatmap"></div>
+                        </div>
+                    </div>
+                    
+                    <!-- Metrics Summary Table -->
+                    <div class="bg-gray-50 rounded-lg p-6">
+                        <h3 class="text-lg font-semibold text-gray-900 mb-4">Metrics Summary</h3>
+                        <div class="overflow-x-auto">
+                            <table class="min-w-full divide-y divide-gray-200">
+                                <thead class="bg-gray-50">
+                                    <tr>
+                                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Metric</th>
+                                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Avg</th>
+                                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Min</th>
+                                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Max</th>
+                                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Std</th>
+                                    </tr>
+                                </thead>
+                                <tbody class="bg-white divide-y divide-gray-200">
+                                    
+                                    <tr>
+                                        <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">email_professionalism</td>
+                                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">8.7</td>
+                                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">8.0</td>
+                                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">9.0</td>
+                                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">0.47</td>
+                                    </tr>
+                                    
+                                    <tr>
+                                        <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">email_responsiveness</td>
+                                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">8.8</td>
+                                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">8.5</td>
+                                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">9.0</td>
+                                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">0.21</td>
+                                    </tr>
+                                    
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Questions Tab -->
+            <div id="questions" class="tab-content p-6">
+                <h2 class="text-2xl font-bold text-gray-900 mb-6">Questions Analysis</h2>
+                
+                <div class="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-8">
+                    <!-- Question Difficulty Chart -->
+                    <div class="bg-gray-50 rounded-lg p-6">
+                        <h3 class="text-lg font-semibold text-gray-900 mb-4">Question Difficulty</h3>
+                        <div class="chart-container">
+                            <canvas id="difficultyChart"></canvas>
+                        </div>
+                    </div>
+                    
+                    <!-- Per-Question Heatmap -->
+                    <div class="bg-gray-50 rounded-lg p-6">
+                        <h3 class="text-lg font-semibold text-gray-900 mb-4">Scores by Question & Evaluator</h3>
+                        <div class="heatmap-container">
+                            <div id="questionHeatmap"></div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Questions Table -->
+                <div class="bg-gray-50 rounded-lg p-6">
+                    <h3 class="text-lg font-semibold text-gray-900 mb-4">Questions Details</h3>
+                    <div class="overflow-x-auto custom-scrollbar" style="max-height: 600px;">
+                        <table class="min-w-full divide-y divide-gray-200">
+                            <thead class="bg-gray-50 sticky top-0">
+                                <tr>
+                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">ID</th>
+                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Question</th>
+                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Difficulty</th>
+                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Avg Score</th>
+                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody class="bg-white divide-y divide-gray-200">
+                                
+                                <tr>
+                                    <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">Q3</td>
+                                    <td class="px-6 py-4 text-sm text-gray-900" style="max-width: 300px;">
+                                        <div class="truncate" title="Context: You are responding as a customer service manager to draft a customer notification about a data breach.
+
+Instructions: Write a clear, transparent, and reassuring email that informs customers about the breach while maintaining trust.
+
+I am writing to inform you that there has been a data breach affecting customer information in our system. We discovered this issue yesterday and have already taken steps to secure the system. However, we need to notify all customers immediately.">Context: You are responding as a customer service manager to draft a customer notification about a d...</div>
+                                    </td>
+                                    <td class="px-6 py-4 whitespace-nowrap text-sm">
+                                        <span class="difficulty-easy font-medium">Easy</span>
+                                    </td>
+                                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">8.5</td>
+                                    <td class="px-6 py-4 whitespace-nowrap text-sm">
+                                        <button onclick="showQuestionDetail(3)" class="text-blue-600 hover:text-blue-800">View Details</button>
+                                    </td>
+                                </tr>
+                                
+                                <tr>
+                                    <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">Q1</td>
+                                    <td class="px-6 py-4 text-sm text-gray-900" style="max-width: 300px;">
+                                        <div class="truncate" title="Context: You are responding as a project manager to a concerned team member about a deadline change.
+
+Instructions: Write a professional, empathetic response that acknowledges the concern, provides clarification, and offers solutions.
+
+Dear John, I noticed that the quarterly report deadline was moved from Friday to Wednesday. This is quite concerning as our team has been working towards the Friday deadline. Could you please clarify the reasoning behind this change and if there are any accommodations that can be made?">Context: You are responding as a project manager to a concerned team member about a deadline change....</div>
+                                    </td>
+                                    <td class="px-6 py-4 whitespace-nowrap text-sm">
+                                        <span class="difficulty-easy font-medium">Easy</span>
+                                    </td>
+                                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">8.8</td>
+                                    <td class="px-6 py-4 whitespace-nowrap text-sm">
+                                        <button onclick="showQuestionDetail(1)" class="text-blue-600 hover:text-blue-800">View Details</button>
+                                    </td>
+                                </tr>
+                                
+                                <tr>
+                                    <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">Q2</td>
+                                    <td class="px-6 py-4 text-sm text-gray-900" style="max-width: 300px;">
+                                        <div class="truncate" title="Context: You are responding as a sales representative to a potential customer inquiry.
+
+Instructions: Write a professional response that addresses their interest, asks qualifying questions, and sets up next steps.
+
+Hi there, I'm interested in your product but I have some questions about pricing and implementation. Can someone get back to me ASAP? Thanks!">Context: You are responding as a sales representative to a potential customer inquiry.
+
+Instructions...</div>
+                                    </td>
+                                    <td class="px-6 py-4 whitespace-nowrap text-sm">
+                                        <span class="difficulty-easy font-medium">Easy</span>
+                                    </td>
+                                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">8.9</td>
+                                    <td class="px-6 py-4 whitespace-nowrap text-sm">
+                                        <button onclick="showQuestionDetail(2)" class="text-blue-600 hover:text-blue-800">View Details</button>
+                                    </td>
+                                </tr>
+                                
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Evaluators Tab -->
+            <div id="evaluators" class="tab-content p-6">
+                <h2 class="text-2xl font-bold text-gray-900 mb-6">Evaluators Analysis</h2>
+                
+                <div class="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-8">
+                    <!-- Evaluator Performance Chart -->
+                    <div class="bg-gray-50 rounded-lg p-6">
+                        <h3 class="text-lg font-semibold text-gray-900 mb-4">Evaluator Performance</h3>
+                        <div class="chart-container">
+                            <canvas id="evaluatorChart"></canvas>
+                        </div>
+                    </div>
+                    
+                    <!-- Agreement Analysis -->
+                    <div class="bg-gray-50 rounded-lg p-6">
+                        <h3 class="text-lg font-semibold text-gray-900 mb-4">Evaluator Agreement</h3>
+                        <div class="chart-container">
+                            <canvas id="agreementChart"></canvas>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Evaluators Table -->
+                <div class="bg-gray-50 rounded-lg p-6">
+                    <h3 class="text-lg font-semibold text-gray-900 mb-4">Evaluator Details</h3>
+                    <div class="overflow-x-auto">
+                        <table class="min-w-full divide-y divide-gray-200">
+                            <thead class="bg-gray-50">
+                                <tr>
+                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Evaluator</th>
+                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Avg Score</th>
+                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Evaluations</th>
+                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Std Dev</th>
+                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Range</th>
+                                </tr>
+                            </thead>
+                            <tbody class="bg-white divide-y divide-gray-200">
+                                
+                                <tr>
+                                    <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">mistral:latest</td>
+                                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">9.0</td>
+                                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">6</td>
+                                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">0.00</td>
+                                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">9.0 - 9.0</td>
+                                </tr>
+                                
+                                <tr>
+                                    <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">llama3.2:latest</td>
+                                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">8.4</td>
+                                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">6</td>
+                                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">0.73</td>
+                                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">7.0 - 9.0</td>
+                                </tr>
+                                
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Detailed View Tab -->
+            <div id="detailed" class="tab-content p-6">
+                <h2 class="text-2xl font-bold text-gray-900 mb-6">Detailed Raw Data</h2>
+                
+                <!-- Raw Scores Table -->
+                <div class="bg-gray-50 rounded-lg p-6">
+                    <h3 class="text-lg font-semibold text-gray-900 mb-4">All Evaluations</h3>
+                    <div class="overflow-x-auto custom-scrollbar" style="max-height: 800px;">
+                        <table class="min-w-full divide-y divide-gray-200">
+                            <thead class="bg-gray-50 sticky top-0">
+                                <tr>
+                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Q#</th>
+                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider" style="min-width: 300px;">Question</th>
+                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider" style="min-width: 400px;">Model Response</th>
+                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Metric</th>
+                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Evaluator</th>
+                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Score</th>
+                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider" style="min-width: 400px;">Rationale</th>
+                                </tr>
+                            </thead>
+                            <tbody class="bg-white divide-y divide-gray-200">
+                                
+                                <tr>
+                                    <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">1</td>
+                                    <td class="px-6 py-4 text-sm text-gray-900" style="max-width: 300px; word-wrap: break-word; white-space: normal;">
+                                        <div class="expandable-text" onclick="toggleText(this)">
+                                            <span class="short-text">Context: You are responding as a project manager to a concerned team member about a deadline change....</span>
+                                            <span class="full-text" style="display: none;">Context: You are responding as a project manager to a concerned team member about a deadline change.
+
+Instructions: Write a professional, empathetic response that acknowledges the concern, provides clarification, and offers solutions.
+
+Dear John, I noticed that the quarterly report deadline was moved from Friday to Wednesday. This is quite concerning as our team has been working towards the Friday deadline. Could you please clarify the reasoning behind this change and if there are any accommodations that can be made?</span>
+                                            
+                                            <button class="text-blue-600 hover:text-blue-800 ml-2 text-xs">Show More</button>
+                                            
+                                        </div>
+                                    </td>
+                                    <td class="px-6 py-4 text-sm text-gray-900" style="max-width: 400px; word-wrap: break-word; white-space: normal;">
+                                        <div class="expandable-text" onclick="toggleText(this)">
+                                            <span class="short-text">Dear [Team Member's Name],
+
+Thank you for bringing your concern to my attention regarding the recent change in the quarterly report deadline. I unders...</span>
+                                            <span class="full-text" style="display: none;">Dear [Team Member's Name],
+
+Thank you for bringing your concern to my attention regarding the recent change in the quarterly report deadline. I understand why this might be causing some uncertainty within our team, as we have been working towards the original Friday deadline.
+
+The decision to move up the deadline was made due to a strategic shift in our company's priorities, with senior management requesting earlier access to the data included in the quarterly report. While I realize that this may put additional pressure on our team, please know that your hard work and dedication are valued and recognized.
+
+To help alleviate any potential difficulties, I would like to offer the following accommodations:
+
+1. Additional Resources: If needed, we can request assistance from other teams or hire temporary help to ensure that we meet the new deadline while maintaining high-quality standards.
+
+2. Prioritization and Delegation: We will reassess our current tasks and projects, prioritizing the most critical elements of the quarterly report and delegating responsibilities accordingly.
+
+3. Flexible Work Hours: Team members who wish to work outside regular business hours may do so with my approval, provided that they take appropriate breaks and maintain a healthy work-life balance.
+
+4. Communication: I encourage open communication within our team about any challenges or roadblocks encountered during this process. By working together and supporting one another, we can effectively manage the new deadline and ensure a successful outcome.
+
+Once again, thank you for your understanding and adaptability in light of this change. Please feel free to reach out if you have any questions or concerns. I am confident that our team will rise to this challenge and deliver outstanding results.
+
+Best regards,
+[Your Name]
+Project Manager</span>
+                                            
+                                            <button class="text-blue-600 hover:text-blue-800 ml-2 text-xs">Show More</button>
+                                            
+                                        </div>
+                                    </td>
+                                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">email_professionalism</td>
+                                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">mistral:latest</td>
+                                    <td class="px-6 py-4 whitespace-nowrap text-sm">
+                                        <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium
+                                            bg-green-100 text-green-800
+                                            ">
+                                            9.0
+                                        </span>
+                                    </td>
+                                    <td class="px-6 py-4 text-sm text-gray-900" style="max-width: 400px; word-wrap: break-word; white-space: normal;">
+                                        <div class="expandable-text" onclick="toggleText(this)">
+                                            <span class="short-text">The response is very professional and empathetic in addressing John's concern about the deadline change. The tone is appropriate for the context, with...</span>
+                                            <span class="full-text" style="display: none;">The response is very professional and empathetic in addressing John's concern about the deadline change. The tone is appropriate for the context, with a level of formality that acknowledges the importance of the situation while still maintaining a respectful and understanding tone. The structure and clarity are good; the content is well-organized, follows proper email etiquette, and provides a clear call-to-action in the form of accommodations and communication suggestions.</span>
+                                            
+                                            <button class="text-blue-600 hover:text-blue-800 ml-2 text-xs">Show More</button>
+                                            
+                                        </div>
+                                    </td>
+                                </tr>
+                                
+                                <tr>
+                                    <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">1</td>
+                                    <td class="px-6 py-4 text-sm text-gray-900" style="max-width: 300px; word-wrap: break-word; white-space: normal;">
+                                        <div class="expandable-text" onclick="toggleText(this)">
+                                            <span class="short-text">Context: You are responding as a project manager to a concerned team member about a deadline change....</span>
+                                            <span class="full-text" style="display: none;">Context: You are responding as a project manager to a concerned team member about a deadline change.
+
+Instructions: Write a professional, empathetic response that acknowledges the concern, provides clarification, and offers solutions.
+
+Dear John, I noticed that the quarterly report deadline was moved from Friday to Wednesday. This is quite concerning as our team has been working towards the Friday deadline. Could you please clarify the reasoning behind this change and if there are any accommodations that can be made?</span>
+                                            
+                                            <button class="text-blue-600 hover:text-blue-800 ml-2 text-xs">Show More</button>
+                                            
+                                        </div>
+                                    </td>
+                                    <td class="px-6 py-4 text-sm text-gray-900" style="max-width: 400px; word-wrap: break-word; white-space: normal;">
+                                        <div class="expandable-text" onclick="toggleText(this)">
+                                            <span class="short-text">Dear [Team Member's Name],
+
+Thank you for bringing your concern to my attention regarding the recent change in the quarterly report deadline. I unders...</span>
+                                            <span class="full-text" style="display: none;">Dear [Team Member's Name],
+
+Thank you for bringing your concern to my attention regarding the recent change in the quarterly report deadline. I understand why this might be causing some uncertainty within our team, as we have been working towards the original Friday deadline.
+
+The decision to move up the deadline was made due to a strategic shift in our company's priorities, with senior management requesting earlier access to the data included in the quarterly report. While I realize that this may put additional pressure on our team, please know that your hard work and dedication are valued and recognized.
+
+To help alleviate any potential difficulties, I would like to offer the following accommodations:
+
+1. Additional Resources: If needed, we can request assistance from other teams or hire temporary help to ensure that we meet the new deadline while maintaining high-quality standards.
+
+2. Prioritization and Delegation: We will reassess our current tasks and projects, prioritizing the most critical elements of the quarterly report and delegating responsibilities accordingly.
+
+3. Flexible Work Hours: Team members who wish to work outside regular business hours may do so with my approval, provided that they take appropriate breaks and maintain a healthy work-life balance.
+
+4. Communication: I encourage open communication within our team about any challenges or roadblocks encountered during this process. By working together and supporting one another, we can effectively manage the new deadline and ensure a successful outcome.
+
+Once again, thank you for your understanding and adaptability in light of this change. Please feel free to reach out if you have any questions or concerns. I am confident that our team will rise to this challenge and deliver outstanding results.
+
+Best regards,
+[Your Name]
+Project Manager</span>
+                                            
+                                            <button class="text-blue-600 hover:text-blue-800 ml-2 text-xs">Show More</button>
+                                            
+                                        </div>
+                                    </td>
+                                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">email_professionalism</td>
+                                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">llama3.2:latest</td>
+                                    <td class="px-6 py-4 whitespace-nowrap text-sm">
+                                        <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium
+                                            bg-green-100 text-green-800
+                                            ">
+                                            9.0
+                                        </span>
+                                    </td>
+                                    <td class="px-6 py-4 text-sm text-gray-900" style="max-width: 400px; word-wrap: break-word; white-space: normal;">
+                                        <div class="expandable-text" onclick="toggleText(this)">
+                                            <span class="short-text">1. TONE APPROPRIATENESS (25%): The tone is professional and respectful throughout the email. The language used is clear and suitable for a business co...</span>
+                                            <span class="full-text" style="display: none;">1. TONE APPROPRIATENESS (25%): The tone is professional and respectful throughout the email. The language used is clear and suitable for a business context. The email acknowledges the team member's concern and expresses empathy, making it easy to understand their perspective. However, some might argue that the sentence "Your hard work and dedication are valued and recognized" could be seen as slightly clichéd. Overall, tone is appropriate.</span>
+                                            
+                                            <button class="text-blue-600 hover:text-blue-800 ml-2 text-xs">Show More</button>
+                                            
+                                        </div>
+                                    </td>
+                                </tr>
+                                
+                                <tr>
+                                    <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">1</td>
+                                    <td class="px-6 py-4 text-sm text-gray-900" style="max-width: 300px; word-wrap: break-word; white-space: normal;">
+                                        <div class="expandable-text" onclick="toggleText(this)">
+                                            <span class="short-text">Context: You are responding as a project manager to a concerned team member about a deadline change....</span>
+                                            <span class="full-text" style="display: none;">Context: You are responding as a project manager to a concerned team member about a deadline change.
+
+Instructions: Write a professional, empathetic response that acknowledges the concern, provides clarification, and offers solutions.
+
+Dear John, I noticed that the quarterly report deadline was moved from Friday to Wednesday. This is quite concerning as our team has been working towards the Friday deadline. Could you please clarify the reasoning behind this change and if there are any accommodations that can be made?</span>
+                                            
+                                            <button class="text-blue-600 hover:text-blue-800 ml-2 text-xs">Show More</button>
+                                            
+                                        </div>
+                                    </td>
+                                    <td class="px-6 py-4 text-sm text-gray-900" style="max-width: 400px; word-wrap: break-word; white-space: normal;">
+                                        <div class="expandable-text" onclick="toggleText(this)">
+                                            <span class="short-text">Dear [Team Member's Name],
+
+Thank you for bringing your concern to my attention regarding the recent change in the quarterly report deadline. I unders...</span>
+                                            <span class="full-text" style="display: none;">Dear [Team Member's Name],
+
+Thank you for bringing your concern to my attention regarding the recent change in the quarterly report deadline. I understand why this might be causing some uncertainty within our team, as we have been working towards the original Friday deadline.
+
+The decision to move up the deadline was made due to a strategic shift in our company's priorities, with senior management requesting earlier access to the data included in the quarterly report. While I realize that this may put additional pressure on our team, please know that your hard work and dedication are valued and recognized.
+
+To help alleviate any potential difficulties, I would like to offer the following accommodations:
+
+1. Additional Resources: If needed, we can request assistance from other teams or hire temporary help to ensure that we meet the new deadline while maintaining high-quality standards.
+
+2. Prioritization and Delegation: We will reassess our current tasks and projects, prioritizing the most critical elements of the quarterly report and delegating responsibilities accordingly.
+
+3. Flexible Work Hours: Team members who wish to work outside regular business hours may do so with my approval, provided that they take appropriate breaks and maintain a healthy work-life balance.
+
+4. Communication: I encourage open communication within our team about any challenges or roadblocks encountered during this process. By working together and supporting one another, we can effectively manage the new deadline and ensure a successful outcome.
+
+Once again, thank you for your understanding and adaptability in light of this change. Please feel free to reach out if you have any questions or concerns. I am confident that our team will rise to this challenge and deliver outstanding results.
+
+Best regards,
+[Your Name]
+Project Manager</span>
+                                            
+                                            <button class="text-blue-600 hover:text-blue-800 ml-2 text-xs">Show More</button>
+                                            
+                                        </div>
+                                    </td>
+                                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">email_responsiveness</td>
+                                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">mistral:latest</td>
+                                    <td class="px-6 py-4 whitespace-nowrap text-sm">
+                                        <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium
+                                            bg-green-100 text-green-800
+                                            ">
+                                            9.0
+                                        </span>
+                                    </td>
+                                    <td class="px-6 py-4 text-sm text-gray-900" style="max-width: 400px; word-wrap: break-word; white-space: normal;">
+                                        <div class="expandable-text" onclick="toggleText(this)">
+                                            <span class="short-text">The response effectively addresses the original message by acknowledging the concern about the deadline change (Completeness of Response) and offering...</span>
+                                            <span class="full-text" style="display: none;">The response effectively addresses the original message by acknowledging the concern about the deadline change (Completeness of Response) and offering four potential solutions to help alleviate any difficulties caused by the new deadline (Problem-Solving Orientation). The tone and approach used in the response are professional, empathetic, and suitable for the situation (Appropriateness of Response).</span>
+                                            
+                                            <button class="text-blue-600 hover:text-blue-800 ml-2 text-xs">Show More</button>
+                                            
+                                        </div>
+                                    </td>
+                                </tr>
+                                
+                                <tr>
+                                    <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">1</td>
+                                    <td class="px-6 py-4 text-sm text-gray-900" style="max-width: 300px; word-wrap: break-word; white-space: normal;">
+                                        <div class="expandable-text" onclick="toggleText(this)">
+                                            <span class="short-text">Context: You are responding as a project manager to a concerned team member about a deadline change....</span>
+                                            <span class="full-text" style="display: none;">Context: You are responding as a project manager to a concerned team member about a deadline change.
+
+Instructions: Write a professional, empathetic response that acknowledges the concern, provides clarification, and offers solutions.
+
+Dear John, I noticed that the quarterly report deadline was moved from Friday to Wednesday. This is quite concerning as our team has been working towards the Friday deadline. Could you please clarify the reasoning behind this change and if there are any accommodations that can be made?</span>
+                                            
+                                            <button class="text-blue-600 hover:text-blue-800 ml-2 text-xs">Show More</button>
+                                            
+                                        </div>
+                                    </td>
+                                    <td class="px-6 py-4 text-sm text-gray-900" style="max-width: 400px; word-wrap: break-word; white-space: normal;">
+                                        <div class="expandable-text" onclick="toggleText(this)">
+                                            <span class="short-text">Dear [Team Member's Name],
+
+Thank you for bringing your concern to my attention regarding the recent change in the quarterly report deadline. I unders...</span>
+                                            <span class="full-text" style="display: none;">Dear [Team Member's Name],
+
+Thank you for bringing your concern to my attention regarding the recent change in the quarterly report deadline. I understand why this might be causing some uncertainty within our team, as we have been working towards the original Friday deadline.
+
+The decision to move up the deadline was made due to a strategic shift in our company's priorities, with senior management requesting earlier access to the data included in the quarterly report. While I realize that this may put additional pressure on our team, please know that your hard work and dedication are valued and recognized.
+
+To help alleviate any potential difficulties, I would like to offer the following accommodations:
+
+1. Additional Resources: If needed, we can request assistance from other teams or hire temporary help to ensure that we meet the new deadline while maintaining high-quality standards.
+
+2. Prioritization and Delegation: We will reassess our current tasks and projects, prioritizing the most critical elements of the quarterly report and delegating responsibilities accordingly.
+
+3. Flexible Work Hours: Team members who wish to work outside regular business hours may do so with my approval, provided that they take appropriate breaks and maintain a healthy work-life balance.
+
+4. Communication: I encourage open communication within our team about any challenges or roadblocks encountered during this process. By working together and supporting one another, we can effectively manage the new deadline and ensure a successful outcome.
+
+Once again, thank you for your understanding and adaptability in light of this change. Please feel free to reach out if you have any questions or concerns. I am confident that our team will rise to this challenge and deliver outstanding results.
+
+Best regards,
+[Your Name]
+Project Manager</span>
+                                            
+                                            <button class="text-blue-600 hover:text-blue-800 ml-2 text-xs">Show More</button>
+                                            
+                                        </div>
+                                    </td>
+                                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">email_responsiveness</td>
+                                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">llama3.2:latest</td>
+                                    <td class="px-6 py-4 whitespace-nowrap text-sm">
+                                        <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium
+                                            bg-blue-100 text-blue-800
+                                            ">
+                                            8.0
+                                        </span>
+                                    </td>
+                                    <td class="px-6 py-4 text-sm text-gray-900" style="max-width: 400px; word-wrap: break-word; white-space: normal;">
+                                        <div class="expandable-text" onclick="toggleText(this)">
+                                            <span class="short-text">The email response effectively addresses John's concerns about the deadline change, demonstrating a good balance between understanding and empathy. Th...</span>
+                                            <span class="full-text" style="display: none;">The email response effectively addresses John's concerns about the deadline change, demonstrating a good balance between understanding and empathy. The following aspects contribute to this score:</span>
+                                            
+                                            <button class="text-blue-600 hover:text-blue-800 ml-2 text-xs">Show More</button>
+                                            
+                                        </div>
+                                    </td>
+                                </tr>
+                                
+                                <tr>
+                                    <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">2</td>
+                                    <td class="px-6 py-4 text-sm text-gray-900" style="max-width: 300px; word-wrap: break-word; white-space: normal;">
+                                        <div class="expandable-text" onclick="toggleText(this)">
+                                            <span class="short-text">Context: You are responding as a sales representative to a potential customer inquiry.
+
+Instructions...</span>
+                                            <span class="full-text" style="display: none;">Context: You are responding as a sales representative to a potential customer inquiry.
+
+Instructions: Write a professional response that addresses their interest, asks qualifying questions, and sets up next steps.
+
+Hi there, I'm interested in your product but I have some questions about pricing and implementation. Can someone get back to me ASAP? Thanks!</span>
+                                            
+                                            <button class="text-blue-600 hover:text-blue-800 ml-2 text-xs">Show More</button>
+                                            
+                                        </div>
+                                    </td>
+                                    <td class="px-6 py-4 text-sm text-gray-900" style="max-width: 400px; word-wrap: break-word; white-space: normal;">
+                                        <div class="expandable-text" onclick="toggleText(this)">
+                                            <span class="short-text">Dear [Customer Name],
+
+Thank you for reaching out and expressing interest in our product. We appreciate your curiosity and are more than happy to answ...</span>
+                                            <span class="full-text" style="display: none;">Dear [Customer Name],
+
+Thank you for reaching out and expressing interest in our product. We appreciate your curiosity and are more than happy to answer any questions you may have about pricing and implementation.
+
+Regarding pricing, the cost of our product can vary depending on several factors, such as the size of your business, the specific features you require, and the level of customization needed. To provide a more accurate quote, could you please tell me a little bit more about your business and your specific needs?
+
+In terms of implementation, we offer a variety of services to help ensure a smooth and successful rollout of our product, including training, technical support, and consulting services. To determine the best approach for your organization, it would be helpful to know more about your current infrastructure, resources, and timeline for implementation.
+
+To set up next steps, I suggest scheduling a call or video conference to discuss your questions and needs in more detail. This will allow us to provide you with a customized proposal and answer any additional questions you may have.
+
+Please let me know if this approach works for you, and if so, what date and time would be convenient for our call. If you prefer, I can also send you some additional information about our product and services via email.
+
+Thank you again for your interest in our product. We look forward to the opportunity to work with you!
+
+Best regards,
+
+[Your Name]
+Sales Representative
+[Company Name]</span>
+                                            
+                                            <button class="text-blue-600 hover:text-blue-800 ml-2 text-xs">Show More</button>
+                                            
+                                        </div>
+                                    </td>
+                                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">email_professionalism</td>
+                                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">mistral:latest</td>
+                                    <td class="px-6 py-4 whitespace-nowrap text-sm">
+                                        <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium
+                                            bg-green-100 text-green-800
+                                            ">
+                                            9.0
+                                        </span>
+                                    </td>
+                                    <td class="px-6 py-4 text-sm text-gray-900" style="max-width: 400px; word-wrap: break-word; white-space: normal;">
+                                        <div class="expandable-text" onclick="toggleText(this)">
+                                            <span class="short-text">The email response demonstrates a high level of professionalism in various aspects.</span>
+                                            <span class="full-text" style="display: none;">The email response demonstrates a high level of professionalism in various aspects.</span>
+                                            
+                                        </div>
+                                    </td>
+                                </tr>
+                                
+                                <tr>
+                                    <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">2</td>
+                                    <td class="px-6 py-4 text-sm text-gray-900" style="max-width: 300px; word-wrap: break-word; white-space: normal;">
+                                        <div class="expandable-text" onclick="toggleText(this)">
+                                            <span class="short-text">Context: You are responding as a sales representative to a potential customer inquiry.
+
+Instructions...</span>
+                                            <span class="full-text" style="display: none;">Context: You are responding as a sales representative to a potential customer inquiry.
+
+Instructions: Write a professional response that addresses their interest, asks qualifying questions, and sets up next steps.
+
+Hi there, I'm interested in your product but I have some questions about pricing and implementation. Can someone get back to me ASAP? Thanks!</span>
+                                            
+                                            <button class="text-blue-600 hover:text-blue-800 ml-2 text-xs">Show More</button>
+                                            
+                                        </div>
+                                    </td>
+                                    <td class="px-6 py-4 text-sm text-gray-900" style="max-width: 400px; word-wrap: break-word; white-space: normal;">
+                                        <div class="expandable-text" onclick="toggleText(this)">
+                                            <span class="short-text">Dear [Customer Name],
+
+Thank you for reaching out and expressing interest in our product. We appreciate your curiosity and are more than happy to answ...</span>
+                                            <span class="full-text" style="display: none;">Dear [Customer Name],
+
+Thank you for reaching out and expressing interest in our product. We appreciate your curiosity and are more than happy to answer any questions you may have about pricing and implementation.
+
+Regarding pricing, the cost of our product can vary depending on several factors, such as the size of your business, the specific features you require, and the level of customization needed. To provide a more accurate quote, could you please tell me a little bit more about your business and your specific needs?
+
+In terms of implementation, we offer a variety of services to help ensure a smooth and successful rollout of our product, including training, technical support, and consulting services. To determine the best approach for your organization, it would be helpful to know more about your current infrastructure, resources, and timeline for implementation.
+
+To set up next steps, I suggest scheduling a call or video conference to discuss your questions and needs in more detail. This will allow us to provide you with a customized proposal and answer any additional questions you may have.
+
+Please let me know if this approach works for you, and if so, what date and time would be convenient for our call. If you prefer, I can also send you some additional information about our product and services via email.
+
+Thank you again for your interest in our product. We look forward to the opportunity to work with you!
+
+Best regards,
+
+[Your Name]
+Sales Representative
+[Company Name]</span>
+                                            
+                                            <button class="text-blue-600 hover:text-blue-800 ml-2 text-xs">Show More</button>
+                                            
+                                        </div>
+                                    </td>
+                                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">email_professionalism</td>
+                                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">llama3.2:latest</td>
+                                    <td class="px-6 py-4 whitespace-nowrap text-sm">
+                                        <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium
+                                            bg-green-100 text-green-800
+                                            ">
+                                            9.0
+                                        </span>
+                                    </td>
+                                    <td class="px-6 py-4 text-sm text-gray-900" style="max-width: 400px; word-wrap: break-word; white-space: normal;">
+                                        <div class="expandable-text" onclick="toggleText(this)">
+                                            <span class="short-text">1. TONE APPROPRIATENESS (25%):
+   - The tone is professional and respectful throughout the email. For example, phrases like "Thank you for reaching ou...</span>
+                                            <span class="full-text" style="display: none;">1. TONE APPROPRIATENESS (25%):
+   - The tone is professional and respectful throughout the email. For example, phrases like "Thank you for reaching out and expressing interest" demonstrate a positive and appreciative attitude.
+   - The language used is appropriate for a business communication, avoiding overly casual or unprofessional terms.</span>
+                                            
+                                            <button class="text-blue-600 hover:text-blue-800 ml-2 text-xs">Show More</button>
+                                            
+                                        </div>
+                                    </td>
+                                </tr>
+                                
+                                <tr>
+                                    <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">2</td>
+                                    <td class="px-6 py-4 text-sm text-gray-900" style="max-width: 300px; word-wrap: break-word; white-space: normal;">
+                                        <div class="expandable-text" onclick="toggleText(this)">
+                                            <span class="short-text">Context: You are responding as a sales representative to a potential customer inquiry.
+
+Instructions...</span>
+                                            <span class="full-text" style="display: none;">Context: You are responding as a sales representative to a potential customer inquiry.
+
+Instructions: Write a professional response that addresses their interest, asks qualifying questions, and sets up next steps.
+
+Hi there, I'm interested in your product but I have some questions about pricing and implementation. Can someone get back to me ASAP? Thanks!</span>
+                                            
+                                            <button class="text-blue-600 hover:text-blue-800 ml-2 text-xs">Show More</button>
+                                            
+                                        </div>
+                                    </td>
+                                    <td class="px-6 py-4 text-sm text-gray-900" style="max-width: 400px; word-wrap: break-word; white-space: normal;">
+                                        <div class="expandable-text" onclick="toggleText(this)">
+                                            <span class="short-text">Dear [Customer Name],
+
+Thank you for reaching out and expressing interest in our product. We appreciate your curiosity and are more than happy to answ...</span>
+                                            <span class="full-text" style="display: none;">Dear [Customer Name],
+
+Thank you for reaching out and expressing interest in our product. We appreciate your curiosity and are more than happy to answer any questions you may have about pricing and implementation.
+
+Regarding pricing, the cost of our product can vary depending on several factors, such as the size of your business, the specific features you require, and the level of customization needed. To provide a more accurate quote, could you please tell me a little bit more about your business and your specific needs?
+
+In terms of implementation, we offer a variety of services to help ensure a smooth and successful rollout of our product, including training, technical support, and consulting services. To determine the best approach for your organization, it would be helpful to know more about your current infrastructure, resources, and timeline for implementation.
+
+To set up next steps, I suggest scheduling a call or video conference to discuss your questions and needs in more detail. This will allow us to provide you with a customized proposal and answer any additional questions you may have.
+
+Please let me know if this approach works for you, and if so, what date and time would be convenient for our call. If you prefer, I can also send you some additional information about our product and services via email.
+
+Thank you again for your interest in our product. We look forward to the opportunity to work with you!
+
+Best regards,
+
+[Your Name]
+Sales Representative
+[Company Name]</span>
+                                            
+                                            <button class="text-blue-600 hover:text-blue-800 ml-2 text-xs">Show More</button>
+                                            
+                                        </div>
+                                    </td>
+                                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">email_responsiveness</td>
+                                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">mistral:latest</td>
+                                    <td class="px-6 py-4 whitespace-nowrap text-sm">
+                                        <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium
+                                            bg-green-100 text-green-800
+                                            ">
+                                            9.0
+                                        </span>
+                                    </td>
+                                    <td class="px-6 py-4 text-sm text-gray-900" style="max-width: 400px; word-wrap: break-word; white-space: normal;">
+                                        <div class="expandable-text" onclick="toggleText(this)">
+                                            <span class="short-text">The email response addresses all questions and concerns raised by the potential customer, providing necessary information about pricing and implementa...</span>
+                                            <span class="full-text" style="display: none;">The email response addresses all questions and concerns raised by the potential customer, providing necessary information about pricing and implementation. It also acknowledges the need for a more accurate quote based on the specific needs of the business and offers to set up a call or video conference to discuss further. Additionally, the response is appropriate in tone and detail for the context, demonstrates problem-solving orientation by offering customized solutions, and provides clear next steps through scheduling a call. Finally, it acknowledges the customer's urgency by using phrases like "ASAP" and suggests alternative methods of communication via email. The only aspect that could potentially be improved is a more specific timeline for receiving the quote after gathering necessary information about their business. However, overall, the response is highly responsive to the original message.</span>
+                                            
+                                            <button class="text-blue-600 hover:text-blue-800 ml-2 text-xs">Show More</button>
+                                            
+                                        </div>
+                                    </td>
+                                </tr>
+                                
+                                <tr>
+                                    <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">2</td>
+                                    <td class="px-6 py-4 text-sm text-gray-900" style="max-width: 300px; word-wrap: break-word; white-space: normal;">
+                                        <div class="expandable-text" onclick="toggleText(this)">
+                                            <span class="short-text">Context: You are responding as a sales representative to a potential customer inquiry.
+
+Instructions...</span>
+                                            <span class="full-text" style="display: none;">Context: You are responding as a sales representative to a potential customer inquiry.
+
+Instructions: Write a professional response that addresses their interest, asks qualifying questions, and sets up next steps.
+
+Hi there, I'm interested in your product but I have some questions about pricing and implementation. Can someone get back to me ASAP? Thanks!</span>
+                                            
+                                            <button class="text-blue-600 hover:text-blue-800 ml-2 text-xs">Show More</button>
+                                            
+                                        </div>
+                                    </td>
+                                    <td class="px-6 py-4 text-sm text-gray-900" style="max-width: 400px; word-wrap: break-word; white-space: normal;">
+                                        <div class="expandable-text" onclick="toggleText(this)">
+                                            <span class="short-text">Dear [Customer Name],
+
+Thank you for reaching out and expressing interest in our product. We appreciate your curiosity and are more than happy to answ...</span>
+                                            <span class="full-text" style="display: none;">Dear [Customer Name],
+
+Thank you for reaching out and expressing interest in our product. We appreciate your curiosity and are more than happy to answer any questions you may have about pricing and implementation.
+
+Regarding pricing, the cost of our product can vary depending on several factors, such as the size of your business, the specific features you require, and the level of customization needed. To provide a more accurate quote, could you please tell me a little bit more about your business and your specific needs?
+
+In terms of implementation, we offer a variety of services to help ensure a smooth and successful rollout of our product, including training, technical support, and consulting services. To determine the best approach for your organization, it would be helpful to know more about your current infrastructure, resources, and timeline for implementation.
+
+To set up next steps, I suggest scheduling a call or video conference to discuss your questions and needs in more detail. This will allow us to provide you with a customized proposal and answer any additional questions you may have.
+
+Please let me know if this approach works for you, and if so, what date and time would be convenient for our call. If you prefer, I can also send you some additional information about our product and services via email.
+
+Thank you again for your interest in our product. We look forward to the opportunity to work with you!
+
+Best regards,
+
+[Your Name]
+Sales Representative
+[Company Name]</span>
+                                            
+                                            <button class="text-blue-600 hover:text-blue-800 ml-2 text-xs">Show More</button>
+                                            
+                                        </div>
+                                    </td>
+                                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">email_responsiveness</td>
+                                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">llama3.2:latest</td>
+                                    <td class="px-6 py-4 whitespace-nowrap text-sm">
+                                        <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium
+                                            bg-blue-100 text-blue-800
+                                            ">
+                                            8.5
+                                        </span>
+                                    </td>
+                                    <td class="px-6 py-4 text-sm text-gray-900" style="max-width: 400px; word-wrap: break-word; white-space: normal;">
+                                        <div class="expandable-text" onclick="toggleText(this)">
+                                            <span class="short-text">1. COMPLETENESS OF RESPONSE (30%):
+   - The response fully addresses the customer's questions about pricing and implementation.
+   - It acknowledges t...</span>
+                                            <span class="full-text" style="display: none;">1. COMPLETENESS OF RESPONSE (30%):
+   - The response fully addresses the customer's questions about pricing and implementation.
+   - It acknowledges the customer's interest in the product and their desire for a quick response.</span>
+                                            
+                                            <button class="text-blue-600 hover:text-blue-800 ml-2 text-xs">Show More</button>
+                                            
+                                        </div>
+                                    </td>
+                                </tr>
+                                
+                                <tr>
+                                    <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">3</td>
+                                    <td class="px-6 py-4 text-sm text-gray-900" style="max-width: 300px; word-wrap: break-word; white-space: normal;">
+                                        <div class="expandable-text" onclick="toggleText(this)">
+                                            <span class="short-text">Context: You are responding as a customer service manager to draft a customer notification about a d...</span>
+                                            <span class="full-text" style="display: none;">Context: You are responding as a customer service manager to draft a customer notification about a data breach.
+
+Instructions: Write a clear, transparent, and reassuring email that informs customers about the breach while maintaining trust.
+
+I am writing to inform you that there has been a data breach affecting customer information in our system. We discovered this issue yesterday and have already taken steps to secure the system. However, we need to notify all customers immediately.</span>
+                                            
+                                            <button class="text-blue-600 hover:text-blue-800 ml-2 text-xs">Show More</button>
+                                            
+                                        </div>
+                                    </td>
+                                    <td class="px-6 py-4 text-sm text-gray-900" style="max-width: 400px; word-wrap: break-word; white-space: normal;">
+                                        <div class="expandable-text" onclick="toggleText(this)">
+                                            <span class="short-text">Subject: Important Notice Regarding Recent Security Incident
+
+Dear Valued Customer,
+
+We hope this message finds you well. We are writing to inform you...</span>
+                                            <span class="full-text" style="display: none;">Subject: Important Notice Regarding Recent Security Incident
+
+Dear Valued Customer,
+
+We hope this message finds you well. We are writing to inform you about a recent security incident that has impacted our systems and some of the personal information we have on file for our customers.
+
+Firstly, we want to assure you that we take the protection of your data very seriously. As soon as we became aware of this issue, we immediately launched an investigation with the help of leading cybersecurity experts. We also notified law enforcement authorities and are cooperating fully with their investigations.
+
+The investigation has revealed that an unauthorized third party gained access to our systems between [start date] and [end date]. During this time, they may have obtained some of your personal information, including your name, address, email address, phone number, and potentially your payment card details. We deeply regret any inconvenience or concern this incident may cause you.
+
+While we cannot guarantee that no data has been taken, we can assure you that we are taking all necessary steps to prevent further unauthorized access and protect our customers' information. These steps include enhancing our security measures, conducting a thorough review of our internal systems and processes, and working with external cybersecurity firms to ensure the highest level of protection for your data.
+
+We recommend that you take the following steps to help protect yourself from potential fraud or identity theft:
+
+1. Review your account statements carefully and report any suspicious activity to your bank or financial institution immediately.
+2. Consider placing a fraud alert on your credit file with the major credit bureaus. This will make it more difficult for anyone to open new accounts in your name.
+3. Be vigilant about reviewing your credit reports and monitoring any unusual activity. You can obtain free copies of your credit report from each of the three major credit bureaus once per year at annualcreditreport.com.
+4. If you suspect that your personal information has been used fraudulently, contact your local law enforcement agency and file a police report.
+
+We will be providing affected customers with one year of complimentary identity protection services through [identity protection service provider]. This service includes credit monitoring, identity theft insurance, and restoration services to help you recover from any potential harm caused by this incident. You will receive an email with instructions on how to activate this service in the coming days.
+
+We deeply regret that this incident occurred and apologize for any inconvenience or concern it may cause you. Our team is working tirelessly to ensure the security of our systems and protect your personal information. If you have any questions or concerns, please do not hesitate to contact us at [customer support email] or call us at [customer support phone number].
+
+Thank you for your continued trust in our company. We remain committed to providing you with excellent service and ensuring the security of your data.
+
+Sincerely,
+
+[Your Name]
+Customer Service Manager</span>
+                                            
+                                            <button class="text-blue-600 hover:text-blue-800 ml-2 text-xs">Show More</button>
+                                            
+                                        </div>
+                                    </td>
+                                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">email_professionalism</td>
+                                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">mistral:latest</td>
+                                    <td class="px-6 py-4 whitespace-nowrap text-sm">
+                                        <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium
+                                            bg-green-100 text-green-800
+                                            ">
+                                            9.0
+                                        </span>
+                                    </td>
+                                    <td class="px-6 py-4 text-sm text-gray-900" style="max-width: 400px; word-wrap: break-word; white-space: normal;">
+                                        <div class="expandable-text" onclick="toggleText(this)">
+                                            <span class="short-text">The email is highly professional and well-structured, demonstrating a clear understanding of business communication best practices.</span>
+                                            <span class="full-text" style="display: none;">The email is highly professional and well-structured, demonstrating a clear understanding of business communication best practices.</span>
+                                            
+                                        </div>
+                                    </td>
+                                </tr>
+                                
+                                <tr>
+                                    <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">3</td>
+                                    <td class="px-6 py-4 text-sm text-gray-900" style="max-width: 300px; word-wrap: break-word; white-space: normal;">
+                                        <div class="expandable-text" onclick="toggleText(this)">
+                                            <span class="short-text">Context: You are responding as a customer service manager to draft a customer notification about a d...</span>
+                                            <span class="full-text" style="display: none;">Context: You are responding as a customer service manager to draft a customer notification about a data breach.
+
+Instructions: Write a clear, transparent, and reassuring email that informs customers about the breach while maintaining trust.
+
+I am writing to inform you that there has been a data breach affecting customer information in our system. We discovered this issue yesterday and have already taken steps to secure the system. However, we need to notify all customers immediately.</span>
+                                            
+                                            <button class="text-blue-600 hover:text-blue-800 ml-2 text-xs">Show More</button>
+                                            
+                                        </div>
+                                    </td>
+                                    <td class="px-6 py-4 text-sm text-gray-900" style="max-width: 400px; word-wrap: break-word; white-space: normal;">
+                                        <div class="expandable-text" onclick="toggleText(this)">
+                                            <span class="short-text">Subject: Important Notice Regarding Recent Security Incident
+
+Dear Valued Customer,
+
+We hope this message finds you well. We are writing to inform you...</span>
+                                            <span class="full-text" style="display: none;">Subject: Important Notice Regarding Recent Security Incident
+
+Dear Valued Customer,
+
+We hope this message finds you well. We are writing to inform you about a recent security incident that has impacted our systems and some of the personal information we have on file for our customers.
+
+Firstly, we want to assure you that we take the protection of your data very seriously. As soon as we became aware of this issue, we immediately launched an investigation with the help of leading cybersecurity experts. We also notified law enforcement authorities and are cooperating fully with their investigations.
+
+The investigation has revealed that an unauthorized third party gained access to our systems between [start date] and [end date]. During this time, they may have obtained some of your personal information, including your name, address, email address, phone number, and potentially your payment card details. We deeply regret any inconvenience or concern this incident may cause you.
+
+While we cannot guarantee that no data has been taken, we can assure you that we are taking all necessary steps to prevent further unauthorized access and protect our customers' information. These steps include enhancing our security measures, conducting a thorough review of our internal systems and processes, and working with external cybersecurity firms to ensure the highest level of protection for your data.
+
+We recommend that you take the following steps to help protect yourself from potential fraud or identity theft:
+
+1. Review your account statements carefully and report any suspicious activity to your bank or financial institution immediately.
+2. Consider placing a fraud alert on your credit file with the major credit bureaus. This will make it more difficult for anyone to open new accounts in your name.
+3. Be vigilant about reviewing your credit reports and monitoring any unusual activity. You can obtain free copies of your credit report from each of the three major credit bureaus once per year at annualcreditreport.com.
+4. If you suspect that your personal information has been used fraudulently, contact your local law enforcement agency and file a police report.
+
+We will be providing affected customers with one year of complimentary identity protection services through [identity protection service provider]. This service includes credit monitoring, identity theft insurance, and restoration services to help you recover from any potential harm caused by this incident. You will receive an email with instructions on how to activate this service in the coming days.
+
+We deeply regret that this incident occurred and apologize for any inconvenience or concern it may cause you. Our team is working tirelessly to ensure the security of our systems and protect your personal information. If you have any questions or concerns, please do not hesitate to contact us at [customer support email] or call us at [customer support phone number].
+
+Thank you for your continued trust in our company. We remain committed to providing you with excellent service and ensuring the security of your data.
+
+Sincerely,
+
+[Your Name]
+Customer Service Manager</span>
+                                            
+                                            <button class="text-blue-600 hover:text-blue-800 ml-2 text-xs">Show More</button>
+                                            
+                                        </div>
+                                    </td>
+                                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">email_professionalism</td>
+                                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">llama3.2:latest</td>
+                                    <td class="px-6 py-4 whitespace-nowrap text-sm">
+                                        <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium
+                                            bg-blue-100 text-blue-800
+                                            ">
+                                            7.0
+                                        </span>
+                                    </td>
+                                    <td class="px-6 py-4 text-sm text-gray-900" style="max-width: 400px; word-wrap: break-word; white-space: normal;">
+                                        <div class="expandable-text" onclick="toggleText(this)">
+                                            <span class="short-text">TONE APPROPRIATENESS (25%): The tone is generally professional and respectful. However, some phrases such as "We deeply regret any inconvenience or co...</span>
+                                            <span class="full-text" style="display: none;">TONE APPROPRIATENESS (25%): The tone is generally professional and respectful. However, some phrases such as "We deeply regret any inconvenience or concern this incident may cause you" come across as overly formal and insincere. A more empathetic approach would be to acknowledge the customer's potential distress and take responsibility for the breach.</span>
+                                            
+                                            <button class="text-blue-600 hover:text-blue-800 ml-2 text-xs">Show More</button>
+                                            
+                                        </div>
+                                    </td>
+                                </tr>
+                                
+                                <tr>
+                                    <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">3</td>
+                                    <td class="px-6 py-4 text-sm text-gray-900" style="max-width: 300px; word-wrap: break-word; white-space: normal;">
+                                        <div class="expandable-text" onclick="toggleText(this)">
+                                            <span class="short-text">Context: You are responding as a customer service manager to draft a customer notification about a d...</span>
+                                            <span class="full-text" style="display: none;">Context: You are responding as a customer service manager to draft a customer notification about a data breach.
+
+Instructions: Write a clear, transparent, and reassuring email that informs customers about the breach while maintaining trust.
+
+I am writing to inform you that there has been a data breach affecting customer information in our system. We discovered this issue yesterday and have already taken steps to secure the system. However, we need to notify all customers immediately.</span>
+                                            
+                                            <button class="text-blue-600 hover:text-blue-800 ml-2 text-xs">Show More</button>
+                                            
+                                        </div>
+                                    </td>
+                                    <td class="px-6 py-4 text-sm text-gray-900" style="max-width: 400px; word-wrap: break-word; white-space: normal;">
+                                        <div class="expandable-text" onclick="toggleText(this)">
+                                            <span class="short-text">Subject: Important Notice Regarding Recent Security Incident
+
+Dear Valued Customer,
+
+We hope this message finds you well. We are writing to inform you...</span>
+                                            <span class="full-text" style="display: none;">Subject: Important Notice Regarding Recent Security Incident
+
+Dear Valued Customer,
+
+We hope this message finds you well. We are writing to inform you about a recent security incident that has impacted our systems and some of the personal information we have on file for our customers.
+
+Firstly, we want to assure you that we take the protection of your data very seriously. As soon as we became aware of this issue, we immediately launched an investigation with the help of leading cybersecurity experts. We also notified law enforcement authorities and are cooperating fully with their investigations.
+
+The investigation has revealed that an unauthorized third party gained access to our systems between [start date] and [end date]. During this time, they may have obtained some of your personal information, including your name, address, email address, phone number, and potentially your payment card details. We deeply regret any inconvenience or concern this incident may cause you.
+
+While we cannot guarantee that no data has been taken, we can assure you that we are taking all necessary steps to prevent further unauthorized access and protect our customers' information. These steps include enhancing our security measures, conducting a thorough review of our internal systems and processes, and working with external cybersecurity firms to ensure the highest level of protection for your data.
+
+We recommend that you take the following steps to help protect yourself from potential fraud or identity theft:
+
+1. Review your account statements carefully and report any suspicious activity to your bank or financial institution immediately.
+2. Consider placing a fraud alert on your credit file with the major credit bureaus. This will make it more difficult for anyone to open new accounts in your name.
+3. Be vigilant about reviewing your credit reports and monitoring any unusual activity. You can obtain free copies of your credit report from each of the three major credit bureaus once per year at annualcreditreport.com.
+4. If you suspect that your personal information has been used fraudulently, contact your local law enforcement agency and file a police report.
+
+We will be providing affected customers with one year of complimentary identity protection services through [identity protection service provider]. This service includes credit monitoring, identity theft insurance, and restoration services to help you recover from any potential harm caused by this incident. You will receive an email with instructions on how to activate this service in the coming days.
+
+We deeply regret that this incident occurred and apologize for any inconvenience or concern it may cause you. Our team is working tirelessly to ensure the security of our systems and protect your personal information. If you have any questions or concerns, please do not hesitate to contact us at [customer support email] or call us at [customer support phone number].
+
+Thank you for your continued trust in our company. We remain committed to providing you with excellent service and ensuring the security of your data.
+
+Sincerely,
+
+[Your Name]
+Customer Service Manager</span>
+                                            
+                                            <button class="text-blue-600 hover:text-blue-800 ml-2 text-xs">Show More</button>
+                                            
+                                        </div>
+                                    </td>
+                                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">email_responsiveness</td>
+                                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">mistral:latest</td>
+                                    <td class="px-6 py-4 whitespace-nowrap text-sm">
+                                        <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium
+                                            bg-green-100 text-green-800
+                                            ">
+                                            9.0
+                                        </span>
+                                    </td>
+                                    <td class="px-6 py-4 text-sm text-gray-900" style="max-width: 400px; word-wrap: break-word; white-space: normal;">
+                                        <div class="expandable-text" onclick="toggleText(this)">
+                                            <span class="short-text">This email demonstrates a high level of responsiveness and addresses the original message effectively. It acknowledges the data breach (Completeness o...</span>
+                                            <span class="full-text" style="display: none;">This email demonstrates a high level of responsiveness and addresses the original message effectively. It acknowledges the data breach (Completeness of Response), assures customers of immediate action taken to secure the system and ongoing investigations with experts, law enforcement, and cybersecurity firms (Appropriateness of Response).</span>
+                                            
+                                            <button class="text-blue-600 hover:text-blue-800 ml-2 text-xs">Show More</button>
+                                            
+                                        </div>
+                                    </td>
+                                </tr>
+                                
+                                <tr>
+                                    <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">3</td>
+                                    <td class="px-6 py-4 text-sm text-gray-900" style="max-width: 300px; word-wrap: break-word; white-space: normal;">
+                                        <div class="expandable-text" onclick="toggleText(this)">
+                                            <span class="short-text">Context: You are responding as a customer service manager to draft a customer notification about a d...</span>
+                                            <span class="full-text" style="display: none;">Context: You are responding as a customer service manager to draft a customer notification about a data breach.
+
+Instructions: Write a clear, transparent, and reassuring email that informs customers about the breach while maintaining trust.
+
+I am writing to inform you that there has been a data breach affecting customer information in our system. We discovered this issue yesterday and have already taken steps to secure the system. However, we need to notify all customers immediately.</span>
+                                            
+                                            <button class="text-blue-600 hover:text-blue-800 ml-2 text-xs">Show More</button>
+                                            
+                                        </div>
+                                    </td>
+                                    <td class="px-6 py-4 text-sm text-gray-900" style="max-width: 400px; word-wrap: break-word; white-space: normal;">
+                                        <div class="expandable-text" onclick="toggleText(this)">
+                                            <span class="short-text">Subject: Important Notice Regarding Recent Security Incident
+
+Dear Valued Customer,
+
+We hope this message finds you well. We are writing to inform you...</span>
+                                            <span class="full-text" style="display: none;">Subject: Important Notice Regarding Recent Security Incident
+
+Dear Valued Customer,
+
+We hope this message finds you well. We are writing to inform you about a recent security incident that has impacted our systems and some of the personal information we have on file for our customers.
+
+Firstly, we want to assure you that we take the protection of your data very seriously. As soon as we became aware of this issue, we immediately launched an investigation with the help of leading cybersecurity experts. We also notified law enforcement authorities and are cooperating fully with their investigations.
+
+The investigation has revealed that an unauthorized third party gained access to our systems between [start date] and [end date]. During this time, they may have obtained some of your personal information, including your name, address, email address, phone number, and potentially your payment card details. We deeply regret any inconvenience or concern this incident may cause you.
+
+While we cannot guarantee that no data has been taken, we can assure you that we are taking all necessary steps to prevent further unauthorized access and protect our customers' information. These steps include enhancing our security measures, conducting a thorough review of our internal systems and processes, and working with external cybersecurity firms to ensure the highest level of protection for your data.
+
+We recommend that you take the following steps to help protect yourself from potential fraud or identity theft:
+
+1. Review your account statements carefully and report any suspicious activity to your bank or financial institution immediately.
+2. Consider placing a fraud alert on your credit file with the major credit bureaus. This will make it more difficult for anyone to open new accounts in your name.
+3. Be vigilant about reviewing your credit reports and monitoring any unusual activity. You can obtain free copies of your credit report from each of the three major credit bureaus once per year at annualcreditreport.com.
+4. If you suspect that your personal information has been used fraudulently, contact your local law enforcement agency and file a police report.
+
+We will be providing affected customers with one year of complimentary identity protection services through [identity protection service provider]. This service includes credit monitoring, identity theft insurance, and restoration services to help you recover from any potential harm caused by this incident. You will receive an email with instructions on how to activate this service in the coming days.
+
+We deeply regret that this incident occurred and apologize for any inconvenience or concern it may cause you. Our team is working tirelessly to ensure the security of our systems and protect your personal information. If you have any questions or concerns, please do not hesitate to contact us at [customer support email] or call us at [customer support phone number].
+
+Thank you for your continued trust in our company. We remain committed to providing you with excellent service and ensuring the security of your data.
+
+Sincerely,
+
+[Your Name]
+Customer Service Manager</span>
+                                            
+                                            <button class="text-blue-600 hover:text-blue-800 ml-2 text-xs">Show More</button>
+                                            
+                                        </div>
+                                    </td>
+                                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">email_responsiveness</td>
+                                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">llama3.2:latest</td>
+                                    <td class="px-6 py-4 whitespace-nowrap text-sm">
+                                        <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium
+                                            bg-green-100 text-green-800
+                                            ">
+                                            9.0
+                                        </span>
+                                    </td>
+                                    <td class="px-6 py-4 text-sm text-gray-900" style="max-width: 400px; word-wrap: break-word; white-space: normal;">
+                                        <div class="expandable-text" onclick="toggleText(this)">
+                                            <span class="short-text">1. COMPLETENESS OF RESPONSE (30%):
+   - The response addresses all questions or concerns raised, such as informing customers about the data breach and...</span>
+                                            <span class="full-text" style="display: none;">1. COMPLETENESS OF RESPONSE (30%):
+   - The response addresses all questions or concerns raised, such as informing customers about the data breach and providing necessary information on how to protect themselves.
+   - It acknowledges that the company takes the protection of customer data seriously and has taken steps to secure their systems.
+   - However, it would be beneficial to explicitly state what specific actions have been taken to prevent further unauthorized access.</span>
+                                            
+                                            <button class="text-blue-600 hover:text-blue-800 ml-2 text-xs">Show More</button>
+                                            
+                                        </div>
+                                    </td>
+                                </tr>
+                                
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <!-- Question Detail Modal -->
+    <div id="questionModal" class="fixed inset-0 bg-gray-600 bg-opacity-50 hidden z-50">
+        <div class="flex items-center justify-center min-h-screen px-4">
+            <div class="bg-white rounded-lg shadow-xl max-w-4xl w-full max-h-screen overflow-y-auto">
+                <div class="px-6 py-4 border-b border-gray-200">
+                    <div class="flex justify-between items-center">
+                        <h3 class="text-lg font-medium text-gray-900" id="modalTitle">Question Details</h3>
+                        <button onclick="closeQuestionModal()" class="text-gray-400 hover:text-gray-600">
+                            <span class="sr-only">Close</span>
+                            <svg class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+                            </svg>
+                        </button>
+                    </div>
+                </div>
+                <div class="px-6 py-4" id="modalContent">
+                    <!-- Content will be populated by JavaScript -->
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Global data
+        const dashboardData = {"overview": {"overall_score": 8.8, "num_questions": 3, "num_metrics": 2, "num_evaluators": 2, "model_name": "mixtral:latest", "metrics_scores": {"email_professionalism": 8.7, "email_responsiveness": 8.8}, "score_distribution": {"min": 8.0, "max": 9.0, "median": 9.0, "std_dev": 0.38}, "evaluator_models": ["mistral:latest", "llama3.2:latest"]}, "metrics": [{"name": "email_professionalism", "average_score": 8.7, "min_score": 8.0, "max_score": 9.0, "std_dev": 0.4714045207910317, "count": 3}, {"name": "email_responsiveness", "average_score": 8.8, "min_score": 8.5, "max_score": 9.0, "std_dev": 0.20548046676563259, "count": 3}], "questions": [{"id": 3, "text": "Context: You are responding as a customer service manager to draft a customer notification about a d...", "full_text": "Context: You are responding as a customer service manager to draft a customer notification about a data breach.\n\nInstructions: Write a clear, transparent, and reassuring email that informs customers about the breach while maintaining trust.\n\nI am writing to inform you that there has been a data breach affecting customer information in our system. We discovered this issue yesterday and have already taken steps to secure the system. However, we need to notify all customers immediately.", "response": "Subject: Important Notice Regarding Recent Security Incident\n\nDear Valued Customer,\n\nWe hope this message finds you well. We are writing to inform you about a recent security incident that has impacte...", "full_response": "Subject: Important Notice Regarding Recent Security Incident\n\nDear Valued Customer,\n\nWe hope this message finds you well. We are writing to inform you about a recent security incident that has impacted our systems and some of the personal information we have on file for our customers.\n\nFirstly, we want to assure you that we take the protection of your data very seriously. As soon as we became aware of this issue, we immediately launched an investigation with the help of leading cybersecurity experts. We also notified law enforcement authorities and are cooperating fully with their investigations.\n\nThe investigation has revealed that an unauthorized third party gained access to our systems between [start date] and [end date]. During this time, they may have obtained some of your personal information, including your name, address, email address, phone number, and potentially your payment card details. We deeply regret any inconvenience or concern this incident may cause you.\n\nWhile we cannot guarantee that no data has been taken, we can assure you that we are taking all necessary steps to prevent further unauthorized access and protect our customers' information. These steps include enhancing our security measures, conducting a thorough review of our internal systems and processes, and working with external cybersecurity firms to ensure the highest level of protection for your data.\n\nWe recommend that you take the following steps to help protect yourself from potential fraud or identity theft:\n\n1. Review your account statements carefully and report any suspicious activity to your bank or financial institution immediately.\n2. Consider placing a fraud alert on your credit file with the major credit bureaus. This will make it more difficult for anyone to open new accounts in your name.\n3. Be vigilant about reviewing your credit reports and monitoring any unusual activity. You can obtain free copies of your credit report from each of the three major credit bureaus once per year at annualcreditreport.com.\n4. If you suspect that your personal information has been used fraudulently, contact your local law enforcement agency and file a police report.\n\nWe will be providing affected customers with one year of complimentary identity protection services through [identity protection service provider]. This service includes credit monitoring, identity theft insurance, and restoration services to help you recover from any potential harm caused by this incident. You will receive an email with instructions on how to activate this service in the coming days.\n\nWe deeply regret that this incident occurred and apologize for any inconvenience or concern it may cause you. Our team is working tirelessly to ensure the security of our systems and protect your personal information. If you have any questions or concerns, please do not hesitate to contact us at [customer support email] or call us at [customer support phone number].\n\nThank you for your continued trust in our company. We remain committed to providing you with excellent service and ensuring the security of your data.\n\nSincerely,\n\n[Your Name]\nCustomer Service Manager", "average_score": 8.5, "difficulty": "Easy", "metric_scores": {"email_professionalism": 8.0, "email_responsiveness": 9.0}, "num_metrics": 2}, {"id": 1, "text": "Context: You are responding as a project manager to a concerned team member about a deadline change....", "full_text": "Context: You are responding as a project manager to a concerned team member about a deadline change.\n\nInstructions: Write a professional, empathetic response that acknowledges the concern, provides clarification, and offers solutions.\n\nDear John, I noticed that the quarterly report deadline was moved from Friday to Wednesday. This is quite concerning as our team has been working towards the Friday deadline. Could you please clarify the reasoning behind this change and if there are any accommodations that can be made?", "response": "Dear [Team Member's Name],\n\nThank you for bringing your concern to my attention regarding the recent change in the quarterly report deadline. I understand why this might be causing some uncertainty wi...", "full_response": "Dear [Team Member's Name],\n\nThank you for bringing your concern to my attention regarding the recent change in the quarterly report deadline. I understand why this might be causing some uncertainty within our team, as we have been working towards the original Friday deadline.\n\nThe decision to move up the deadline was made due to a strategic shift in our company's priorities, with senior management requesting earlier access to the data included in the quarterly report. While I realize that this may put additional pressure on our team, please know that your hard work and dedication are valued and recognized.\n\nTo help alleviate any potential difficulties, I would like to offer the following accommodations:\n\n1. Additional Resources: If needed, we can request assistance from other teams or hire temporary help to ensure that we meet the new deadline while maintaining high-quality standards.\n\n2. Prioritization and Delegation: We will reassess our current tasks and projects, prioritizing the most critical elements of the quarterly report and delegating responsibilities accordingly.\n\n3. Flexible Work Hours: Team members who wish to work outside regular business hours may do so with my approval, provided that they take appropriate breaks and maintain a healthy work-life balance.\n\n4. Communication: I encourage open communication within our team about any challenges or roadblocks encountered during this process. By working together and supporting one another, we can effectively manage the new deadline and ensure a successful outcome.\n\nOnce again, thank you for your understanding and adaptability in light of this change. Please feel free to reach out if you have any questions or concerns. I am confident that our team will rise to this challenge and deliver outstanding results.\n\nBest regards,\n[Your Name]\nProject Manager", "average_score": 8.75, "difficulty": "Easy", "metric_scores": {"email_professionalism": 9.0, "email_responsiveness": 8.5}, "num_metrics": 2}, {"id": 2, "text": "Context: You are responding as a sales representative to a potential customer inquiry.\n\nInstructions...", "full_text": "Context: You are responding as a sales representative to a potential customer inquiry.\n\nInstructions: Write a professional response that addresses their interest, asks qualifying questions, and sets up next steps.\n\nHi there, I'm interested in your product but I have some questions about pricing and implementation. Can someone get back to me ASAP? Thanks!", "response": "Dear [Customer Name],\n\nThank you for reaching out and expressing interest in our product. We appreciate your curiosity and are more than happy to answer any questions you may have about pricing and im...", "full_response": "Dear [Customer Name],\n\nThank you for reaching out and expressing interest in our product. We appreciate your curiosity and are more than happy to answer any questions you may have about pricing and implementation.\n\nRegarding pricing, the cost of our product can vary depending on several factors, such as the size of your business, the specific features you require, and the level of customization needed. To provide a more accurate quote, could you please tell me a little bit more about your business and your specific needs?\n\nIn terms of implementation, we offer a variety of services to help ensure a smooth and successful rollout of our product, including training, technical support, and consulting services. To determine the best approach for your organization, it would be helpful to know more about your current infrastructure, resources, and timeline for implementation.\n\nTo set up next steps, I suggest scheduling a call or video conference to discuss your questions and needs in more detail. This will allow us to provide you with a customized proposal and answer any additional questions you may have.\n\nPlease let me know if this approach works for you, and if so, what date and time would be convenient for our call. If you prefer, I can also send you some additional information about our product and services via email.\n\nThank you again for your interest in our product. We look forward to the opportunity to work with you!\n\nBest regards,\n\n[Your Name]\nSales Representative\n[Company Name]", "average_score": 8.9, "difficulty": "Easy", "metric_scores": {"email_professionalism": 9.0, "email_responsiveness": 8.8}, "num_metrics": 2}], "evaluators": [{"name": "mistral:latest", "average_score": 9.0, "total_evaluations": 6, "std_dev": 0.0, "min_score": 9.0, "max_score": 9.0, "metric_averages": {"email_professionalism": 9.0, "email_responsiveness": 9.0}}, {"name": "llama3.2:latest", "average_score": 8.416666666666666, "total_evaluations": 6, "std_dev": 0.7312470322826768, "min_score": 7.0, "max_score": 9.0, "metric_averages": {"email_professionalism": 8.333333333333334, "email_responsiveness": 8.5}}], "correlations": {"matrix": {"email_responsiveness": {"email_responsiveness": 1.0, "email_professionalism": {"correlation": -0.8029550685469653, "p_value": 0.4065197283736616, "significant": "False"}}, "email_professionalism": {"email_responsiveness": {"correlation": -0.8029550685469652, "p_value": 0.4065197283736616, "significant": "False"}, "email_professionalism": 1.0}}, "metrics": ["email_responsiveness", "email_professionalism"]}, "raw_scores": [{"question_id": 1, "question_text": "Context: You are responding as a project manager to a concerned team member about a deadline change.\n\nInstructions: Write a professional, empathetic response that acknowledges the concern, provides clarification, and offers solutions.\n\nDear John, I noticed that the quarterly report deadline was moved from Friday to Wednesday. This is quite concerning as our team has been working towards the Friday deadline. Could you please clarify the reasoning behind this change and if there are any accommodations that can be made?", "response": "Dear [Team Member's Name],\n\nThank you for bringing your concern to my attention regarding the recent change in the quarterly report deadline. I understand why this might be causing some uncertainty within our team, as we have been working towards the original Friday deadline.\n\nThe decision to move up the deadline was made due to a strategic shift in our company's priorities, with senior management requesting earlier access to the data included in the quarterly report. While I realize that this may put additional pressure on our team, please know that your hard work and dedication are valued and recognized.\n\nTo help alleviate any potential difficulties, I would like to offer the following accommodations:\n\n1. Additional Resources: If needed, we can request assistance from other teams or hire temporary help to ensure that we meet the new deadline while maintaining high-quality standards.\n\n2. Prioritization and Delegation: We will reassess our current tasks and projects, prioritizing the most critical elements of the quarterly report and delegating responsibilities accordingly.\n\n3. Flexible Work Hours: Team members who wish to work outside regular business hours may do so with my approval, provided that they take appropriate breaks and maintain a healthy work-life balance.\n\n4. Communication: I encourage open communication within our team about any challenges or roadblocks encountered during this process. By working together and supporting one another, we can effectively manage the new deadline and ensure a successful outcome.\n\nOnce again, thank you for your understanding and adaptability in light of this change. Please feel free to reach out if you have any questions or concerns. I am confident that our team will rise to this challenge and deliver outstanding results.\n\nBest regards,\n[Your Name]\nProject Manager", "metric": "email_professionalism", "evaluator": "mistral:latest", "score": 9.0, "rationale": "The response is very professional and empathetic in addressing John's concern about the deadline change. The tone is appropriate for the context, with a level of formality that acknowledges the importance of the situation while still maintaining a respectful and understanding tone. The structure and clarity are good; the content is well-organized, follows proper email etiquette, and provides a clear call-to-action in the form of accommodations and communication suggestions."}, {"question_id": 1, "question_text": "Context: You are responding as a project manager to a concerned team member about a deadline change.\n\nInstructions: Write a professional, empathetic response that acknowledges the concern, provides clarification, and offers solutions.\n\nDear John, I noticed that the quarterly report deadline was moved from Friday to Wednesday. This is quite concerning as our team has been working towards the Friday deadline. Could you please clarify the reasoning behind this change and if there are any accommodations that can be made?", "response": "Dear [Team Member's Name],\n\nThank you for bringing your concern to my attention regarding the recent change in the quarterly report deadline. I understand why this might be causing some uncertainty within our team, as we have been working towards the original Friday deadline.\n\nThe decision to move up the deadline was made due to a strategic shift in our company's priorities, with senior management requesting earlier access to the data included in the quarterly report. While I realize that this may put additional pressure on our team, please know that your hard work and dedication are valued and recognized.\n\nTo help alleviate any potential difficulties, I would like to offer the following accommodations:\n\n1. Additional Resources: If needed, we can request assistance from other teams or hire temporary help to ensure that we meet the new deadline while maintaining high-quality standards.\n\n2. Prioritization and Delegation: We will reassess our current tasks and projects, prioritizing the most critical elements of the quarterly report and delegating responsibilities accordingly.\n\n3. Flexible Work Hours: Team members who wish to work outside regular business hours may do so with my approval, provided that they take appropriate breaks and maintain a healthy work-life balance.\n\n4. Communication: I encourage open communication within our team about any challenges or roadblocks encountered during this process. By working together and supporting one another, we can effectively manage the new deadline and ensure a successful outcome.\n\nOnce again, thank you for your understanding and adaptability in light of this change. Please feel free to reach out if you have any questions or concerns. I am confident that our team will rise to this challenge and deliver outstanding results.\n\nBest regards,\n[Your Name]\nProject Manager", "metric": "email_professionalism", "evaluator": "llama3.2:latest", "score": 9.0, "rationale": "1. TONE APPROPRIATENESS (25%): The tone is professional and respectful throughout the email. The language used is clear and suitable for a business context. The email acknowledges the team member's concern and expresses empathy, making it easy to understand their perspective. However, some might argue that the sentence \"Your hard work and dedication are valued and recognized\" could be seen as slightly clich\u00e9d. Overall, tone is appropriate."}, {"question_id": 1, "question_text": "Context: You are responding as a project manager to a concerned team member about a deadline change.\n\nInstructions: Write a professional, empathetic response that acknowledges the concern, provides clarification, and offers solutions.\n\nDear John, I noticed that the quarterly report deadline was moved from Friday to Wednesday. This is quite concerning as our team has been working towards the Friday deadline. Could you please clarify the reasoning behind this change and if there are any accommodations that can be made?", "response": "Dear [Team Member's Name],\n\nThank you for bringing your concern to my attention regarding the recent change in the quarterly report deadline. I understand why this might be causing some uncertainty within our team, as we have been working towards the original Friday deadline.\n\nThe decision to move up the deadline was made due to a strategic shift in our company's priorities, with senior management requesting earlier access to the data included in the quarterly report. While I realize that this may put additional pressure on our team, please know that your hard work and dedication are valued and recognized.\n\nTo help alleviate any potential difficulties, I would like to offer the following accommodations:\n\n1. Additional Resources: If needed, we can request assistance from other teams or hire temporary help to ensure that we meet the new deadline while maintaining high-quality standards.\n\n2. Prioritization and Delegation: We will reassess our current tasks and projects, prioritizing the most critical elements of the quarterly report and delegating responsibilities accordingly.\n\n3. Flexible Work Hours: Team members who wish to work outside regular business hours may do so with my approval, provided that they take appropriate breaks and maintain a healthy work-life balance.\n\n4. Communication: I encourage open communication within our team about any challenges or roadblocks encountered during this process. By working together and supporting one another, we can effectively manage the new deadline and ensure a successful outcome.\n\nOnce again, thank you for your understanding and adaptability in light of this change. Please feel free to reach out if you have any questions or concerns. I am confident that our team will rise to this challenge and deliver outstanding results.\n\nBest regards,\n[Your Name]\nProject Manager", "metric": "email_responsiveness", "evaluator": "mistral:latest", "score": 9.0, "rationale": "The response effectively addresses the original message by acknowledging the concern about the deadline change (Completeness of Response) and offering four potential solutions to help alleviate any difficulties caused by the new deadline (Problem-Solving Orientation). The tone and approach used in the response are professional, empathetic, and suitable for the situation (Appropriateness of Response)."}, {"question_id": 1, "question_text": "Context: You are responding as a project manager to a concerned team member about a deadline change.\n\nInstructions: Write a professional, empathetic response that acknowledges the concern, provides clarification, and offers solutions.\n\nDear John, I noticed that the quarterly report deadline was moved from Friday to Wednesday. This is quite concerning as our team has been working towards the Friday deadline. Could you please clarify the reasoning behind this change and if there are any accommodations that can be made?", "response": "Dear [Team Member's Name],\n\nThank you for bringing your concern to my attention regarding the recent change in the quarterly report deadline. I understand why this might be causing some uncertainty within our team, as we have been working towards the original Friday deadline.\n\nThe decision to move up the deadline was made due to a strategic shift in our company's priorities, with senior management requesting earlier access to the data included in the quarterly report. While I realize that this may put additional pressure on our team, please know that your hard work and dedication are valued and recognized.\n\nTo help alleviate any potential difficulties, I would like to offer the following accommodations:\n\n1. Additional Resources: If needed, we can request assistance from other teams or hire temporary help to ensure that we meet the new deadline while maintaining high-quality standards.\n\n2. Prioritization and Delegation: We will reassess our current tasks and projects, prioritizing the most critical elements of the quarterly report and delegating responsibilities accordingly.\n\n3. Flexible Work Hours: Team members who wish to work outside regular business hours may do so with my approval, provided that they take appropriate breaks and maintain a healthy work-life balance.\n\n4. Communication: I encourage open communication within our team about any challenges or roadblocks encountered during this process. By working together and supporting one another, we can effectively manage the new deadline and ensure a successful outcome.\n\nOnce again, thank you for your understanding and adaptability in light of this change. Please feel free to reach out if you have any questions or concerns. I am confident that our team will rise to this challenge and deliver outstanding results.\n\nBest regards,\n[Your Name]\nProject Manager", "metric": "email_responsiveness", "evaluator": "llama3.2:latest", "score": 8.0, "rationale": "The email response effectively addresses John's concerns about the deadline change, demonstrating a good balance between understanding and empathy. The following aspects contribute to this score:"}, {"question_id": 2, "question_text": "Context: You are responding as a sales representative to a potential customer inquiry.\n\nInstructions: Write a professional response that addresses their interest, asks qualifying questions, and sets up next steps.\n\nHi there, I'm interested in your product but I have some questions about pricing and implementation. Can someone get back to me ASAP? Thanks!", "response": "Dear [Customer Name],\n\nThank you for reaching out and expressing interest in our product. We appreciate your curiosity and are more than happy to answer any questions you may have about pricing and implementation.\n\nRegarding pricing, the cost of our product can vary depending on several factors, such as the size of your business, the specific features you require, and the level of customization needed. To provide a more accurate quote, could you please tell me a little bit more about your business and your specific needs?\n\nIn terms of implementation, we offer a variety of services to help ensure a smooth and successful rollout of our product, including training, technical support, and consulting services. To determine the best approach for your organization, it would be helpful to know more about your current infrastructure, resources, and timeline for implementation.\n\nTo set up next steps, I suggest scheduling a call or video conference to discuss your questions and needs in more detail. This will allow us to provide you with a customized proposal and answer any additional questions you may have.\n\nPlease let me know if this approach works for you, and if so, what date and time would be convenient for our call. If you prefer, I can also send you some additional information about our product and services via email.\n\nThank you again for your interest in our product. We look forward to the opportunity to work with you!\n\nBest regards,\n\n[Your Name]\nSales Representative\n[Company Name]", "metric": "email_professionalism", "evaluator": "mistral:latest", "score": 9.0, "rationale": "The email response demonstrates a high level of professionalism in various aspects."}, {"question_id": 2, "question_text": "Context: You are responding as a sales representative to a potential customer inquiry.\n\nInstructions: Write a professional response that addresses their interest, asks qualifying questions, and sets up next steps.\n\nHi there, I'm interested in your product but I have some questions about pricing and implementation. Can someone get back to me ASAP? Thanks!", "response": "Dear [Customer Name],\n\nThank you for reaching out and expressing interest in our product. We appreciate your curiosity and are more than happy to answer any questions you may have about pricing and implementation.\n\nRegarding pricing, the cost of our product can vary depending on several factors, such as the size of your business, the specific features you require, and the level of customization needed. To provide a more accurate quote, could you please tell me a little bit more about your business and your specific needs?\n\nIn terms of implementation, we offer a variety of services to help ensure a smooth and successful rollout of our product, including training, technical support, and consulting services. To determine the best approach for your organization, it would be helpful to know more about your current infrastructure, resources, and timeline for implementation.\n\nTo set up next steps, I suggest scheduling a call or video conference to discuss your questions and needs in more detail. This will allow us to provide you with a customized proposal and answer any additional questions you may have.\n\nPlease let me know if this approach works for you, and if so, what date and time would be convenient for our call. If you prefer, I can also send you some additional information about our product and services via email.\n\nThank you again for your interest in our product. We look forward to the opportunity to work with you!\n\nBest regards,\n\n[Your Name]\nSales Representative\n[Company Name]", "metric": "email_professionalism", "evaluator": "llama3.2:latest", "score": 9.0, "rationale": "1. TONE APPROPRIATENESS (25%):\n   - The tone is professional and respectful throughout the email. For example, phrases like \"Thank you for reaching out and expressing interest\" demonstrate a positive and appreciative attitude.\n   - The language used is appropriate for a business communication, avoiding overly casual or unprofessional terms."}, {"question_id": 2, "question_text": "Context: You are responding as a sales representative to a potential customer inquiry.\n\nInstructions: Write a professional response that addresses their interest, asks qualifying questions, and sets up next steps.\n\nHi there, I'm interested in your product but I have some questions about pricing and implementation. Can someone get back to me ASAP? Thanks!", "response": "Dear [Customer Name],\n\nThank you for reaching out and expressing interest in our product. We appreciate your curiosity and are more than happy to answer any questions you may have about pricing and implementation.\n\nRegarding pricing, the cost of our product can vary depending on several factors, such as the size of your business, the specific features you require, and the level of customization needed. To provide a more accurate quote, could you please tell me a little bit more about your business and your specific needs?\n\nIn terms of implementation, we offer a variety of services to help ensure a smooth and successful rollout of our product, including training, technical support, and consulting services. To determine the best approach for your organization, it would be helpful to know more about your current infrastructure, resources, and timeline for implementation.\n\nTo set up next steps, I suggest scheduling a call or video conference to discuss your questions and needs in more detail. This will allow us to provide you with a customized proposal and answer any additional questions you may have.\n\nPlease let me know if this approach works for you, and if so, what date and time would be convenient for our call. If you prefer, I can also send you some additional information about our product and services via email.\n\nThank you again for your interest in our product. We look forward to the opportunity to work with you!\n\nBest regards,\n\n[Your Name]\nSales Representative\n[Company Name]", "metric": "email_responsiveness", "evaluator": "mistral:latest", "score": 9.0, "rationale": "The email response addresses all questions and concerns raised by the potential customer, providing necessary information about pricing and implementation. It also acknowledges the need for a more accurate quote based on the specific needs of the business and offers to set up a call or video conference to discuss further. Additionally, the response is appropriate in tone and detail for the context, demonstrates problem-solving orientation by offering customized solutions, and provides clear next steps through scheduling a call. Finally, it acknowledges the customer's urgency by using phrases like \"ASAP\" and suggests alternative methods of communication via email. The only aspect that could potentially be improved is a more specific timeline for receiving the quote after gathering necessary information about their business. However, overall, the response is highly responsive to the original message."}, {"question_id": 2, "question_text": "Context: You are responding as a sales representative to a potential customer inquiry.\n\nInstructions: Write a professional response that addresses their interest, asks qualifying questions, and sets up next steps.\n\nHi there, I'm interested in your product but I have some questions about pricing and implementation. Can someone get back to me ASAP? Thanks!", "response": "Dear [Customer Name],\n\nThank you for reaching out and expressing interest in our product. We appreciate your curiosity and are more than happy to answer any questions you may have about pricing and implementation.\n\nRegarding pricing, the cost of our product can vary depending on several factors, such as the size of your business, the specific features you require, and the level of customization needed. To provide a more accurate quote, could you please tell me a little bit more about your business and your specific needs?\n\nIn terms of implementation, we offer a variety of services to help ensure a smooth and successful rollout of our product, including training, technical support, and consulting services. To determine the best approach for your organization, it would be helpful to know more about your current infrastructure, resources, and timeline for implementation.\n\nTo set up next steps, I suggest scheduling a call or video conference to discuss your questions and needs in more detail. This will allow us to provide you with a customized proposal and answer any additional questions you may have.\n\nPlease let me know if this approach works for you, and if so, what date and time would be convenient for our call. If you prefer, I can also send you some additional information about our product and services via email.\n\nThank you again for your interest in our product. We look forward to the opportunity to work with you!\n\nBest regards,\n\n[Your Name]\nSales Representative\n[Company Name]", "metric": "email_responsiveness", "evaluator": "llama3.2:latest", "score": 8.5, "rationale": "1. COMPLETENESS OF RESPONSE (30%):\n   - The response fully addresses the customer's questions about pricing and implementation.\n   - It acknowledges the customer's interest in the product and their desire for a quick response."}, {"question_id": 3, "question_text": "Context: You are responding as a customer service manager to draft a customer notification about a data breach.\n\nInstructions: Write a clear, transparent, and reassuring email that informs customers about the breach while maintaining trust.\n\nI am writing to inform you that there has been a data breach affecting customer information in our system. We discovered this issue yesterday and have already taken steps to secure the system. However, we need to notify all customers immediately.", "response": "Subject: Important Notice Regarding Recent Security Incident\n\nDear Valued Customer,\n\nWe hope this message finds you well. We are writing to inform you about a recent security incident that has impacted our systems and some of the personal information we have on file for our customers.\n\nFirstly, we want to assure you that we take the protection of your data very seriously. As soon as we became aware of this issue, we immediately launched an investigation with the help of leading cybersecurity experts. We also notified law enforcement authorities and are cooperating fully with their investigations.\n\nThe investigation has revealed that an unauthorized third party gained access to our systems between [start date] and [end date]. During this time, they may have obtained some of your personal information, including your name, address, email address, phone number, and potentially your payment card details. We deeply regret any inconvenience or concern this incident may cause you.\n\nWhile we cannot guarantee that no data has been taken, we can assure you that we are taking all necessary steps to prevent further unauthorized access and protect our customers' information. These steps include enhancing our security measures, conducting a thorough review of our internal systems and processes, and working with external cybersecurity firms to ensure the highest level of protection for your data.\n\nWe recommend that you take the following steps to help protect yourself from potential fraud or identity theft:\n\n1. Review your account statements carefully and report any suspicious activity to your bank or financial institution immediately.\n2. Consider placing a fraud alert on your credit file with the major credit bureaus. This will make it more difficult for anyone to open new accounts in your name.\n3. Be vigilant about reviewing your credit reports and monitoring any unusual activity. You can obtain free copies of your credit report from each of the three major credit bureaus once per year at annualcreditreport.com.\n4. If you suspect that your personal information has been used fraudulently, contact your local law enforcement agency and file a police report.\n\nWe will be providing affected customers with one year of complimentary identity protection services through [identity protection service provider]. This service includes credit monitoring, identity theft insurance, and restoration services to help you recover from any potential harm caused by this incident. You will receive an email with instructions on how to activate this service in the coming days.\n\nWe deeply regret that this incident occurred and apologize for any inconvenience or concern it may cause you. Our team is working tirelessly to ensure the security of our systems and protect your personal information. If you have any questions or concerns, please do not hesitate to contact us at [customer support email] or call us at [customer support phone number].\n\nThank you for your continued trust in our company. We remain committed to providing you with excellent service and ensuring the security of your data.\n\nSincerely,\n\n[Your Name]\nCustomer Service Manager", "metric": "email_professionalism", "evaluator": "mistral:latest", "score": 9.0, "rationale": "The email is highly professional and well-structured, demonstrating a clear understanding of business communication best practices."}, {"question_id": 3, "question_text": "Context: You are responding as a customer service manager to draft a customer notification about a data breach.\n\nInstructions: Write a clear, transparent, and reassuring email that informs customers about the breach while maintaining trust.\n\nI am writing to inform you that there has been a data breach affecting customer information in our system. We discovered this issue yesterday and have already taken steps to secure the system. However, we need to notify all customers immediately.", "response": "Subject: Important Notice Regarding Recent Security Incident\n\nDear Valued Customer,\n\nWe hope this message finds you well. We are writing to inform you about a recent security incident that has impacted our systems and some of the personal information we have on file for our customers.\n\nFirstly, we want to assure you that we take the protection of your data very seriously. As soon as we became aware of this issue, we immediately launched an investigation with the help of leading cybersecurity experts. We also notified law enforcement authorities and are cooperating fully with their investigations.\n\nThe investigation has revealed that an unauthorized third party gained access to our systems between [start date] and [end date]. During this time, they may have obtained some of your personal information, including your name, address, email address, phone number, and potentially your payment card details. We deeply regret any inconvenience or concern this incident may cause you.\n\nWhile we cannot guarantee that no data has been taken, we can assure you that we are taking all necessary steps to prevent further unauthorized access and protect our customers' information. These steps include enhancing our security measures, conducting a thorough review of our internal systems and processes, and working with external cybersecurity firms to ensure the highest level of protection for your data.\n\nWe recommend that you take the following steps to help protect yourself from potential fraud or identity theft:\n\n1. Review your account statements carefully and report any suspicious activity to your bank or financial institution immediately.\n2. Consider placing a fraud alert on your credit file with the major credit bureaus. This will make it more difficult for anyone to open new accounts in your name.\n3. Be vigilant about reviewing your credit reports and monitoring any unusual activity. You can obtain free copies of your credit report from each of the three major credit bureaus once per year at annualcreditreport.com.\n4. If you suspect that your personal information has been used fraudulently, contact your local law enforcement agency and file a police report.\n\nWe will be providing affected customers with one year of complimentary identity protection services through [identity protection service provider]. This service includes credit monitoring, identity theft insurance, and restoration services to help you recover from any potential harm caused by this incident. You will receive an email with instructions on how to activate this service in the coming days.\n\nWe deeply regret that this incident occurred and apologize for any inconvenience or concern it may cause you. Our team is working tirelessly to ensure the security of our systems and protect your personal information. If you have any questions or concerns, please do not hesitate to contact us at [customer support email] or call us at [customer support phone number].\n\nThank you for your continued trust in our company. We remain committed to providing you with excellent service and ensuring the security of your data.\n\nSincerely,\n\n[Your Name]\nCustomer Service Manager", "metric": "email_professionalism", "evaluator": "llama3.2:latest", "score": 7.0, "rationale": "TONE APPROPRIATENESS (25%): The tone is generally professional and respectful. However, some phrases such as \"We deeply regret any inconvenience or concern this incident may cause you\" come across as overly formal and insincere. A more empathetic approach would be to acknowledge the customer's potential distress and take responsibility for the breach."}, {"question_id": 3, "question_text": "Context: You are responding as a customer service manager to draft a customer notification about a data breach.\n\nInstructions: Write a clear, transparent, and reassuring email that informs customers about the breach while maintaining trust.\n\nI am writing to inform you that there has been a data breach affecting customer information in our system. We discovered this issue yesterday and have already taken steps to secure the system. However, we need to notify all customers immediately.", "response": "Subject: Important Notice Regarding Recent Security Incident\n\nDear Valued Customer,\n\nWe hope this message finds you well. We are writing to inform you about a recent security incident that has impacted our systems and some of the personal information we have on file for our customers.\n\nFirstly, we want to assure you that we take the protection of your data very seriously. As soon as we became aware of this issue, we immediately launched an investigation with the help of leading cybersecurity experts. We also notified law enforcement authorities and are cooperating fully with their investigations.\n\nThe investigation has revealed that an unauthorized third party gained access to our systems between [start date] and [end date]. During this time, they may have obtained some of your personal information, including your name, address, email address, phone number, and potentially your payment card details. We deeply regret any inconvenience or concern this incident may cause you.\n\nWhile we cannot guarantee that no data has been taken, we can assure you that we are taking all necessary steps to prevent further unauthorized access and protect our customers' information. These steps include enhancing our security measures, conducting a thorough review of our internal systems and processes, and working with external cybersecurity firms to ensure the highest level of protection for your data.\n\nWe recommend that you take the following steps to help protect yourself from potential fraud or identity theft:\n\n1. Review your account statements carefully and report any suspicious activity to your bank or financial institution immediately.\n2. Consider placing a fraud alert on your credit file with the major credit bureaus. This will make it more difficult for anyone to open new accounts in your name.\n3. Be vigilant about reviewing your credit reports and monitoring any unusual activity. You can obtain free copies of your credit report from each of the three major credit bureaus once per year at annualcreditreport.com.\n4. If you suspect that your personal information has been used fraudulently, contact your local law enforcement agency and file a police report.\n\nWe will be providing affected customers with one year of complimentary identity protection services through [identity protection service provider]. This service includes credit monitoring, identity theft insurance, and restoration services to help you recover from any potential harm caused by this incident. You will receive an email with instructions on how to activate this service in the coming days.\n\nWe deeply regret that this incident occurred and apologize for any inconvenience or concern it may cause you. Our team is working tirelessly to ensure the security of our systems and protect your personal information. If you have any questions or concerns, please do not hesitate to contact us at [customer support email] or call us at [customer support phone number].\n\nThank you for your continued trust in our company. We remain committed to providing you with excellent service and ensuring the security of your data.\n\nSincerely,\n\n[Your Name]\nCustomer Service Manager", "metric": "email_responsiveness", "evaluator": "mistral:latest", "score": 9.0, "rationale": "This email demonstrates a high level of responsiveness and addresses the original message effectively. It acknowledges the data breach (Completeness of Response), assures customers of immediate action taken to secure the system and ongoing investigations with experts, law enforcement, and cybersecurity firms (Appropriateness of Response)."}, {"question_id": 3, "question_text": "Context: You are responding as a customer service manager to draft a customer notification about a data breach.\n\nInstructions: Write a clear, transparent, and reassuring email that informs customers about the breach while maintaining trust.\n\nI am writing to inform you that there has been a data breach affecting customer information in our system. We discovered this issue yesterday and have already taken steps to secure the system. However, we need to notify all customers immediately.", "response": "Subject: Important Notice Regarding Recent Security Incident\n\nDear Valued Customer,\n\nWe hope this message finds you well. We are writing to inform you about a recent security incident that has impacted our systems and some of the personal information we have on file for our customers.\n\nFirstly, we want to assure you that we take the protection of your data very seriously. As soon as we became aware of this issue, we immediately launched an investigation with the help of leading cybersecurity experts. We also notified law enforcement authorities and are cooperating fully with their investigations.\n\nThe investigation has revealed that an unauthorized third party gained access to our systems between [start date] and [end date]. During this time, they may have obtained some of your personal information, including your name, address, email address, phone number, and potentially your payment card details. We deeply regret any inconvenience or concern this incident may cause you.\n\nWhile we cannot guarantee that no data has been taken, we can assure you that we are taking all necessary steps to prevent further unauthorized access and protect our customers' information. These steps include enhancing our security measures, conducting a thorough review of our internal systems and processes, and working with external cybersecurity firms to ensure the highest level of protection for your data.\n\nWe recommend that you take the following steps to help protect yourself from potential fraud or identity theft:\n\n1. Review your account statements carefully and report any suspicious activity to your bank or financial institution immediately.\n2. Consider placing a fraud alert on your credit file with the major credit bureaus. This will make it more difficult for anyone to open new accounts in your name.\n3. Be vigilant about reviewing your credit reports and monitoring any unusual activity. You can obtain free copies of your credit report from each of the three major credit bureaus once per year at annualcreditreport.com.\n4. If you suspect that your personal information has been used fraudulently, contact your local law enforcement agency and file a police report.\n\nWe will be providing affected customers with one year of complimentary identity protection services through [identity protection service provider]. This service includes credit monitoring, identity theft insurance, and restoration services to help you recover from any potential harm caused by this incident. You will receive an email with instructions on how to activate this service in the coming days.\n\nWe deeply regret that this incident occurred and apologize for any inconvenience or concern it may cause you. Our team is working tirelessly to ensure the security of our systems and protect your personal information. If you have any questions or concerns, please do not hesitate to contact us at [customer support email] or call us at [customer support phone number].\n\nThank you for your continued trust in our company. We remain committed to providing you with excellent service and ensuring the security of your data.\n\nSincerely,\n\n[Your Name]\nCustomer Service Manager", "metric": "email_responsiveness", "evaluator": "llama3.2:latest", "score": 9.0, "rationale": "1. COMPLETENESS OF RESPONSE (30%):\n   - The response addresses all questions or concerns raised, such as informing customers about the data breach and providing necessary information on how to protect themselves.\n   - It acknowledges that the company takes the protection of customer data seriously and has taken steps to secure their systems.\n   - However, it would be beneficial to explicitly state what specific actions have been taken to prevent further unauthorized access."}], "metadata": {"model_name": "mixtral:latest", "num_prompts": 3, "num_metrics": 2, "metrics": ["email_responsiveness", "email_professionalism"], "evaluator_models": ["mistral:latest", "llama3.2:latest"], "combined_from": 2, "dataset_name": "Email Benchmark Remote Demo", "dataset_description": "Demo with 3 email scenarios using remote server", "dataset_stats": {"total_questions": 3, "languages": {"en": 3}, "has_expected_answers": 3, "has_context": 3, "has_instructions": 3, "average_text_length": 224.33333333333334}, "processed_at": "2025-08-10T19:05:27.089921", "data_stats": {"total_evaluations": 12, "unique_questions": 3, "unique_metrics": 2, "unique_evaluators": 2}}};
+        
+        // Tab functionality
+        function showTab(tabName) {
+            // Hide all tab contents
+            document.querySelectorAll('.tab-content').forEach(tab => {
+                tab.classList.remove('active');
+            });
+            
+            // Remove active class from all tab buttons
+            document.querySelectorAll('.tab-button').forEach(button => {
+                button.classList.remove('active');
+            });
+            
+            // Show selected tab
+            document.getElementById(tabName).classList.add('active');
+            
+            // Add active class to clicked button
+            event.target.classList.add('active');
+            
+            // Initialize charts for the active tab
+            setTimeout(() => initializeChartsForTab(tabName), 100);
+        }
+        
+        // Initialize charts based on active tab
+        function initializeChartsForTab(tabName) {
+            switch(tabName) {
+                case 'overview':
+                    initializeOverviewCharts();
+                    break;
+                case 'metrics':
+                    initializeMetricsCharts();
+                    break;
+                case 'questions':
+                    initializeQuestionCharts();
+                    break;
+                case 'evaluators':
+                    initializeEvaluatorCharts();
+                    break;
+            }
+        }
+        
+        // Initialize overview charts
+        function initializeOverviewCharts() {
+            // Metrics Bar Chart
+            const metricsCtx = document.getElementById('metricsBarChart');
+            if (metricsCtx && !metricsCtx.chart) {
+                const metrics = Object.keys(dashboardData.overview.metrics_scores);
+                const scores = Object.values(dashboardData.overview.metrics_scores);
+                
+                metricsCtx.chart = new Chart(metricsCtx, {
+                    type: 'bar',
+                    data: {
+                        labels: metrics,
+                        datasets: [{
+                            label: 'Average Score',
+                            data: scores,
+                            backgroundColor: 'rgba(59, 130, 246, 0.5)',
+                            borderColor: 'rgba(59, 130, 246, 1)',
+                            borderWidth: 1
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        scales: {
+                            y: {
+                                beginAtZero: true,
+                                max: 10
+                            }
+                        }
+                    }
+                });
+            }
+        }
+        
+        // Initialize metrics charts
+        function initializeMetricsCharts() {
+            // Correlation Heatmap
+            initializeCorrelationHeatmap();
+        }
+        
+        // Initialize question charts
+        function initializeQuestionCharts() {
+            // Question Difficulty Chart
+            const difficultyCtx = document.getElementById('difficultyChart');
+            if (difficultyCtx && !difficultyCtx.chart) {
+                const questions = dashboardData.questions.map(q => `Q${q.id}`);
+                const scores = dashboardData.questions.map(q => q.average_score);
+                
+                difficultyCtx.chart = new Chart(difficultyCtx, {
+                    type: 'bar',
+                    data: {
+                        labels: questions,
+                        datasets: [{
+                            label: 'Average Score',
+                            data: scores,
+                            backgroundColor: scores.map(score => {
+                                if (score >= 8) return 'rgba(16, 185, 129, 0.5)';
+                                if (score >= 6) return 'rgba(245, 158, 11, 0.5)';
+                                if (score >= 4) return 'rgba(239, 68, 68, 0.5)';
+                                return 'rgba(124, 45, 18, 0.5)';
+                            }),
+                            borderColor: scores.map(score => {
+                                if (score >= 8) return 'rgba(16, 185, 129, 1)';
+                                if (score >= 6) return 'rgba(245, 158, 11, 1)';
+                                if (score >= 4) return 'rgba(239, 68, 68, 1)';
+                                return 'rgba(124, 45, 18, 1)';
+                            }),
+                            borderWidth: 1
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        scales: {
+                            y: {
+                                beginAtZero: true,
+                                max: 10
+                            }
+                        }
+                    }
+                });
+            }
+            
+            // Question Heatmap
+            initializeQuestionHeatmap();
+        }
+        
+        // Initialize evaluator charts
+        function initializeEvaluatorCharts() {
+            // Check if we have evaluator data
+            if (!dashboardData.evaluators || dashboardData.evaluators.length === 0) {
+                // Show message if no evaluator data
+                const evaluatorCtx = document.getElementById('evaluatorChart');
+                if (evaluatorCtx) {
+                    evaluatorCtx.parentElement.innerHTML = '<p class="text-gray-500 text-center py-8">No evaluator data available</p>';
+                }
+                const agreementCtx = document.getElementById('agreementChart');
+                if (agreementCtx) {
+                    agreementCtx.parentElement.innerHTML = '<p class="text-gray-500 text-center py-8">No agreement data available</p>';
+                }
+                return;
+            }
+            
+            // Evaluator Performance Chart
+            const evaluatorCtx = document.getElementById('evaluatorChart');
+            if (evaluatorCtx && !evaluatorCtx.chart) {
+                const evaluators = dashboardData.evaluators.map(e => e.name);
+                const scores = dashboardData.evaluators.map(e => e.average_score);
+                
+                evaluatorCtx.chart = new Chart(evaluatorCtx, {
+                    type: 'bar',
+                    data: {
+                        labels: evaluators,
+                        datasets: [{
+                            label: 'Average Score',
+                            data: scores,
+                            backgroundColor: 'rgba(147, 51, 234, 0.5)',
+                            borderColor: 'rgba(147, 51, 234, 1)',
+                            borderWidth: 1
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        scales: {
+                            y: {
+                                beginAtZero: true,
+                                max: 10
+                            }
+                        }
+                    }
+                });
+            }
+            
+            // Agreement Chart
+            const agreementCtx = document.getElementById('agreementChart');
+            if (agreementCtx && !agreementCtx.chart) {
+                const evaluators = dashboardData.evaluators.map(e => e.name);
+                const stdDevs = dashboardData.evaluators.map(e => e.std_dev);
+                
+                agreementCtx.chart = new Chart(agreementCtx, {
+                    type: 'bar',
+                    data: {
+                        labels: evaluators,
+                        datasets: [{
+                            label: 'Standard Deviation (Lower = More Agreement)',
+                            data: stdDevs,
+                            backgroundColor: 'rgba(245, 158, 11, 0.5)',
+                            borderColor: 'rgba(245, 158, 11, 1)',
+                            borderWidth: 1
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        scales: {
+                            y: {
+                                beginAtZero: true
+                            }
+                        }
+                    }
+                });
+            }
+        }
+        
+        // Initialize correlation heatmap using D3
+        function initializeCorrelationHeatmap() {
+            const container = d3.select("#correlationHeatmap");
+            if (container.select("svg").empty()) {
+                const correlations = dashboardData.correlations;
+                const metrics = correlations.metrics;
+                const matrix = correlations.matrix;
+                
+                // Calculate required margins based on longest metric name
+                const maxNameLength = Math.max(...metrics.map(m => m.length));
+                const dynamicMargin = Math.max(80, maxNameLength * 6); // 6px per character, minimum 80px
+                
+                const margin = {top: dynamicMargin, right: 50, bottom: dynamicMargin, left: dynamicMargin};
+                const width = 400 - margin.left - margin.right;
+                const height = 400 - margin.top - margin.bottom;
+                
+                const svg = container.append("svg")
+                    .attr("width", width + margin.left + margin.right)
+                    .attr("height", height + margin.top + margin.bottom);
+                
+                const g = svg.append("g")
+                    .attr("transform", `translate(${margin.left},${margin.top})`);
+                
+                const cellSize = Math.min(width, height) / metrics.length;
+                
+                const colorScale = d3.scaleSequential(d3.interpolateRdBu)
+                    .domain([-1, 1]);
+                
+                // Create cells
+                metrics.forEach((metric1, i) => {
+                    metrics.forEach((metric2, j) => {
+                        const corrValue = typeof matrix[metric1][metric2] === 'object' 
+                            ? matrix[metric1][metric2].correlation 
+                            : matrix[metric1][metric2];
+                        
+                        g.append("rect")
+                            .attr("x", j * cellSize)
+                            .attr("y", i * cellSize)
+                            .attr("width", cellSize)
+                            .attr("height", cellSize)
+                            .attr("fill", colorScale(corrValue))
+                            .attr("stroke", "white")
+                            .attr("stroke-width", 1);
+                        
+                        g.append("text")
+                            .attr("x", j * cellSize + cellSize/2)
+                            .attr("y", i * cellSize + cellSize/2)
+                            .attr("text-anchor", "middle")
+                            .attr("dominant-baseline", "middle")
+                            .attr("fill", Math.abs(corrValue) > 0.5 ? "white" : "black")
+                            .attr("font-size", "10px")
+                            .text(corrValue.toFixed(2));
+                    });
+                });
+                
+                // Add row labels with better positioning
+                g.selectAll(".row-label")
+                    .data(metrics)
+                    .enter().append("text")
+                    .attr("class", "row-label")
+                    .attr("x", -15) // More space from the heatmap
+                    .attr("y", (d, i) => i * cellSize + cellSize/2)
+                    .attr("text-anchor", "end")
+                    .attr("dominant-baseline", "middle")
+                    .attr("font-size", "12px")
+                    .text(d => d);
+                
+                // Add column labels with rotation for better readability
+                g.selectAll(".col-label")
+                    .data(metrics)
+                    .enter().append("text")
+                    .attr("class", "col-label")
+                    .attr("x", (d, i) => i * cellSize + cellSize/2)
+                    .attr("y", -15) // More space from the heatmap
+                    .attr("text-anchor", "start") // Changed to start for rotation
+                    .attr("dominant-baseline", "middle")
+                    .attr("font-size", "12px")
+                    .attr("transform", (d, i) => `rotate(-45, ${i * cellSize + cellSize/2}, -15)`) // Rotate 45 degrees
+                    .text(d => d);
+            }
+        }
+        
+        // Initialize question heatmap
+        function initializeQuestionHeatmap() {
+            const container = d3.select("#questionHeatmap");
+            if (container.select("svg").empty() && dashboardData.questions && dashboardData.evaluators) {
+                const questions = dashboardData.questions;
+                const evaluators = dashboardData.evaluators;
+                
+                if (questions.length === 0 || evaluators.length === 0) {
+                    container.append("div")
+                        .style("padding", "20px")
+                        .style("text-align", "center")
+                        .style("color", "#666")
+                        .text("No data available for question-evaluator heatmap");
+                    return;
+                }
+                
+                // Calculate required left margin based on longest evaluator name
+                const maxNameLength = Math.max(...evaluators.map(e => e.name.length));
+                const leftMargin = Math.max(100, maxNameLength * 8); // 8px per character, minimum 100px
+                
+                const margin = {top: 50, right: 50, bottom: 50, left: leftMargin};
+                const width = 500 - margin.left - margin.right;
+                const height = 300 - margin.top - margin.bottom;
+                
+                const svg = container.append("svg")
+                    .attr("width", width + margin.left + margin.right)
+                    .attr("height", height + margin.top + margin.bottom);
+                
+                const g = svg.append("g")
+                    .attr("transform", `translate(${margin.left},${margin.top})`);
+                
+                const cellWidth = width / questions.length;
+                const cellHeight = height / evaluators.length;
+                
+                const colorScale = d3.scaleSequential(d3.interpolateRdYlGn)
+                    .domain([0, 10]);
+                
+                // Create heatmap cells
+                questions.forEach((question, i) => {
+                    evaluators.forEach((evaluator, j) => {
+                        // Use question average score as placeholder
+                        const score = question.average_score;
+                        
+                        g.append("rect")
+                            .attr("x", i * cellWidth)
+                            .attr("y", j * cellHeight)
+                            .attr("width", cellWidth)
+                            .attr("height", cellHeight)
+                            .attr("fill", colorScale(score))
+                            .attr("stroke", "white")
+                            .attr("stroke-width", 1);
+                        
+                        g.append("text")
+                            .attr("x", i * cellWidth + cellWidth/2)
+                            .attr("y", j * cellHeight + cellHeight/2)
+                            .attr("text-anchor", "middle")
+                            .attr("dominant-baseline", "middle")
+                            .attr("fill", score > 5 ? "white" : "black")
+                            .attr("font-size", "10px")
+                            .text(score.toFixed(1));
+                    });
+                });
+                
+                // Add question labels
+                g.selectAll(".question-label")
+                    .data(questions)
+                    .enter().append("text")
+                    .attr("class", "question-label")
+                    .attr("x", (d, i) => i * cellWidth + cellWidth/2)
+                    .attr("y", -10)
+                    .attr("text-anchor", "middle")
+                    .attr("font-size", "10px")
+                    .text((d, i) => `Q${i+1}`);
+                
+                // Add evaluator labels with better positioning
+                g.selectAll(".evaluator-label")
+                    .data(evaluators)
+                    .enter().append("text")
+                    .attr("class", "evaluator-label")
+                    .attr("x", -15) // More space from the heatmap
+                    .attr("y", (d, i) => i * cellHeight + cellHeight/2)
+                    .attr("text-anchor", "end")
+                    .attr("dominant-baseline", "middle")
+                    .attr("font-size", "11px") // Slightly larger font
+                    .text(d => d.name); // Show full name instead of truncated
+            }
+        }
+        
+        // Text expansion functionality
+        function toggleText(element) {
+            const shortText = element.querySelector('.short-text');
+            const fullText = element.querySelector('.full-text');
+            const button = element.querySelector('button');
+            
+            if (fullText.style.display === 'none') {
+                shortText.style.display = 'none';
+                fullText.style.display = 'inline';
+                if (button) button.textContent = 'Show Less';
+            } else {
+                shortText.style.display = 'inline';
+                fullText.style.display = 'none';
+                if (button) button.textContent = 'Show More';
+            }
+        }
+        
+        // Question detail modal functions
+        function showQuestionDetail(questionId) {
+            const modal = document.getElementById('questionModal');
+            const title = document.getElementById('modalTitle');
+            const content = document.getElementById('modalContent');
+            
+            const question = dashboardData.questions.find(q => q.id === questionId);
+            if (!question) return;
+            
+            title.textContent = `Question ${questionId} Details`;
+            
+            content.innerHTML = `
+                <div class="space-y-6">
+                    <div>
+                        <h4 class="text-lg font-medium text-gray-900 mb-2">Question</h4>
+                        <p class="text-gray-700 bg-gray-50 p-4 rounded-lg">${question.full_text}</p>
+                    </div>
+                    
+                    <div>
+                        <h4 class="text-lg font-medium text-gray-900 mb-2">Response</h4>
+                        <p class="text-gray-700 bg-gray-50 p-4 rounded-lg">${question.full_response}</p>
+                    </div>
+                    
+                    <div>
+                        <h4 class="text-lg font-medium text-gray-900 mb-2">Scores by Metric</h4>
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            ${Object.entries(question.metric_scores).map(([metric, score]) => `
+                                <div class="bg-gray-50 p-4 rounded-lg">
+                                    <div class="flex justify-between items-center">
+                                        <span class="font-medium">${metric}</span>
+                                        <span class="text-lg font-bold ${score >= 7 ? 'text-green-600' : score >= 5 ? 'text-yellow-600' : 'text-red-600'}">${score.toFixed(1)}</span>
+                                    </div>
+                                </div>
+                            `).join('')}
+                        </div>
+                    </div>
+                    
+                    <div>
+                        <h4 class="text-lg font-medium text-gray-900 mb-2">Summary</h4>
+                        <div class="bg-gray-50 p-4 rounded-lg">
+                            <p><strong>Difficulty:</strong> <span class="difficulty-${question.difficulty.toLowerCase().replace(' ', '-')}">${question.difficulty}</span></p>
+                            <p><strong>Average Score:</strong> ${question.average_score.toFixed(1)}/10</p>
+                            <p><strong>Metrics Evaluated:</strong> ${question.num_metrics}</p>
+                        </div>
+                    </div>
+                </div>
+            `;
+            
+            modal.classList.remove('hidden');
+        }
+        
+        function closeQuestionModal() {
+            document.getElementById('questionModal').classList.add('hidden');
+        }
+        
+        // Initialize default charts on page load
+        document.addEventListener('DOMContentLoaded', function() {
+            initializeOverviewCharts();
+        });
+        
+        // Close modal when clicking outside
+        document.getElementById('questionModal').addEventListener('click', function(e) {
+            if (e.target === this) {
+                closeQuestionModal();
+            }
+        });
+    </script>
+</body>
+</html>
