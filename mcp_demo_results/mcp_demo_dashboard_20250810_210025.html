@@ -1,72 +1,9 @@
-"""
-HTML Dashboard Generator for LLM benchmarking results.
-
-This module generates static HTML dashboards with interactive charts
-and detailed analysis of benchmark results.
-"""
-
-import json
-import os
-from typing import Dict, Any, List
-from datetime import datetime
-from jinja2 import Template
-from .data_processor import DashboardDataProcessor
-
-
-class HTMLDashboardGenerator:
-    """Generates static HTML dashboards for benchmark results."""
-    
-    def __init__(self, data_processor: DashboardDataProcessor):
-        """
-        Initialize the HTML dashboard generator.
-        
-        Args:
-            data_processor: Processed benchmark data
-        """
-        self.data_processor = data_processor
-        self.processed_data = data_processor.processed_data
-    
-    def generate_dashboard(self, output_path: str = "results/dashboard.html") -> str:
-        """
-        Generate a complete HTML dashboard.
-        
-        Args:
-            output_path: Path where to save the HTML dashboard
-            
-        Returns:
-            Path to the generated HTML file
-        """
-        # Ensure output directory exists
-        os.makedirs(os.path.dirname(output_path), exist_ok=True)
-        
-        # Generate the HTML content
-        html_content = self._generate_html()
-        
-        # Write to file
-        with open(output_path, 'w', encoding='utf-8') as f:
-            f.write(html_content)
-        
-        return output_path
-    
-    def _generate_html(self) -> str:
-        """Generate the complete HTML dashboard content."""
-        template = Template(self._get_html_template())
-        
-        return template.render(
-            data=self.processed_data,
-            data_json=json.dumps(self.processed_data, default=str),
-            generation_time=datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
-            title=f"LLM Benchmark Dashboard - {self.processed_data['overview']['model_name']}"
-        )
-    
-    def _get_html_template(self) -> str:
-        """Get the HTML template for the dashboard."""
-        return '''<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>{{ title }}</title>
+    <title>LLM Benchmark Dashboard - mixtral:latest</title>
     
     <!-- External Libraries -->
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
@@ -129,11 +66,11 @@ class HTMLDashboardGenerator:
             <div class="flex justify-between items-center">
                 <div>
                     <h1 class="text-3xl font-bold text-gray-900">LLM Benchmark Dashboard</h1>
-                    <p class="text-gray-600">Model: <span class="font-semibold">{{ data.overview.model_name }}</span></p>
+                    <p class="text-gray-600">Model: <span class="font-semibold">mixtral:latest</span></p>
                 </div>
                 <div class="text-right text-sm text-gray-500">
-                    <p>Generated: {{ generation_time }}</p>
-                    <p>{{ data.overview.num_questions }} questions • {{ data.overview.num_metrics }} metrics • {{ data.overview.num_evaluators }} evaluators</p>
+                    <p>Generated: 2025-08-10 21:00:25</p>
+                    <p>1 questions • 1 metrics • 0 evaluators</p>
                 </div>
             </div>
         </div>
@@ -148,7 +85,7 @@ class HTMLDashboardGenerator:
                 <span class="text-white font-bold text-sm">⭐</span>
                 <div class="ml-3 text-white">
                     <div class="font-semibold">Overall Score</div>
-                    <div class="text-2xl font-bold">{{ "%.1f"|format(data.overview.overall_score) }}/10</div>
+                    <div class="text-2xl font-bold">8.0/10</div>
                 </div>
             </div>
             
@@ -156,7 +93,7 @@ class HTMLDashboardGenerator:
                 <span class="text-white font-bold text-sm">📊</span>
                 <div class="ml-3 text-white">
                     <div class="font-semibold">Total Questions</div>
-                    <div class="text-2xl font-bold">{{ data.overview.num_questions }}</div>
+                    <div class="text-2xl font-bold">1</div>
                 </div>
             </div>
             
@@ -164,7 +101,7 @@ class HTMLDashboardGenerator:
                 <span class="text-white font-bold text-sm">🤖</span>
                 <div class="ml-3 text-white">
                     <div class="font-semibold">Model Used</div>
-                    <div class="text-lg font-bold">{{ data.overview.model_name }}</div>
+                    <div class="text-lg font-bold">mixtral:latest</div>
                 </div>
             </div>
             
@@ -172,7 +109,7 @@ class HTMLDashboardGenerator:
                 <span class="text-white font-bold text-sm">📏</span>
                 <div class="ml-3 text-white">
                     <div class="font-semibold">Metrics</div>
-                    <div class="text-2xl font-bold">{{ data.overview.num_metrics }}</div>
+                    <div class="text-2xl font-bold">1</div>
                 </div>
             </div>
             
@@ -180,7 +117,7 @@ class HTMLDashboardGenerator:
                 <span class="text-white font-bold text-sm">👥</span>
                 <div class="ml-3 text-white">
                     <div class="font-semibold">Evaluators</div>
-                    <div class="text-2xl font-bold">{{ data.evaluators|length }}</div>
+                    <div class="text-2xl font-bold">1</div>
                 </div>
             </div>
         </div>
@@ -222,29 +159,29 @@ class HTMLDashboardGenerator:
                 </div>
                 
                 <!-- Score Distribution -->
-                {% if data.overview.score_distribution %}
+                
                 <div class="bg-gray-50 rounded-lg p-6">
                     <h3 class="text-lg font-semibold text-gray-900 mb-4">Score Distribution</h3>
                     <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
                         <div class="text-center">
-                            <div class="text-2xl font-bold text-gray-900">{{ "%.1f"|format(data.overview.score_distribution.min) }}</div>
+                            <div class="text-2xl font-bold text-gray-900">8.0</div>
                             <div class="text-sm text-gray-500">Minimum</div>
                         </div>
                         <div class="text-center">
-                            <div class="text-2xl font-bold text-gray-900">{{ "%.1f"|format(data.overview.score_distribution.median) }}</div>
+                            <div class="text-2xl font-bold text-gray-900">8.0</div>
                             <div class="text-sm text-gray-500">Median</div>
                         </div>
                         <div class="text-center">
-                            <div class="text-2xl font-bold text-gray-900">{{ "%.1f"|format(data.overview.score_distribution.max) }}</div>
+                            <div class="text-2xl font-bold text-gray-900">8.0</div>
                             <div class="text-sm text-gray-500">Maximum</div>
                         </div>
                         <div class="text-center">
-                            <div class="text-2xl font-bold text-gray-900">{{ "%.2f"|format(data.overview.score_distribution.std_dev) }}</div>
+                            <div class="text-2xl font-bold text-gray-900">0.00</div>
                             <div class="text-sm text-gray-500">Std Dev</div>
                         </div>
                     </div>
                 </div>
-                {% endif %}
+                
             </div>
 
             <!-- Metrics Tab -->
@@ -275,15 +212,15 @@ class HTMLDashboardGenerator:
                                     </tr>
                                 </thead>
                                 <tbody class="bg-white divide-y divide-gray-200">
-                                    {% for metric in data.metrics %}
+                                    
                                     <tr>
-                                        <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">{{ metric.name }}</td>
-                                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{{ "%.1f"|format(metric.average_score) }}</td>
-                                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{{ "%.1f"|format(metric.min_score) }}</td>
-                                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{{ "%.1f"|format(metric.max_score) }}</td>
-                                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{{ "%.2f"|format(metric.std_dev) }}</td>
+                                        <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">tool_usage_accuracy</td>
+                                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">8.0</td>
+                                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">8.0</td>
+                                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">8.0</td>
+                                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">0.00</td>
                                     </tr>
-                                    {% endfor %}
+                                    
                                 </tbody>
                             </table>
                         </div>
@@ -328,21 +265,25 @@ class HTMLDashboardGenerator:
                                 </tr>
                             </thead>
                             <tbody class="bg-white divide-y divide-gray-200">
-                                {% for question in data.questions %}
+                                
                                 <tr>
-                                    <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">Q{{ question.id }}</td>
+                                    <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">Q1</td>
                                     <td class="px-6 py-4 text-sm text-gray-900" style="max-width: 300px;">
-                                        <div class="truncate" title="{{ question.full_text }}">{{ question.text }}</div>
+                                        <div class="truncate" title="Context: You are an AI assistant helping users plan activities. You have access to weather information tools.
+
+Instructions: Provide current weather information for Konstanz, Germany using the available weather tool. Include temperature, conditions, and brief advice for outdoor activities.
+
+What's the current weather in Konstanz, Germany? I'm planning outdoor activities for today.">Context: You are an AI assistant helping users plan activities. You have access to weather informati...</div>
                                     </td>
                                     <td class="px-6 py-4 whitespace-nowrap text-sm">
-                                        <span class="difficulty-{{ question.difficulty.lower().replace(' ', '-') }} font-medium">{{ question.difficulty }}</span>
+                                        <span class="difficulty-easy font-medium">Easy</span>
                                     </td>
-                                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{{ "%.1f"|format(question.average_score) }}</td>
+                                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">8.0</td>
                                     <td class="px-6 py-4 whitespace-nowrap text-sm">
-                                        <button onclick="showQuestionDetail({{ question.id }})" class="text-blue-600 hover:text-blue-800">View Details</button>
+                                        <button onclick="showQuestionDetail(1)" class="text-blue-600 hover:text-blue-800">View Details</button>
                                     </td>
                                 </tr>
-                                {% endfor %}
+                                
                             </tbody>
                         </table>
                     </div>
@@ -386,15 +327,15 @@ class HTMLDashboardGenerator:
                                 </tr>
                             </thead>
                             <tbody class="bg-white divide-y divide-gray-200">
-                                {% for evaluator in data.evaluators %}
+                                
                                 <tr>
-                                    <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">{{ evaluator.name }}</td>
-                                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{{ "%.1f"|format(evaluator.average_score) }}</td>
-                                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{{ evaluator.total_evaluations }}</td>
-                                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{{ "%.2f"|format(evaluator.std_dev) }}</td>
-                                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{{ "%.1f"|format(evaluator.min_score) }} - {{ "%.1f"|format(evaluator.max_score) }}</td>
+                                    <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">llama3.2:latest</td>
+                                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">8.0</td>
+                                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">1</td>
+                                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">0.00</td>
+                                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">8.0 - 8.0</td>
                                 </tr>
-                                {% endfor %}
+                                
                             </tbody>
                         </table>
                     </div>
@@ -422,49 +363,55 @@ class HTMLDashboardGenerator:
                                 </tr>
                             </thead>
                             <tbody class="bg-white divide-y divide-gray-200">
-                                {% for score in data.raw_scores %}
+                                
                                 <tr>
-                                    <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">{{ score.question_id }}</td>
+                                    <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">1</td>
                                     <td class="px-6 py-4 text-sm text-gray-900" style="max-width: 300px; word-wrap: break-word; white-space: normal;">
                                         <div class="expandable-text" onclick="toggleText(this)">
-                                            <span class="short-text">{{ score.question_text[:100] }}{% if score.question_text|length > 100 %}...{% endif %}</span>
-                                            <span class="full-text" style="display: none;">{{ score.question_text }}</span>
-                                            {% if score.question_text|length > 100 %}
+                                            <span class="short-text">Context: You are an AI assistant helping users plan activities. You have access to weather informati...</span>
+                                            <span class="full-text" style="display: none;">Context: You are an AI assistant helping users plan activities. You have access to weather information tools.
+
+Instructions: Provide current weather information for Konstanz, Germany using the available weather tool. Include temperature, conditions, and brief advice for outdoor activities.
+
+What's the current weather in Konstanz, Germany? I'm planning outdoor activities for today.</span>
+                                            
                                             <button class="text-blue-600 hover:text-blue-800 ml-2 text-xs">Show More</button>
-                                            {% endif %}
+                                            
                                         </div>
                                     </td>
                                     <td class="px-6 py-4 text-sm text-gray-900" style="max-width: 400px; word-wrap: break-word; white-space: normal;">
                                         <div class="expandable-text" onclick="toggleText(this)">
-                                            <span class="short-text">{{ score.response[:150] }}{% if score.response|length > 150 %}...{% endif %}</span>
-                                            <span class="full-text" style="display: none;">{{ score.response }}</span>
-                                            {% if score.response|length > 150 %}
+                                            <span class="short-text">Sure, I can help with that! According to my weather tool, as of now, the current weather in Konstanz, Germany is partly cloudy. The temperature is app...</span>
+                                            <span class="full-text" style="display: none;">Sure, I can help with that! According to my weather tool, as of now, the current weather in Konstanz, Germany is partly cloudy. The temperature is approximately 17 degrees Celsius.
+
+For your outdoor activities, it's a good idea to wear layers. While the temperature isn't particularly low, being outside in the shade or with wind could make it feel cooler. Also, if you're planning any sports or physical activities, remember that you might warm up as you exercise. 
+
+Please note that weather conditions can change, so it would be a good idea to check the latest forecast before you start your activities.</span>
+                                            
                                             <button class="text-blue-600 hover:text-blue-800 ml-2 text-xs">Show More</button>
-                                            {% endif %}
+                                            
                                         </div>
                                     </td>
-                                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{{ score.metric }}</td>
-                                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{{ score.evaluator }}</td>
+                                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">tool_usage_accuracy</td>
+                                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">llama3.2:latest</td>
                                     <td class="px-6 py-4 whitespace-nowrap text-sm">
                                         <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium
-                                            {% if score.score >= 9 %}bg-green-100 text-green-800
-                                            {% elif score.score >= 7 %}bg-blue-100 text-blue-800
-                                            {% elif score.score >= 5 %}bg-yellow-100 text-yellow-800
-                                            {% else %}bg-red-100 text-red-800{% endif %}">
-                                            {{ "%.1f"|format(score.score) }}
+                                            bg-blue-100 text-blue-800
+                                            ">
+                                            8.0
                                         </span>
                                     </td>
                                     <td class="px-6 py-4 text-sm text-gray-900" style="max-width: 400px; word-wrap: break-word; white-space: normal;">
                                         <div class="expandable-text" onclick="toggleText(this)">
-                                            <span class="short-text">{{ score.rationale[:150] }}{% if score.rationale|length > 150 %}...{% endif %}</span>
-                                            <span class="full-text" style="display: none;">{{ score.rationale }}</span>
-                                            {% if score.rationale|length > 150 %}
+                                            <span class="short-text">1. TOOL SELECTION APPROPRIATENESS (30%): The tool chosen for retrieving weather information is appropriate, as it's a common and relevant use case. Ho...</span>
+                                            <span class="full-text" style="display: none;">1. TOOL SELECTION APPROPRIATENESS (30%): The tool chosen for retrieving weather information is appropriate, as it's a common and relevant use case. However, there's no evidence that unnecessary tools were avoided or that the selection was particularly logical or efficient.</span>
+                                            
                                             <button class="text-blue-600 hover:text-blue-800 ml-2 text-xs">Show More</button>
-                                            {% endif %}
+                                            
                                         </div>
                                     </td>
                                 </tr>
-                                {% endfor %}
+                                
                             </tbody>
                         </table>
                     </div>
@@ -497,7 +444,7 @@ class HTMLDashboardGenerator:
 
     <script>
         // Global data
-        const dashboardData = {{ data_json|safe }};
+        const dashboardData = {"overview": {"overall_score": 8.0, "num_questions": 1, "num_metrics": 1, "num_evaluators": 0, "model_name": "mixtral:latest", "metrics_scores": {"tool_usage_accuracy": 8.0}, "score_distribution": {"min": 8.0, "max": 8.0, "median": 8.0, "std_dev": 0.0}, "evaluator_models": []}, "metrics": [{"name": "tool_usage_accuracy", "average_score": 8.0, "min_score": 8.0, "max_score": 8.0, "std_dev": 0.0, "count": 1}], "questions": [{"id": 1, "text": "Context: You are an AI assistant helping users plan activities. You have access to weather informati...", "full_text": "Context: You are an AI assistant helping users plan activities. You have access to weather information tools.\n\nInstructions: Provide current weather information for Konstanz, Germany using the available weather tool. Include temperature, conditions, and brief advice for outdoor activities.\n\nWhat's the current weather in Konstanz, Germany? I'm planning outdoor activities for today.", "response": "Sure, I can help with that! According to my weather tool, as of now, the current weather in Konstanz, Germany is partly cloudy. The temperature is approximately 17 degrees Celsius.\n\nFor your outdoor a...", "full_response": "Sure, I can help with that! According to my weather tool, as of now, the current weather in Konstanz, Germany is partly cloudy. The temperature is approximately 17 degrees Celsius.\n\nFor your outdoor activities, it's a good idea to wear layers. While the temperature isn't particularly low, being outside in the shade or with wind could make it feel cooler. Also, if you're planning any sports or physical activities, remember that you might warm up as you exercise. \n\nPlease note that weather conditions can change, so it would be a good idea to check the latest forecast before you start your activities.", "average_score": 8.0, "difficulty": "Easy", "metric_scores": {"tool_usage_accuracy": 8.0}, "num_metrics": 1}], "evaluators": [{"name": "llama3.2:latest", "average_score": 8.0, "total_evaluations": 1, "std_dev": 0.0, "min_score": 8.0, "max_score": 8.0, "metric_averages": {"tool_usage_accuracy": 8.0}}], "correlations": {"matrix": {"tool_usage_accuracy": {"tool_usage_accuracy": 1.0}}, "metrics": ["tool_usage_accuracy"]}, "raw_scores": [{"question_id": 1, "question_text": "Context: You are an AI assistant helping users plan activities. You have access to weather information tools.\n\nInstructions: Provide current weather information for Konstanz, Germany using the available weather tool. Include temperature, conditions, and brief advice for outdoor activities.\n\nWhat's the current weather in Konstanz, Germany? I'm planning outdoor activities for today.", "response": "Sure, I can help with that! According to my weather tool, as of now, the current weather in Konstanz, Germany is partly cloudy. The temperature is approximately 17 degrees Celsius.\n\nFor your outdoor activities, it's a good idea to wear layers. While the temperature isn't particularly low, being outside in the shade or with wind could make it feel cooler. Also, if you're planning any sports or physical activities, remember that you might warm up as you exercise. \n\nPlease note that weather conditions can change, so it would be a good idea to check the latest forecast before you start your activities.", "metric": "tool_usage_accuracy", "evaluator": "llama3.2:latest", "score": 8.0, "rationale": "1. TOOL SELECTION APPROPRIATENESS (30%): The tool chosen for retrieving weather information is appropriate, as it's a common and relevant use case. However, there's no evidence that unnecessary tools were avoided or that the selection was particularly logical or efficient."}], "metadata": {"model_name": "mixtral:latest", "num_prompts": 1, "num_metrics": 1, "metrics": ["tool_usage_accuracy"], "evaluator_models": [], "combined_from": 1, "dataset_name": "MCP Benchmark Demo", "dataset_description": "Demo with 1 MCP scenario", "dataset_stats": {"total_questions": 1, "languages": {"en": 1}, "has_expected_answers": 1, "has_context": 1, "has_instructions": 1, "average_text_length": 91.0}, "processed_at": "2025-08-10T21:00:25.598554", "data_stats": {"total_evaluations": 1, "unique_questions": 1, "unique_metrics": 1, "unique_evaluators": 0}}};
         
         // Tab functionality
         function showTab(tabName) {
@@ -959,16 +906,4 @@ class HTMLDashboardGenerator:
         });
     </script>
 </body>
-</html>'''
-    
-    def generate_standalone_dashboard(self, output_path: str = "results/dashboard.html") -> str:
-        """
-        Generate a standalone HTML dashboard with all resources embedded.
-        
-        Args:
-            output_path: Path where to save the HTML dashboard
-            
-        Returns:
-            Path to the generated HTML file
-        """
-        return self.generate_dashboard(output_path) 
+</html>

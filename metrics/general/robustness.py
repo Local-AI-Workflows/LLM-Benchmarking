@@ -1,4 +1,4 @@
-from .metric_base import StandardMetric
+from ..metric_base import StandardMetric
 
 
 class RobustnessMetric(StandardMetric):

@@ -224,6 +224,7 @@ class DashboardDataProcessor:
                     raw_data.append({
                         'question_id': i + 1,
                         'question_text': evaluation.prompt,
+                        'response': evaluation.response,  # Add the model response
                         'metric': eval_result.metric_name,
                         'evaluator': individual.model_name,
                         'score': individual.score,

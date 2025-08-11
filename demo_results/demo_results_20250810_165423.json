@@ -1,0 +1,177 @@
+{
+  "prompt_evaluations": [
+    {
+      "prompt": "Context: You are responding as a project manager to a concerned team member about a deadline change.\n\nInstructions: Write a professional, empathetic response that acknowledges the concern, provides clarification, and offers solutions.\n\nDear John, I noticed that the quarterly report deadline was moved from Friday to Wednesday. This is quite concerning as our team has been working towards the Friday deadline. Could you please clarify the reasoning behind this change and if there are any accommodations that can be made?",
+      "response": "Dear John,\n\nI completely understand your concern about the sudden change in the quarterly report deadline, and I appreciate your dedication to meeting our goals on time. I want to assure you that we value your hard work and commitment to delivering high-quality results.\n\nAfter reviewing the changes with our team leads and stakeholders, I was informed that the deadline shift was made due to unforeseen circumstances related to the data collection process. The delay will provide us with an additional 2 days to ensure that the report is thoroughly reviewed, validated, and meets the required standards.\n\nRegarding accommodations, I would like to propose a few options:\n\n1. **Flexible Work Arrangements**: We can work together to adjust your schedule for the next two days to minimize any impact on your personal time.\n2. **Prioritized Tasks**: Our team will focus on delivering critical tasks that meet the new deadline, ensuring that we maintain our quality standards.\n3. **Additional Resources**: If needed, we can allocate additional resources or support staff to help with data collection and report preparation.\n\nPlease know that we are committed to supporting you throughout this process. I would like to schedule a meeting with our team leads to discuss your specific needs and come up with a plan that works best for everyone.\n\nIf there's anything else you'd like to share or discuss, please don't hesitate to reach out. Your input is invaluable in helping us navigate this change.\n\nBest regards,\n[Your Name]",
+      "evaluations": [
+        {
+          "metric_name": "email_professionalism",
+          "score": 1,
+          "rationale": "Evaluation failed: Unexpected error during Ollama generation:",
+          "individual_responses": [
+            {
+              "model_name": "llama3.2:latest",
+              "score": 0.0,
+              "rationale": "Evaluation failed: Unexpected error during Ollama generation:"
+            }
+          ],
+          "metadata": {
+            "model_name": "llama3.2:latest",
+            "metric_description": "Evaluates professionalism, tone, and business appropriateness of email responses",
+            "error": "Unexpected error during Ollama generation: ",
+            "prompt_length": 522,
+            "response_length": 1518,
+            "scale_min": 1,
+            "scale_max": 10,
+            "metric_version": "1.0"
+          }
+        },
+        {
+          "metric_name": "email_responsiveness",
+          "score": 1,
+          "rationale": "Evaluation failed: Unexpected error during Ollama generation:",
+          "individual_responses": [
+            {
+              "model_name": "llama3.2:latest",
+              "score": 0.0,
+              "rationale": "Evaluation failed: Unexpected error during Ollama generation:"
+            }
+          ],
+          "metadata": {
+            "model_name": "llama3.2:latest",
+            "metric_description": "Evaluates how comprehensively and appropriately the response addresses the original message",
+            "error": "Unexpected error during Ollama generation: ",
+            "prompt_length": 522,
+            "response_length": 1518,
+            "scale_min": 1,
+            "scale_max": 10,
+            "metric_version": "1.0"
+          }
+        }
+      ]
+    },
+    {
+      "prompt": "Context: You are responding as a sales representative to a potential customer inquiry.\n\nInstructions: Write a professional response that addresses their interest, asks qualifying questions, and sets up next steps.\n\nHi there, I'm interested in your product but I have some questions about pricing and implementation. Can someone get back to me ASAP? Thanks!",
+      "response": "Thank you for reaching out to us about our product. We're excited to hear that you're interested in learning more about how it can meet your needs.\n\nBefore we dive into pricing and implementation details, could you please tell me a bit more about your current situation and what specific challenges or goals you're trying to address with our product? This will help me better understand your requirements and provide the most relevant information.\n\nAdditionally, would you prefer to discuss pricing over the phone or via email/in-person meeting? We have a dedicated sales team that can answer any questions you may have and provide a customized quote.\n\nWould you be available for a brief call next [insert day/week] at your convenience? I'd be happy to schedule a time that works for you and we can discuss the details further.",
+      "evaluations": [
+        {
+          "metric_name": "email_professionalism",
+          "score": 9.0,
+          "rationale": "1. TONE APPROPRIATENESS (25%):\nThe tone of the email response is professional and respectful, using appropriate language for a business context. The use of phrases such as \"Thank you for reaching out to us\" and \"I'd be happy to schedule a time that works for you\" demonstrates a courteous and empathetic approach.",
+          "individual_responses": [
+            {
+              "model_name": "llama3.2:latest",
+              "score": 9.0,
+              "rationale": "1. TONE APPROPRIATENESS (25%):\nThe tone of the email response is professional and respectful, using appropriate language for a business context. The use of phrases such as \"Thank you for reaching out to us\" and \"I'd be happy to schedule a time that works for you\" demonstrates a courteous and empathetic approach."
+            }
+          ],
+          "metadata": {
+            "model_name": "llama3.2:latest",
+            "metric_description": "Evaluates professionalism, tone, and business appropriateness of email responses",
+            "raw_response": "Score: 9\n\nRationale:\n\n1. TONE APPROPRIATENESS (25%):\nThe tone of the email response is professional and respectful, using appropriate language for a business context. The use of phrases such as \"Thank you for reaching out to us\" and \"I'd be happy to schedule a time that works for you\" demonstrates a courteous and empathetic approach.\n\nExample: \"We're excited to hear that you're interested in learning more about how it can meet your needs.\" shows enthusiasm while maintaining professionalism.\n\n2. ",
+            "prompt_length": 356,
+            "response_length": 827,
+            "scale_min": 1,
+            "scale_max": 10,
+            "metric_version": "1.0"
+          }
+        },
+        {
+          "metric_name": "email_responsiveness",
+          "score": 9.0,
+          "rationale": "1. COMPLETENESS OF RESPONSE (30%):\n   - The response acknowledges all questions or concerns raised by the potential customer (pricing and implementation).\n   - It asks for additional information to better understand their requirements, which helps provide a more customized quote.\n   - However, the prompt does not specifically request details about challenges or goals; it is inferred from the context that this information would be necessary.",
+          "individual_responses": [
+            {
+              "model_name": "llama3.2:latest",
+              "score": 9.0,
+              "rationale": "1. COMPLETENESS OF RESPONSE (30%):\n   - The response acknowledges all questions or concerns raised by the potential customer (pricing and implementation).\n   - It asks for additional information to better understand their requirements, which helps provide a more customized quote.\n   - However, the prompt does not specifically request details about challenges or goals; it is inferred from the context that this information would be necessary."
+            }
+          ],
+          "metadata": {
+            "model_name": "llama3.2:latest",
+            "metric_description": "Evaluates how comprehensively and appropriately the response addresses the original message",
+            "raw_response": "Score: 9\n\nRationale:\n\n1. COMPLETENESS OF RESPONSE (30%):\n   - The response acknowledges all questions or concerns raised by the potential customer (pricing and implementation).\n   - It asks for additional information to better understand their requirements, which helps provide a more customized quote.\n   - However, the prompt does not specifically request details about challenges or goals; it is inferred from the context that this information would be necessary. \n\n2. APPROPRIATENESS OF RESPONSE ",
+            "prompt_length": 356,
+            "response_length": 827,
+            "scale_min": 1,
+            "scale_max": 10,
+            "metric_version": "1.0"
+          }
+        }
+      ]
+    },
+    {
+      "prompt": "Context: You are responding as a customer service manager to draft a customer notification about a data breach.\n\nInstructions: Write a clear, transparent, and reassuring email that informs customers about the breach while maintaining trust.\n\nI am writing to inform you that there has been a data breach affecting customer information in our system. We discovered this issue yesterday and have already taken steps to secure the system. However, we need to notify all customers immediately.",
+      "response": "Subject: Important Notification regarding Data Security\n\nDear Valued Customer,\n\nI am writing to inform you of a data security incident that has affected your information stored within our database. Our dedicated team discovered this issue on [Date] and promptly initiated an investigation. We have taken immediate action to secure the system, implement additional measures to prevent similar incidents in the future, and notify relevant authorities.\n\nPlease be assured that we take the security of your personal data seriously and are committed to protecting it. The incident is being investigated further, and we will provide a full update on our findings as soon as possible.\n\nIn light of this development, we want to assure you of the following measures we have taken:\n\n- Enhanced encryption for all stored data\n- Implementation of additional security protocols to prevent similar incidents\n- Immediate notification to affected customers\n\nWe understand that this news may cause concern, but please rest assured that we are doing everything possible to minimize any potential impact. Our primary focus is on ensuring your information remains secure.\n\nIf you have any questions or concerns regarding the incident, we would like to encourage you to reach out to us at [support email address] or [support phone number]. We are committed to maintaining transparency throughout this process and will keep you updated with any developments.\n\nThank you for entrusting us with your personal information. Your security is our top priority, and we appreciate your understanding as we work through this incident.\n\nSincerely,\n[Your Name]\nCustomer Service Manager\n[Company Name]",
+      "evaluations": [
+        {
+          "metric_name": "email_professionalism",
+          "score": 1,
+          "rationale": "Evaluation failed: Unexpected error during Ollama generation:",
+          "individual_responses": [
+            {
+              "model_name": "llama3.2:latest",
+              "score": 0.0,
+              "rationale": "Evaluation failed: Unexpected error during Ollama generation:"
+            }
+          ],
+          "metadata": {
+            "model_name": "llama3.2:latest",
+            "metric_description": "Evaluates professionalism, tone, and business appropriateness of email responses",
+            "error": "Unexpected error during Ollama generation: ",
+            "prompt_length": 488,
+            "response_length": 1667,
+            "scale_min": 1,
+            "scale_max": 10,
+            "metric_version": "1.0"
+          }
+        },
+        {
+          "metric_name": "email_responsiveness",
+          "score": 1,
+          "rationale": "Evaluation failed: Unexpected error during Ollama generation:",
+          "individual_responses": [
+            {
+              "model_name": "llama3.2:latest",
+              "score": 0.0,
+              "rationale": "Evaluation failed: Unexpected error during Ollama generation:"
+            }
+          ],
+          "metadata": {
+            "model_name": "llama3.2:latest",
+            "metric_description": "Evaluates how comprehensively and appropriately the response addresses the original message",
+            "error": "Unexpected error during Ollama generation: ",
+            "prompt_length": 488,
+            "response_length": 1667,
+            "scale_min": 1,
+            "scale_max": 10,
+            "metric_version": "1.0"
+          }
+        }
+      ]
+    }
+  ],
+  "metadata": {
+    "model_name": "llama3.2:latest",
+    "num_prompts": 3,
+    "num_metrics": 2,
+    "metrics": [
+      "email_professionalism",
+      "email_responsiveness"
+    ],
+    "evaluator_models": [],
+    "combined_from": 2,
+    "dataset_name": "Email Benchmark Demo",
+    "dataset_description": "Demo with 3 email scenarios for testing",
+    "dataset_stats": {
+      "total_questions": 3,
+      "languages": {
+        "en": 3
+      },
+      "has_expected_answers": 3,
+      "has_context": 3,
+      "has_instructions": 3,
+      "average_text_length": 224.33333333333334
+    }
+  }
+}
