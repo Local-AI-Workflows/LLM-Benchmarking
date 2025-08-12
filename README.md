@@ -64,11 +64,3 @@ results = evaluator.run(dataset)
 # Save results
 results.save_to_json_file("results.json")
 ```
-
-## Documentation
-
-Full guides, advanced configuration, and API reference are in the [`docs/`](docs/) folder and the `llm_benchmark.ipynb` notebook:
-- Detailed metric definitions and configuration  
-- Dataset formats and examples  
-- Advanced CLI usage  
-- Model-specific features for OpenAI and Ollama  
