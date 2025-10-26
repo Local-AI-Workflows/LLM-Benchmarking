@@ -39,7 +39,6 @@ pip-delete-this-directory.txt
 *.spec
 
 # Installer logs
-pip-log.txt
 
 # Unit test / coverage reports
 htmlcov/
@@ -87,7 +86,6 @@ Desktop.ini
 
 # IDE
 .idea/
-.vscode/
 *.swp
 *.swo
 
@@ -97,6 +95,8 @@ results/
 *.csv
 *.json
 *.log
+
+!weather_mcp_test_dataset.json
 
 # Environment variables
 .env

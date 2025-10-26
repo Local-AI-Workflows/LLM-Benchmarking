@@ -13,10 +13,16 @@ class InformationRetrievalQualityMetric(StandardMetric):
             evaluation_instructions="""
 Evaluate information retrieval quality on a scale of 1-10, considering:
 
-1. RETRIEVAL COMPLETENESS (25%):
-   - Was all necessary information retrieved?
-   - Were multiple relevant sources consulted when appropriate?
-   - Was the search strategy comprehensive?
+**CRITICAL: If the metadata shows "Tool calls made: 0" and the response does NOT contain specific, 
+current information (just general advice or disclaimers), this is a RETRIEVAL FAILURE. Score must be 1-3.**
+
+**CRITICAL: If the response says to "check a website" or "use an app" instead of providing the 
+information directly through tools, this is a FAILURE. Score must be 1-2.**
+
+1. RETRIEVAL COMPLETENESS (30%):
+   - Was all necessary information actually retrieved?
+   - Were tools used to get current/real-time data when needed?
+   - Was the information complete and sufficient to answer the query?
 
 2. INFORMATION RELEVANCE (25%):
    - Was retrieved information directly relevant to the question?
@@ -25,23 +31,30 @@ Evaluate information retrieval quality on a scale of 1-10, considering:
 
 3. DATA FRESHNESS & ACCURACY (25%):
    - Was current/up-to-date information retrieved when needed?
-   - Were data sources reliable and authoritative?
-   - Was information cross-verified when appropriate?
+   - Were tools actually called to get fresh data?
+   - Is the information specific (e.g., actual temperature) or vague (e.g., "check a website")?
 
-4. SYNTHESIS & INTEGRATION (25%):
+4. SYNTHESIS & INTEGRATION (20%):
    - Was retrieved information well-integrated into the response?
    - Were multiple sources synthesized coherently?
    - Was the final answer comprehensive yet concise?
 
-Rate the overall information retrieval quality from 1 (poor/incomplete retrieval) 
-to 10 (excellent retrieval and integration of relevant, accurate information).
+Rate the overall information retrieval quality from 1 (poor/incomplete retrieval or no retrieval) 
+to 10 (excellent retrieval and integration of relevant, accurate, current information).
+
+**Scoring Guidelines:**
+- Score 1-2: No actual information retrieval, just suggestions to check elsewhere
+- Score 3-4: Minimal retrieval, vague or outdated information
+- Score 5-6: Some information retrieved but incomplete or not well integrated
+- Score 7-8: Good retrieval with current information and decent integration
+- Score 9-10: Excellent retrieval with fresh, accurate data perfectly integrated
 
 Consider:
-- Whether the right information was retrieved
+- Whether ANY information was actually retrieved (not just suggested)
 - How well information was integrated into the response
-- Quality and reliability of the information sources
+- Currency and specificity of the information (exact numbers vs. general advice)
 """,
             scale_min=1,
             scale_max=10,
-            additional_context="Focus on information quality, relevance, and effective integration into responses."
-        ) 
+            additional_context="Focus on information quality, relevance, and effective integration. Heavily penalize responses that don't actually retrieve information when tools are available."
+        )

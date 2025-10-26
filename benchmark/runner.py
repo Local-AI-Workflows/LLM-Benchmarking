@@ -1,4 +1,4 @@
-from typing import List, Dict, Any, Union
+from typing import List, Union
 from models.base_model import BaseLLMModel
 from metrics.evaluator import BaseEvaluator
 from metrics.metric_base import BaseMetric
@@ -50,15 +50,23 @@ class BenchmarkRunner:
         
         # Get responses from the model
         model_responses = {}
+        model_response_objects = {}  # Store full response objects for metadata access
         for question, prompt_string in zip(questions, prompt_strings):
             response = await model.generate(prompt_string)
             # Store responses using the full prompt string as key for metrics compatibility
             model_responses[prompt_string] = response.text
-        
+            model_response_objects[prompt_string] = response  # Store full object for metadata
+
         # Run each metric
         results = []
         for metric in self.metrics:
-            result = await metric.evaluate_batch(prompt_strings, model_responses, self.evaluator)
+            # Pass both text responses and full response objects with metadata
+            result = await metric.evaluate_batch(
+                prompt_strings,
+                model_responses,
+                self.evaluator,
+                response_objects=model_response_objects  # Pass full response objects
+            )
             results.append(result)
         
         # Combine results from all metrics and add dataset information

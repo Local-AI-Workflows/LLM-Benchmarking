@@ -24,7 +24,7 @@ class BaseMetric(ABC):
         self.description = description
     
     @abstractmethod
-    async def evaluate(self, prompt: str, response: str, evaluator: BaseEvaluator) -> EvaluatorResponse:
+    async def evaluate(self, prompt: str, response: str, evaluator: BaseEvaluator, response_obj: Optional[Any] = None) -> EvaluatorResponse:
         """
         Evaluate a single response.
         
@@ -32,7 +32,8 @@ class BaseMetric(ABC):
             prompt: The input prompt
             response: The model's response
             evaluator: The evaluator to use
-            
+            response_obj: Optional full response object with metadata
+
         Returns:
             EvaluatorResponse containing the evaluation results
         """
@@ -42,7 +43,8 @@ class BaseMetric(ABC):
         self, 
         prompts: List[str], 
         responses: Dict[str, str], 
-        evaluator: BaseEvaluator
+        evaluator: BaseEvaluator,
+        response_objects: Optional[Dict[str, Any]] = None
     ) -> BenchmarkResult:
         """
         Evaluate a batch of responses.
@@ -51,7 +53,8 @@ class BaseMetric(ABC):
             prompts: List of prompts
             responses: Dictionary mapping prompts to responses
             evaluator: The evaluator to use
-            
+            response_objects: Optional dictionary mapping prompts to full response objects with metadata
+
         Returns:
             BenchmarkResult containing all evaluations
         """
@@ -62,8 +65,9 @@ class BaseMetric(ABC):
         for i, prompt in enumerate(prompts):
             try:
                 response = responses[prompt]
-                evaluation = await self.evaluate(prompt, response, evaluator)
-                
+                response_obj = response_objects.get(prompt) if response_objects else None
+                evaluation = await self.evaluate(prompt, response, evaluator, response_obj=response_obj)
+
                 prompt_evaluations.append(PromptEvaluation(
                     prompt=prompt,
                     response=response,
@@ -155,8 +159,8 @@ Score: [your score from {self.scale_min} to {self.scale_max}]
 
 Rationale: [your explanation of the score, including specific examples]"""
     
-    def _build_evaluation_prompt(self, prompt: str, response: str) -> str:
-        """Build the complete evaluation prompt."""
+    def _build_evaluation_prompt(self, prompt: str, response: str, response_obj: Optional[Any] = None) -> str:
+        """Build the complete evaluation prompt with optional metadata context."""
         parts = [
             f"You are evaluating {self.name} in a model's response.",
             "",
@@ -168,6 +172,35 @@ Rationale: [your explanation of the score, including specific examples]"""
             ""
         ]
         
+        # Add metadata information if available
+        if response_obj and hasattr(response_obj, 'metadata') and response_obj.metadata:
+            metadata_info = []
+
+            # Check for tool calls
+            if 'tool_calls' in response_obj.metadata:
+                tool_calls = response_obj.metadata['tool_calls']
+                if tool_calls:
+                    metadata_info.append(f"Tool calls made: {len(tool_calls)}")
+                    for i, tc in enumerate(tool_calls, 1):
+                        tool_name = tc.get('name', 'unknown')
+                        tool_params = tc.get('parameters', {})
+                        metadata_info.append(f"  {i}. {tool_name} with parameters: {tool_params}")
+                else:
+                    metadata_info.append("Tool calls made: 0 (No tools were used)")
+            else:
+                metadata_info.append("Tool calls made: 0 (No tools were used)")
+
+            # Check for original response before tool execution
+            if 'original_response' in response_obj.metadata:
+                metadata_info.append(f"Original model response: {response_obj.metadata['original_response'][:200]}...")
+
+            if metadata_info:
+                parts.extend([
+                    "### Response Metadata:",
+                    "\n".join(metadata_info),
+                    ""
+                ])
+
         if self.additional_context:
             parts.extend([
                 "### Additional Context:",
@@ -183,7 +216,7 @@ Rationale: [your explanation of the score, including specific examples]"""
         
         return "\n".join(parts)
     
-    async def evaluate(self, prompt: str, response: str, evaluator: BaseEvaluator) -> EvaluatorResponse:
+    async def evaluate(self, prompt: str, response: str, evaluator: BaseEvaluator, response_obj: Optional[Any] = None) -> EvaluatorResponse:
         """
         Evaluate a response using the standard evaluation pattern.
         
@@ -191,12 +224,13 @@ Rationale: [your explanation of the score, including specific examples]"""
             prompt: The input prompt
             response: The model's response
             evaluator: The evaluator to use
-            
+            response_obj: Optional full response object with metadata
+
         Returns:
             EvaluatorResponse containing the evaluation results
         """
-        eval_prompt = self._build_evaluation_prompt(prompt, response)
-        
+        eval_prompt = self._build_evaluation_prompt(prompt, response, response_obj)
+
         logger.debug(f"Evaluating {self.name} for prompt: {prompt[:50]}...")
         
         try:
@@ -215,6 +249,14 @@ Rationale: [your explanation of the score, including specific examples]"""
                 "metric_version": "1.0"
             })
             
+            # Add tool call information to metadata if available
+            if response_obj and hasattr(response_obj, 'metadata') and 'tool_calls' in response_obj.metadata:
+                eval_response.metadata['tool_calls_made'] = len(response_obj.metadata['tool_calls'])
+                eval_response.metadata['had_tool_calls'] = len(response_obj.metadata['tool_calls']) > 0
+            else:
+                eval_response.metadata['tool_calls_made'] = 0
+                eval_response.metadata['had_tool_calls'] = False
+
             # Validate score is within expected range
             if not (self.scale_min <= eval_response.score <= self.scale_max):
                 logger.warning(

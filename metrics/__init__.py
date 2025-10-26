@@ -16,7 +16,7 @@ from .email import (
 )
 from .mcp import (
     ToolUsageAccuracyMetric, InformationRetrievalQualityMetric,
-    ContextualAwarenessMetric
+    ContextualAwarenessMetric, ToolSelectionEfficiencyMetric
 )
 
 # Base classes and utilities
@@ -47,6 +47,7 @@ __all__ = [
     'ToolUsageAccuracyMetric',
     'InformationRetrievalQualityMetric',
     'ContextualAwarenessMetric',
+    'ToolSelectionEfficiencyMetric',
 
     # Utilities
     'MetricFactory',
@@ -75,6 +76,7 @@ _METRIC_REGISTRY = {
     'tool_usage_accuracy': ToolUsageAccuracyMetric,
     'information_retrieval_quality': InformationRetrievalQualityMetric,
     'contextual_awareness': ContextualAwarenessMetric,
+    'tool_selection_efficiency': ToolSelectionEfficiencyMetric,
 }
 
 def get_all_metrics():
@@ -90,5 +92,5 @@ def get_metrics_by_category():
     return {
         'general': ['relevance', 'hallucinations', 'fairness', 'robustness', 'bias', 'toxicity'],
         'email': ['email_professionalism', 'email_responsiveness', 'email_clarity', 'email_empathy'],
-        'mcp': ['tool_usage_accuracy', 'information_retrieval_quality', 'contextual_awareness']
-    } 
+        'mcp': ['tool_usage_accuracy', 'information_retrieval_quality', 'contextual_awareness', 'tool_selection_efficiency']
+    }
