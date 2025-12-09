@@ -10,12 +10,21 @@ import traceback
 
 from database.connection import Database
 from database.repository import BenchmarkRepository
-from database.models import BenchmarkDocument, BenchmarkStatus
+from database.metric_repository import MetricRepository
+from database.dataset_repository import DatasetRepository
+from database.models import (
+    BenchmarkDocument, BenchmarkStatus, MetricDocument, 
+    DatasetDocument, MetricType
+)
 from metrics.responses import BenchmarkResult
 from benchmark.runner import BenchmarkRunner
-from metrics import MetricFactory, EvaluatorFactory
+from metrics import EvaluatorFactory
+from metrics.metric_factory import MetricFactory
 from models.ollama_model import OllamaModel, OllamaConfig
+from models.ollama_mcp_model import OllamaWithMCPModel, OllamaMCPConfig, MCPServerConfig
 from dataset import DatasetLoader, Dataset
+from dataset.question import Question
+import importlib
 
 logger = logging.getLogger(__name__)
 
@@ -30,8 +39,10 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-# Initialize repository
+# Initialize repositories
 repository = BenchmarkRepository()
+metric_repository = MetricRepository()
+dataset_repository = DatasetRepository()
 
 
 @app.on_event("startup")
@@ -47,13 +58,30 @@ async def shutdown_event():
 
 
 # Request/Response models
+class MCPServerConfigRequest(BaseModel):
+    """MCP server configuration."""
+    name: str
+    url: str
+    description: Optional[str] = None
+    available_tools: List[str] = []
+
+
+class EvaluatorModelConfig(BaseModel):
+    """Configuration for an evaluator model."""
+    model_name: str
+    base_url: Optional[str] = None
+
+
 class BenchmarkCreateRequest(BaseModel):
     """Request model for creating a new benchmark."""
     model_name: str = "llama3.2:latest"
-    dataset_file: Optional[str] = None
-    dataset_format: Optional[str] = None
-    metrics: Optional[List[str]] = None
-    evaluator_models: Optional[List[str]] = None
+    model_base_url: Optional[str] = None  # Base URL for test model
+    dataset_id: Optional[str] = None  # Use dataset from database
+    metric_type: str = "standard"  # "standard" or "mcp"
+    metric_ids: List[str] = []  # Metric IDs from database
+    evaluator_models: Optional[List[EvaluatorModelConfig]] = None  # Evaluator models with base URLs
+    # MCP-specific
+    mcp_tools: Optional[List[MCPServerConfigRequest]] = None
 
 
 class BenchmarkResponse(BaseModel):
@@ -109,42 +137,119 @@ def benchmark_doc_to_response(doc: BenchmarkDocument) -> BenchmarkResponse:
     )
 
 
+def load_metric_from_db(metric_doc: MetricDocument):
+    """Load a metric instance from database document, using stored configuration."""
+    if not metric_doc.class_path:
+        raise ValueError(f"Metric {metric_doc.name} has no class_path configured. Cannot load metric.")
+    
+    try:
+        module_path, class_name = metric_doc.class_path.rsplit('.', 1)
+        module = importlib.import_module(module_path)
+        metric_class = getattr(module, class_name)
+        
+        # Check if it's a StandardMetric that accepts configuration
+        from metrics.metric_base import StandardMetric
+        if issubclass(metric_class, StandardMetric):
+            # Create metric with configuration from database
+            return metric_class(
+                name=metric_doc.name,
+                description=metric_doc.description,
+                evaluation_instructions=metric_doc.evaluation_instructions or "",
+                scale_min=metric_doc.scale_min,
+                scale_max=metric_doc.scale_max,
+                custom_format=metric_doc.custom_format,
+                additional_context=metric_doc.additional_context
+            )
+        else:
+            # For non-StandardMetric classes, use default initialization
+            return metric_class()
+    except Exception as e:
+        raise ValueError(f"Failed to load metric {metric_doc.name} from class_path {metric_doc.class_path}: {e}")
+
+
 async def run_benchmark_task(benchmark_id: str, request: BenchmarkCreateRequest):
     """Background task to run a benchmark."""
     try:
         # Update status to running
         await repository.update_status(benchmark_id, BenchmarkStatus.RUNNING)
         
-        # Load dataset
+        # Load dataset from database
         dataset = None
-        if request.dataset_file:
-            if request.dataset_format:
-                if request.dataset_format == 'json':
-                    dataset = DatasetLoader.from_json_file(request.dataset_file)
-                elif request.dataset_format == 'csv':
-                    dataset = DatasetLoader.from_csv_file(request.dataset_file)
-                elif request.dataset_format == 'yaml':
-                    dataset = DatasetLoader.from_yaml_file(request.dataset_file)
-                elif request.dataset_format == 'txt':
-                    dataset = DatasetLoader.from_text_file(request.dataset_file)
-            else:
-                dataset = DatasetLoader.load_from_file(request.dataset_file)
+        if request.dataset_id:
+            dataset_doc = await dataset_repository.get_by_id(request.dataset_id)
+            if not dataset_doc:
+                raise ValueError(f"Dataset not found: {request.dataset_id}")
+            if not dataset_doc.enabled:
+                raise ValueError(f"Dataset is disabled: {request.dataset_id}")
+            
+            # Convert dataset document to Dataset object
+            questions = [Question.from_dict(q_dict) for q_dict in dataset_doc.questions]
+            dataset = Dataset(
+                questions=questions,
+                name=dataset_doc.name,
+                description=dataset_doc.description
+            )
+            dataset.metadata = dataset_doc.metadata
         else:
-            # Use default dataset
-            from run_benchmark import create_default_dataset
-            dataset = create_default_dataset()
+            # Use first available dataset
+            datasets = await dataset_repository.get_all(enabled_only=True, limit=1)
+            if datasets:
+                dataset_doc = datasets[0]
+                questions = [Question.from_dict(q_dict) for q_dict in dataset_doc.questions]
+                dataset = Dataset(
+                    questions=questions,
+                    name=dataset_doc.name,
+                    description=dataset_doc.description
+                )
+                dataset.metadata = dataset_doc.metadata
+            else:
+                raise ValueError("No datasets available in database")
         
-        # Update dataset name
-        await repository.update(benchmark_id, {"dataset_name": dataset.name})
+        # Update dataset name and ID
+        await repository.update(benchmark_id, {
+            "dataset_name": dataset.name,
+            "dataset_id": request.dataset_id
+        })
         
-        # Initialize model
-        test_model = OllamaModel(config=OllamaConfig(model_name=request.model_name))
+        # Initialize model (with MCP support if needed)
+        test_model = None
+        if request.metric_type == "mcp" and request.mcp_tools:
+            # Create MCP server configs
+            mcp_servers = [
+                MCPServerConfig(
+                    name=server.name,
+                    url=server.url,
+                    description=server.description or "",
+                    available_tools=server.available_tools
+                )
+                for server in request.mcp_tools
+            ]
+            
+            mcp_config = OllamaMCPConfig(
+                model_name=request.model_name,
+                base_url=request.model_base_url,
+                temperature=0.7,
+                timeout=300.0,
+                num_ctx=8192,
+                mcp_servers=mcp_servers,
+                max_tool_calls=5,
+                tool_call_timeout=30.0
+            )
+            test_model = OllamaWithMCPModel(config=mcp_config)
+        else:
+            test_model = OllamaModel(config=OllamaConfig(
+                model_name=request.model_name,
+                base_url=request.model_base_url
+            ))
         
         # Initialize evaluator models
         if request.evaluator_models:
             evaluator_models = [
-                OllamaModel(config=OllamaConfig(model_name=name))
-                for name in request.evaluator_models
+                OllamaModel(config=OllamaConfig(
+                    model_name=eval_config.model_name,
+                    base_url=eval_config.base_url
+                ))
+                for eval_config in request.evaluator_models
             ]
         else:
             evaluator_models = [
@@ -156,19 +261,54 @@ async def run_benchmark_task(benchmark_id: str, request: BenchmarkCreateRequest)
         evaluator = EvaluatorFactory.create_evaluator(evaluator_models)
         evaluator_model_names = [m.model_name for m in evaluator_models]
         
-        # Initialize metrics
-        if request.metrics:
-            metrics = MetricFactory.create_metrics_by_names(request.metrics)
-        else:
-            metrics = MetricFactory.create_all_metrics()
+        # Load metrics from database
+        metrics = []
+        metric_names = []
+        metric_ids = []
         
-        metric_names = [metric.name for metric in metrics]
+        if request.metric_ids:
+            for metric_id in request.metric_ids:
+                metric_doc = await metric_repository.get_by_id(metric_id)
+                if not metric_doc:
+                    raise ValueError(f"Metric not found: {metric_id}")
+                if not metric_doc.enabled:
+                    logger.warning(f"Metric {metric_doc.name} is disabled, skipping")
+                    continue
+                if metric_doc.type != request.metric_type:
+                    logger.warning(f"Metric {metric_doc.name} type mismatch, skipping")
+                    continue
+                
+                metric = load_metric_from_db(metric_doc)
+                metrics.append(metric)
+                metric_names.append(metric_doc.name)
+                metric_ids.append(metric_id)
+        else:
+            # Load all enabled metrics of the specified type
+            metric_docs = await metric_repository.get_all(
+                metric_type=request.metric_type,
+                enabled_only=True
+            )
+            for metric_doc in metric_docs:
+                metric = load_metric_from_db(metric_doc)
+                metrics.append(metric)
+                metric_names.append(metric_doc.name)
+                metric_ids.append(str(metric_doc.id))
+        
+        if not metrics:
+            raise ValueError(f"No enabled {request.metric_type} metrics found")
         
         # Update benchmark with configuration
+        mcp_tools_dict = None
+        if request.mcp_tools:
+            mcp_tools_dict = [tool.model_dump() for tool in request.mcp_tools]
+        
         await repository.update(benchmark_id, {
             "model_name": request.model_name,
             "metrics": metric_names,
-            "evaluator_models": evaluator_model_names
+            "metric_ids": metric_ids,
+            "metric_type": request.metric_type,
+            "evaluator_models": evaluator_model_names,
+            "mcp_tools": mcp_tools_dict
         })
         
         # Run benchmark
@@ -203,12 +343,45 @@ async def create_benchmark(
     background_tasks: BackgroundTasks
 ):
     """Create and start a new benchmark."""
+    # Validate metric type
+    if request.metric_type not in [MetricType.STANDARD, MetricType.MCP]:
+        raise HTTPException(status_code=400, detail="metric_type must be 'standard' or 'mcp'")
+    
+    # Validate dataset exists if provided
+    if request.dataset_id:
+        dataset = await dataset_repository.get_by_id(request.dataset_id)
+        if not dataset:
+            raise HTTPException(status_code=404, detail=f"Dataset not found: {request.dataset_id}")
+        if not dataset.enabled:
+            raise HTTPException(status_code=400, detail=f"Dataset is disabled: {request.dataset_id}")
+    
+    # Validate metrics exist if provided
+    if request.metric_ids:
+        for metric_id in request.metric_ids:
+            metric = await metric_repository.get_by_id(metric_id)
+            if not metric:
+                raise HTTPException(status_code=404, detail=f"Metric not found: {metric_id}")
+            if not metric.enabled:
+                raise HTTPException(status_code=400, detail=f"Metric is disabled: {metric_id}")
+            if metric.type != request.metric_type:
+                raise HTTPException(
+                    status_code=400, 
+                    detail=f"Metric {metric.name} type mismatch: expected {request.metric_type}, got {metric.type}"
+                )
+    
     # Create benchmark document
+    mcp_tools_dict = None
+    if request.mcp_tools:
+        mcp_tools_dict = [tool.dict() for tool in request.mcp_tools]
+    
     benchmark = BenchmarkDocument(
         status=BenchmarkStatus.PENDING,
         model_name=request.model_name,
-        metrics=request.metrics or [],
-        evaluator_models=request.evaluator_models or []
+        dataset_id=request.dataset_id,
+        metric_type=request.metric_type,
+        metric_ids=request.metric_ids,
+        evaluator_models=request.evaluator_models or [],
+        mcp_tools=mcp_tools_dict
     )
     
     # Save to database
@@ -246,10 +419,17 @@ async def list_benchmarks(
 @app.get("/api/benchmarks/{benchmark_id}", response_model=BenchmarkResponse)
 async def get_benchmark(benchmark_id: str):
     """Get a specific benchmark by ID."""
-    benchmark = await repository.get_by_id(benchmark_id)
-    if not benchmark:
-        raise HTTPException(status_code=404, detail="Benchmark not found")
-    return benchmark_doc_to_response(benchmark)
+    try:
+        benchmark = await repository.get_by_id(benchmark_id)
+        if not benchmark:
+            logger.warning(f"Benchmark not found: {benchmark_id}")
+            raise HTTPException(status_code=404, detail=f"Benchmark not found: {benchmark_id}")
+        return benchmark_doc_to_response(benchmark)
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Error retrieving benchmark {benchmark_id}: {e}", exc_info=True)
+        raise HTTPException(status_code=500, detail=f"Error retrieving benchmark: {str(e)}")
 
 
 @app.get("/api/benchmarks/{benchmark_id}/status", response_model=Dict[str, Any])
@@ -301,18 +481,354 @@ async def delete_benchmark(benchmark_id: str):
     return None
 
 
-@app.get("/api/metrics", response_model=List[Dict[str, str]])
-async def list_available_metrics():
-    """List all available metrics."""
-    metrics = MetricFactory.list_available_metrics()
-    result = []
-    for metric_name in metrics:
-        metric_class = MetricFactory.create_metric(metric_name)
-        result.append({
-            "name": metric_name,
-            "description": metric_class.description
-        })
-    return result
+# Metrics endpoints
+class MetricCreateRequest(BaseModel):
+    """Request model for creating a metric."""
+    name: str
+    type: str  # "standard" or "mcp"
+    description: str = ""
+    enabled: bool = True
+    metadata: Dict[str, Any] = {}
+    # Metric configuration
+    evaluation_instructions: str = ""
+    scale_min: int = 0
+    scale_max: int = 10
+    custom_format: Optional[str] = None
+    additional_context: Optional[str] = None
+    # Note: class_path is auto-generated from name/type, not user-editable
+
+
+class MetricUpdateRequest(BaseModel):
+    """Request model for updating a metric."""
+    description: Optional[str] = None
+    enabled: Optional[bool] = None
+    metadata: Optional[Dict[str, Any]] = None
+    # Metric configuration
+    evaluation_instructions: Optional[str] = None
+    scale_min: Optional[int] = None
+    scale_max: Optional[int] = None
+    custom_format: Optional[str] = None
+    additional_context: Optional[str] = None
+    # Note: name and class_path cannot be changed after creation
+
+
+class MetricResponse(BaseModel):
+    """Response model for metric data."""
+    id: str
+    name: str
+    type: str
+    description: str
+    class_path: Optional[str] = None
+    enabled: bool
+    created_at: str
+    updated_at: str
+    metadata: Dict[str, Any] = {}
+    # Metric configuration
+    evaluation_instructions: str = ""
+    scale_min: int = 0
+    scale_max: int = 10
+    custom_format: Optional[str] = None
+    additional_context: Optional[str] = None
+
+
+def metric_doc_to_response(doc: MetricDocument) -> MetricResponse:
+    """Convert MetricDocument to MetricResponse."""
+    return MetricResponse(
+        id=str(doc.id),
+        name=doc.name,
+        type=doc.type,
+        description=doc.description,
+        class_path=doc.class_path,
+        enabled=doc.enabled,
+        created_at=doc.created_at.isoformat(),
+        updated_at=doc.updated_at.isoformat(),
+        metadata=doc.metadata,
+        evaluation_instructions=doc.evaluation_instructions,
+        scale_min=doc.scale_min,
+        scale_max=doc.scale_max,
+        custom_format=doc.custom_format,
+        additional_context=doc.additional_context
+    )
+
+
+@app.get("/api/metrics", response_model=List[MetricResponse])
+async def list_metrics(
+    metric_type: Optional[str] = None,
+    enabled_only: bool = False
+):
+    """List all metrics."""
+    metrics = await metric_repository.get_all(
+        metric_type=metric_type,
+        enabled_only=enabled_only
+    )
+    return [metric_doc_to_response(m) for m in metrics]
+
+
+@app.get("/api/metrics/{metric_id}", response_model=MetricResponse)
+async def get_metric(metric_id: str):
+    """Get a specific metric by ID."""
+    metric = await metric_repository.get_by_id(metric_id)
+    if not metric:
+        raise HTTPException(status_code=404, detail="Metric not found")
+    return metric_doc_to_response(metric)
+
+
+def get_class_path_for_metric(name: str, metric_type: str) -> Optional[str]:
+    """Get class path for a metric based on name and type."""
+    # Map of metric names to their class paths
+    metric_class_paths = {
+        # Standard metrics
+        'relevance': 'metrics.general.relevance.RelevanceMetric',
+        'hallucinations': 'metrics.general.hallucinations.HallucinationsMetric',
+        'fairness': 'metrics.general.fairness.FairnessMetric',
+        'robustness': 'metrics.general.robustness.RobustnessMetric',
+        'bias': 'metrics.general.bias.BiasMetric',
+        'toxicity': 'metrics.general.toxicity.ToxicityMetric',
+        'email_professionalism': 'metrics.email.email_professionalism.EmailProfessionalismMetric',
+        'email_responsiveness': 'metrics.email.email_responsiveness.EmailResponsivenessMetric',
+        'email_clarity': 'metrics.email.email_clarity.EmailClarityMetric',
+        'email_empathy': 'metrics.email.email_empathy.EmailEmpathyMetric',
+        # MCP metrics
+        'tool_usage_accuracy': 'metrics.mcp.tool_usage_accuracy.ToolUsageAccuracyMetric',
+        'information_retrieval_quality': 'metrics.mcp.information_retrieval_quality.InformationRetrievalQualityMetric',
+        'contextual_awareness': 'metrics.mcp.contextual_awareness.ContextualAwarenessMetric',
+        'tool_selection_efficiency': 'metrics.mcp.tool_selection_efficiency.ToolSelectionEfficiencyMetric',
+    }
+    return metric_class_paths.get(name)
+
+
+@app.post("/api/metrics", response_model=MetricResponse, status_code=201)
+async def create_metric(request: MetricCreateRequest):
+    """Create a new metric."""
+    if request.type not in [MetricType.STANDARD, MetricType.MCP]:
+        raise HTTPException(status_code=400, detail="Type must be 'standard' or 'mcp'")
+    
+    # Check if name already exists
+    existing = await metric_repository.get_by_name(request.name)
+    if existing:
+        raise HTTPException(status_code=400, detail="Metric with this name already exists")
+    
+    # Auto-generate class_path based on name
+    class_path = get_class_path_for_metric(request.name, request.type)
+    if not class_path:
+        raise HTTPException(
+            status_code=400, 
+            detail=f"Cannot determine class_path for metric '{request.name}'. Only predefined metrics can be added."
+        )
+    
+    # If evaluation_instructions is empty, try to extract from default metric instance
+    metric_data = request.model_dump()
+    metric_data['class_path'] = class_path
+    
+    # If no evaluation_instructions provided, try to get defaults from metric class
+    if not metric_data.get('evaluation_instructions'):
+        try:
+            metric_instance = MetricFactory.create_metric(request.name)
+            if not metric_data.get('evaluation_instructions'):
+                metric_data['evaluation_instructions'] = getattr(metric_instance, 'evaluation_instructions', '')
+            if metric_data.get('scale_min') == 0 and metric_data.get('scale_max') == 10:
+                metric_data['scale_min'] = getattr(metric_instance, 'scale_min', 0)
+                metric_data['scale_max'] = getattr(metric_instance, 'scale_max', 10)
+            if not metric_data.get('custom_format'):
+                metric_data['custom_format'] = getattr(metric_instance, 'custom_format', None)
+            if not metric_data.get('additional_context'):
+                metric_data['additional_context'] = getattr(metric_instance, 'additional_context', None)
+        except Exception as e:
+            logger.warning(f"Could not extract default config for {request.name}: {e}")
+    
+    metric = MetricDocument(**metric_data)
+    metric_id = await metric_repository.create(metric)
+    
+    created_metric = await metric_repository.get_by_id(metric_id)
+    if not created_metric:
+        raise HTTPException(status_code=500, detail="Failed to create metric")
+    
+    return metric_doc_to_response(created_metric)
+
+
+@app.put("/api/metrics/{metric_id}", response_model=MetricResponse)
+async def update_metric(metric_id: str, request: MetricUpdateRequest):
+    """Update a metric."""
+    updates = request.model_dump(exclude_none=True)
+    if not updates:
+        raise HTTPException(status_code=400, detail="No fields to update")
+    
+    success = await metric_repository.update(metric_id, updates)
+    if not success:
+        raise HTTPException(status_code=404, detail="Metric not found")
+    
+    updated_metric = await metric_repository.get_by_id(metric_id)
+    return metric_doc_to_response(updated_metric)
+
+
+@app.delete("/api/metrics/{metric_id}", status_code=204)
+async def delete_metric(metric_id: str):
+    """Delete a metric."""
+    success = await metric_repository.delete(metric_id)
+    if not success:
+        raise HTTPException(status_code=404, detail="Metric not found")
+    return None
+
+
+# Dataset endpoints
+class DatasetCreateRequest(BaseModel):
+    """Request model for creating a dataset."""
+    name: str
+    description: str = ""
+    questions: List[Dict[str, Any]] = []
+    enabled: bool = True
+    metadata: Dict[str, Any] = {}
+
+
+class DatasetUpdateRequest(BaseModel):
+    """Request model for updating a dataset."""
+    name: Optional[str] = None
+    description: Optional[str] = None
+    questions: Optional[List[Dict[str, Any]]] = None
+    enabled: Optional[bool] = None
+    metadata: Optional[Dict[str, Any]] = None
+
+
+class DatasetResponse(BaseModel):
+    """Response model for dataset data."""
+    id: str
+    name: str
+    description: str
+    questions: List[Dict[str, Any]] = []
+    enabled: bool
+    created_at: str
+    updated_at: str
+    metadata: Dict[str, Any] = {}
+
+
+def dataset_doc_to_response(doc: DatasetDocument) -> DatasetResponse:
+    """Convert DatasetDocument to DatasetResponse."""
+    return DatasetResponse(
+        id=str(doc.id),
+        name=doc.name,
+        description=doc.description,
+        questions=doc.questions,
+        enabled=doc.enabled,
+        created_at=doc.created_at.isoformat(),
+        updated_at=doc.updated_at.isoformat(),
+        metadata=doc.metadata
+    )
+
+
+@app.get("/api/datasets", response_model=List[DatasetResponse])
+async def list_datasets(enabled_only: bool = False):
+    """List all datasets."""
+    datasets = await dataset_repository.get_all(enabled_only=enabled_only)
+    return [dataset_doc_to_response(d) for d in datasets]
+
+
+@app.get("/api/datasets/{dataset_id}", response_model=DatasetResponse)
+async def get_dataset(dataset_id: str):
+    """Get a specific dataset by ID."""
+    dataset = await dataset_repository.get_by_id(dataset_id)
+    if not dataset:
+        raise HTTPException(status_code=404, detail="Dataset not found")
+    return dataset_doc_to_response(dataset)
+
+
+@app.post("/api/datasets", response_model=DatasetResponse, status_code=201)
+async def create_dataset(request: DatasetCreateRequest):
+    """Create a new dataset."""
+    # Check if name already exists
+    existing = await dataset_repository.get_by_name(request.name)
+    if existing:
+        raise HTTPException(status_code=400, detail="Dataset with this name already exists")
+    
+    dataset = DatasetDocument(**request.model_dump())
+    dataset_id = await dataset_repository.create(dataset)
+    
+    created_dataset = await dataset_repository.get_by_id(dataset_id)
+    if not created_dataset:
+        raise HTTPException(status_code=500, detail="Failed to create dataset")
+    
+    return dataset_doc_to_response(created_dataset)
+
+
+class DatasetImportRequest(BaseModel):
+    """Request model for importing a dataset."""
+    file_content: str
+    file_format: str = "json"
+    name: Optional[str] = None
+
+
+@app.post("/api/datasets/import", response_model=DatasetResponse, status_code=201)
+async def import_dataset(request: DatasetImportRequest):
+    """Import a dataset from file content."""
+    import tempfile
+    import os
+    
+    # Create temporary file
+    with tempfile.NamedTemporaryFile(mode='w', suffix=f'.{request.file_format}', delete=False) as f:
+        f.write(request.file_content)
+        temp_path = f.name
+    
+    try:
+        # Load dataset
+        if request.file_format == 'json':
+            dataset = DatasetLoader.from_json_file(temp_path)
+        elif request.file_format == 'csv':
+            dataset = DatasetLoader.from_csv_file(temp_path)
+        elif request.file_format == 'yaml':
+            dataset = DatasetLoader.from_yaml_file(temp_path)
+        elif request.file_format == 'txt':
+            dataset = DatasetLoader.from_text_file(temp_path)
+        else:
+            raise HTTPException(status_code=400, detail=f"Unsupported format: {request.file_format}")
+        
+        # Use provided name or dataset name
+        dataset_name = request.name or dataset.name
+        
+        # Check if name already exists
+        existing = await dataset_repository.get_by_name(dataset_name)
+        if existing:
+            raise HTTPException(status_code=400, detail="Dataset with this name already exists")
+        
+        # Create dataset document
+        dataset_doc = DatasetDocument(
+            name=dataset_name,
+            description=dataset.description,
+            questions=[q.to_dict() for q in dataset.questions],
+            enabled=True,
+            metadata=dataset.metadata
+        )
+        
+        dataset_id = await dataset_repository.create(dataset_doc)
+        created_dataset = await dataset_repository.get_by_id(dataset_id)
+        
+        return dataset_doc_to_response(created_dataset)
+    finally:
+        # Clean up temp file
+        if os.path.exists(temp_path):
+            os.unlink(temp_path)
+
+
+@app.put("/api/datasets/{dataset_id}", response_model=DatasetResponse)
+async def update_dataset(dataset_id: str, request: DatasetUpdateRequest):
+    """Update a dataset."""
+    updates = request.model_dump(exclude_none=True)
+    if not updates:
+        raise HTTPException(status_code=400, detail="No fields to update")
+    
+    success = await dataset_repository.update(dataset_id, updates)
+    if not success:
+        raise HTTPException(status_code=404, detail="Dataset not found")
+    
+    updated_dataset = await dataset_repository.get_by_id(dataset_id)
+    return dataset_doc_to_response(updated_dataset)
+
+
+@app.delete("/api/datasets/{dataset_id}", status_code=204)
+async def delete_dataset(dataset_id: str):
+    """Delete a dataset."""
+    success = await dataset_repository.delete(dataset_id)
+    if not success:
+        raise HTTPException(status_code=404, detail="Dataset not found")
+    return None
 
 
 @app.get("/health")

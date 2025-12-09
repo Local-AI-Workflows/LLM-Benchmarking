@@ -1,191 +1,259 @@
 <template>
   <div>
-    <div v-if="!resultData" class="loading">No result data available</div>
+    <v-card v-if="!resultData" class="pa-4">
+      <v-alert type="info">No result data available</v-alert>
+    </v-card>
     
     <div v-else>
       <!-- Overview Stats -->
-      <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 20px; margin-bottom: 30px;">
-        <div class="stat-card">
-          <h3>Overall Score</h3>
-          <div class="stat-value">{{ overallScore.toFixed(1) }}/10</div>
-        </div>
-        <div class="stat-card">
-          <h3>Questions</h3>
-          <div class="stat-value">{{ numQuestions }}</div>
-        </div>
-        <div class="stat-card">
-          <h3>Metrics</h3>
-          <div class="stat-value">{{ numMetrics }}</div>
-        </div>
-        <div class="stat-card">
-          <h3>Evaluators</h3>
-          <div class="stat-value">{{ numEvaluators }}</div>
-        </div>
-      </div>
+      <v-row class="mb-4">
+        <v-col cols="12" sm="6" md="3">
+          <v-card color="primary" variant="flat">
+            <v-card-text>
+              <div class="text-h6 text-white">Overall Score</div>
+              <div class="text-h3 text-white font-weight-bold">{{ overallScore.toFixed(1) }}/10</div>
+            </v-card-text>
+          </v-card>
+        </v-col>
+        <v-col cols="12" sm="6" md="3">
+          <v-card color="success" variant="flat">
+            <v-card-text>
+              <div class="text-h6 text-white">Questions</div>
+              <div class="text-h3 text-white font-weight-bold">{{ numQuestions }}</div>
+            </v-card-text>
+          </v-card>
+        </v-col>
+        <v-col cols="12" sm="6" md="3">
+          <v-card color="info" variant="flat">
+            <v-card-text>
+              <div class="text-h6 text-white">Metrics</div>
+              <div class="text-h3 text-white font-weight-bold">{{ numMetrics }}</div>
+            </v-card-text>
+          </v-card>
+        </v-col>
+        <v-col cols="12" sm="6" md="3">
+          <v-card color="warning" variant="flat">
+            <v-card-text>
+              <div class="text-h6 text-white">Evaluators</div>
+              <div class="text-h3 text-white font-weight-bold">{{ numEvaluators }}</div>
+            </v-card-text>
+          </v-card>
+        </v-col>
+      </v-row>
 
       <!-- Metrics Chart -->
-      <div class="chart-container">
-        <h3>Average Scores by Metric</h3>
-        <canvas ref="metricsChart"></canvas>
-      </div>
+      <v-card class="mb-4">
+        <v-card-title>
+          <v-icon icon="mdi-chart-bar" class="mr-2"></v-icon>
+          Average Scores by Metric
+        </v-card-title>
+        <v-card-text>
+          <div style="height: 400px;">
+            <canvas ref="metricsChart"></canvas>
+          </div>
+        </v-card-text>
+      </v-card>
 
       <!-- Questions Table -->
-      <div style="margin-top: 30px;">
-        <h3>Question Details</h3>
-        <table class="table">
-          <thead>
-            <tr>
-              <th>Question</th>
-              <th>Average Score</th>
-              <th>Metrics</th>
-            </tr>
-          </thead>
-          <tbody>
-            <tr v-for="(question, idx) in questionData" :key="idx">
-              <td>{{ question.prompt.substring(0, 100) }}{{ question.prompt.length > 100 ? '...' : '' }}</td>
-              <td>{{ question.avgScore.toFixed(1) }}</td>
-              <td>
-                <div v-for="(score, metric) in question.metricScores" :key="metric" style="margin: 2px 0;">
+      <v-card>
+        <v-card-title>
+          <v-icon icon="mdi-help-circle" class="mr-2"></v-icon>
+          Question Details
+        </v-card-title>
+        <v-card-text>
+          <v-data-table
+            :headers="questionHeaders"
+            :items="questionData"
+            :items-per-page="10"
+            class="elevation-0"
+          >
+            <template v-slot:item.prompt="{ item }">
+              <div style="max-width: 400px;">
+                {{ item.prompt.substring(0, 100) }}{{ item.prompt.length > 100 ? '...' : '' }}
+              </div>
+            </template>
+            <template v-slot:item.avgScore="{ item }">
+              <v-chip
+                :color="getScoreColor(item.avgScore)"
+                size="small"
+                variant="flat"
+              >
+                {{ item.avgScore.toFixed(1) }}
+              </v-chip>
+            </template>
+            <template v-slot:item.metricScores="{ item }">
+              <div v-for="(score, metric) in item.metricScores" :key="metric" class="mb-1">
+                <v-chip
+                  size="x-small"
+                  variant="outlined"
+                  class="mr-1"
+                >
                   <strong>{{ metric }}:</strong> {{ score.toFixed(1) }}
-                </div>
-              </td>
-            </tr>
-          </tbody>
-        </table>
-      </div>
+                </v-chip>
+              </div>
+            </template>
+          </v-data-table>
+        </v-card-text>
+      </v-card>
     </div>
   </div>
 </template>
 
 <script>
 import { Chart, registerables } from 'chart.js'
+import { Bar } from 'vue-chartjs'
 
 Chart.register(...registerables)
 
 export default {
   name: 'BenchmarkVisualization',
+  components: {
+    Bar
+  },
   props: {
     resultData: {
       type: Object,
-      required: true
+      default: null
     }
   },
   data() {
     return {
-      chart: null
+      metricsChart: null,
+      questionHeaders: [
+        { title: 'Question', key: 'prompt', sortable: false },
+        { title: 'Average Score', key: 'avgScore', sortable: true },
+        { title: 'Metrics', key: 'metricScores', sortable: false }
+      ]
     }
   },
   computed: {
     overallScore() {
       if (!this.resultData || !this.resultData.prompt_evaluations) return 0
-      let total = 0
-      let count = 0
+      const allScores = []
       this.resultData.prompt_evaluations.forEach(pe => {
-        pe.evaluations.forEach(eval => {
-          total += eval.score
-          count++
+        pe.evaluations.forEach(evaluation => {
+          if (evaluation.score !== undefined) {
+            allScores.push(evaluation.score)
+          }
         })
       })
-      return count > 0 ? total / count : 0
+      if (allScores.length === 0) return 0
+      return allScores.reduce((a, b) => a + b, 0) / allScores.length
     },
     numQuestions() {
-      return this.resultData?.prompt_evaluations?.length || 0
+      if (!this.resultData || !this.resultData.prompt_evaluations) return 0
+      return this.resultData.prompt_evaluations.length
     },
     numMetrics() {
-      if (!this.resultData?.prompt_evaluations) return 0
+      if (!this.resultData || !this.resultData.prompt_evaluations) return 0
       const metrics = new Set()
       this.resultData.prompt_evaluations.forEach(pe => {
-        pe.evaluations.forEach(eval => {
-          metrics.add(eval.metric_name)
+        pe.evaluations.forEach(evaluation => {
+          if (evaluation.metric_name) {
+            metrics.add(evaluation.metric_name)
+          }
         })
       })
       return metrics.size
     },
     numEvaluators() {
-      if (!this.resultData?.prompt_evaluations) return 0
-      const evaluators = new Set()
-      this.resultData.prompt_evaluations.forEach(pe => {
-        pe.evaluations.forEach(eval => {
-          eval.individual_responses?.forEach(ir => {
-            evaluators.add(ir.model_name)
-          })
-        })
-      })
-      return evaluators.size
+      if (!this.resultData || !this.resultData.metadata) return 0
+      const evaluators = this.resultData.metadata.evaluator_models || []
+      return evaluators.length || 1
     },
     questionData() {
-      if (!this.resultData?.prompt_evaluations) return []
+      if (!this.resultData || !this.resultData.prompt_evaluations) return []
+      
       return this.resultData.prompt_evaluations.map(pe => {
         const metricScores = {}
-        let total = 0
-        let count = 0
-        pe.evaluations.forEach(eval => {
-          metricScores[eval.metric_name] = eval.score
-          total += eval.score
-          count++
+        let totalScore = 0
+        let scoreCount = 0
+        
+        pe.evaluations.forEach(evaluation => {
+          if (evaluation.score !== undefined) {
+            const metricName = evaluation.metric_name || 'unknown'
+            if (!metricScores[metricName]) {
+              metricScores[metricName] = []
+            }
+            metricScores[metricName].push(evaluation.score)
+            totalScore += evaluation.score
+            scoreCount++
+          }
         })
+        
+        // Calculate average per metric
+        const avgMetricScores = {}
+        Object.keys(metricScores).forEach(metric => {
+          const scores = metricScores[metric]
+          avgMetricScores[metric] = scores.reduce((a, b) => a + b, 0) / scores.length
+        })
+        
         return {
           prompt: pe.prompt,
-          avgScore: count > 0 ? total / count : 0,
-          metricScores
+          avgScore: scoreCount > 0 ? totalScore / scoreCount : 0,
+          metricScores: avgMetricScores
         }
       })
     },
-    metricsData() {
-      if (!this.resultData?.prompt_evaluations) return {}
-      const metrics = {}
+    metricsChartData() {
+      if (!this.resultData || !this.resultData.prompt_evaluations) return null
+      
+      const metricAverages = {}
+      const metricCounts = {}
+      
       this.resultData.prompt_evaluations.forEach(pe => {
-        pe.evaluations.forEach(eval => {
-          if (!metrics[eval.metric_name]) {
-            metrics[eval.metric_name] = []
+        pe.evaluations.forEach(evaluation => {
+          if (evaluation.score !== undefined) {
+            const metricName = evaluation.metric_name || 'unknown'
+            if (!metricAverages[metricName]) {
+              metricAverages[metricName] = 0
+              metricCounts[metricName] = 0
+            }
+            metricAverages[metricName] += evaluation.score
+            metricCounts[metricName]++
           }
-          metrics[eval.metric_name].push(eval.score)
         })
       })
-      const averages = {}
-      Object.keys(metrics).forEach(metric => {
-        const scores = metrics[metric]
-        averages[metric] = scores.reduce((a, b) => a + b, 0) / scores.length
+      
+      const labels = Object.keys(metricAverages)
+      const data = labels.map(metric => {
+        return metricAverages[metric] / metricCounts[metric]
       })
-      return averages
+      
+      return {
+        labels,
+        datasets: [{
+          label: 'Average Score',
+          data,
+          backgroundColor: 'rgba(25, 118, 210, 0.6)',
+          borderColor: 'rgba(25, 118, 210, 1)',
+          borderWidth: 2
+        }]
+      }
     }
   },
   mounted() {
     this.renderChart()
   },
   watch: {
-    resultData: {
-      handler() {
-        this.$nextTick(() => {
-          this.renderChart()
-        })
-      },
-      deep: true
+    resultData() {
+      this.$nextTick(() => {
+        this.renderChart()
+      })
     }
   },
   methods: {
     renderChart() {
-      if (!this.$refs.metricsChart || !this.resultData) return
+      if (!this.metricsChartData || !this.$refs.metricsChart) return
       
-      if (this.chart) {
-        this.chart.destroy()
+      if (this.metricsChart) {
+        this.metricsChart.destroy()
       }
       
-      const metrics = Object.keys(this.metricsData)
-      const scores = Object.values(this.metricsData)
-      
-      this.chart = new Chart(this.$refs.metricsChart, {
+      const ctx = this.$refs.metricsChart.getContext('2d')
+      this.metricsChart = new Chart(ctx, {
         type: 'bar',
-        data: {
-          labels: metrics,
-          datasets: [{
-            label: 'Average Score',
-            data: scores,
-            backgroundColor: 'rgba(52, 152, 219, 0.6)',
-            borderColor: 'rgba(52, 152, 219, 1)',
-            borderWidth: 1
-          }]
-        },
+        data: this.metricsChartData,
         options: {
           responsive: true,
           maintainAspectRatio: false,
@@ -193,15 +261,8 @@ export default {
             y: {
               beginAtZero: true,
               max: 10,
-              title: {
-                display: true,
-                text: 'Score (0-10)'
-              }
-            },
-            x: {
-              title: {
-                display: true,
-                text: 'Metrics'
+              ticks: {
+                stepSize: 1
               }
             }
           },
@@ -212,48 +273,31 @@ export default {
             tooltip: {
               callbacks: {
                 label: function(context) {
-                  return `Score: ${context.parsed.y.toFixed(1)}/10`
+                  return `Score: ${context.parsed.y.toFixed(2)}`
                 }
               }
             }
           }
         }
       })
+    },
+    getScoreColor(score) {
+      if (score >= 8) return 'success'
+      if (score >= 6) return 'info'
+      if (score >= 4) return 'warning'
+      return 'error'
     }
   },
   beforeUnmount() {
-    if (this.chart) {
-      this.chart.destroy()
+    if (this.metricsChart) {
+      this.metricsChart.destroy()
     }
   }
 }
 </script>
 
 <style scoped>
-.stat-card {
-  background: #f8f9fa;
-  padding: 20px;
-  border-radius: 8px;
-  text-align: center;
-}
-
-.stat-card h3 {
-  font-size: 14px;
-  color: #666;
-  margin-bottom: 10px;
-}
-
-.stat-value {
-  font-size: 32px;
-  font-weight: bold;
-  color: #2c3e50;
-}
-
-.chart-container {
-  background: white;
-  padding: 20px;
-  border-radius: 8px;
-  margin: 20px 0;
+canvas {
+  max-height: 400px;
 }
 </style>
-

@@ -27,7 +27,15 @@ class BenchmarkRepository:
         """Create a new benchmark document."""
         collection = self._get_collection()
         benchmark.updated_at = datetime.utcnow()
-        result = await collection.insert_one(benchmark.to_dict())
+        
+        # Get the document as dict, ensuring _id is None for new documents
+        # so MongoDB can auto-generate it
+        doc_dict = benchmark.to_dict()
+        # Remove _id if it's None or not set, so MongoDB generates it
+        if "_id" in doc_dict and (doc_dict["_id"] is None or doc_dict["_id"] == ""):
+            del doc_dict["_id"]
+        
+        result = await collection.insert_one(doc_dict)
         logger.info(f"Created benchmark with id: {result.inserted_id}")
         return str(result.inserted_id)
     
@@ -35,12 +43,26 @@ class BenchmarkRepository:
         """Get a benchmark by ID."""
         collection = self._get_collection()
         try:
-            doc = await collection.find_one({"_id": ObjectId(benchmark_id)})
+            # Validate ObjectId format
+            try:
+                object_id = ObjectId(benchmark_id)
+            except Exception as e:
+                logger.error(f"Invalid ObjectId format: {benchmark_id} - {e}")
+                return None
+            
+            # Try to find with ObjectId first (correct format)
+            doc = await collection.find_one({"_id": object_id})
+            
+            # If not found, try with string (for backwards compatibility with old data)
+            if not doc:
+                doc = await collection.find_one({"_id": benchmark_id})
+            
             if doc:
                 return BenchmarkDocument.from_dict(doc)
+            logger.warning(f"Benchmark not found with ID: {benchmark_id}")
             return None
         except Exception as e:
-            logger.error(f"Error getting benchmark {benchmark_id}: {e}")
+            logger.error(f"Error getting benchmark {benchmark_id}: {e}", exc_info=True)
             return None
     
     async def get_all(
@@ -71,10 +93,18 @@ class BenchmarkRepository:
         updates["updated_at"] = datetime.utcnow()
         
         try:
+            object_id = ObjectId(benchmark_id)
+            # Try with ObjectId first
             result = await collection.update_one(
-                {"_id": ObjectId(benchmark_id)},
+                {"_id": object_id},
                 {"$set": updates}
             )
+            # If not found, try with string (for backwards compatibility)
+            if result.matched_count == 0:
+                result = await collection.update_one(
+                    {"_id": benchmark_id},
+                    {"$set": updates}
+                )
             return result.modified_count > 0
         except Exception as e:
             logger.error(f"Error updating benchmark {benchmark_id}: {e}")
@@ -119,7 +149,12 @@ class BenchmarkRepository:
         """Delete a benchmark document."""
         collection = self._get_collection()
         try:
-            result = await collection.delete_one({"_id": ObjectId(benchmark_id)})
+            object_id = ObjectId(benchmark_id)
+            # Try with ObjectId first
+            result = await collection.delete_one({"_id": object_id})
+            # If not found, try with string (for backwards compatibility)
+            if result.deleted_count == 0:
+                result = await collection.delete_one({"_id": benchmark_id})
             return result.deleted_count > 0
         except Exception as e:
             logger.error(f"Error deleting benchmark {benchmark_id}: {e}")

@@ -37,6 +37,7 @@ pip-delete-this-directory.txt
 #  Usually contains the output of `pyinstaller`
 *.manifest
 *.spec
+frontend/node_modules/
 
 # Installer logs
 
