@@ -89,13 +89,17 @@ class OllamaConfig(BaseModelConfig):
     num_predict: Optional[int] = Field(default=None, ge=1, description="Maximum tokens to generate")
     seed: Optional[int] = Field(default=None, description="Random seed for reproducible generation")
     
-    @validator('base_url')
+    @validator('base_url', pre=True)
     def validate_base_url(cls, v):
         """Validate base URL format."""
-        if not v or not v.strip():
-            raise ValueError("Base URL cannot be empty")
+        # If None or empty, use default
+        if not v:
+            return "http://localhost:11434"
         
-        v = v.strip().rstrip('/')
+        v = str(v).strip().rstrip('/')
+        if not v:
+            return "http://localhost:11434"
+        
         if not v.startswith(('http://', 'https://')):
             raise ValueError("Base URL must start with http:// or https://")
         

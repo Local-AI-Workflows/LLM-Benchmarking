@@ -3,6 +3,7 @@ import aiohttp
 import json
 import logging
 import time
+import asyncio
 from .base_model import BaseLLMModel
 from .model_config import OllamaConfig
 from .responses import ModelResponse
@@ -85,11 +86,19 @@ class OllamaModel(BaseLLMModel):
                 **api_params
             }
             
+            # Configure timeout - for streaming, we need longer read timeout
+            # total: total time for the request
+            # sock_read: time to wait between reading chunks (important for streaming)
+            timeout_config = aiohttp.ClientTimeout(
+                total=self.config.timeout * 10,  # Allow 10x for total (for long generations)
+                sock_read=self.config.timeout * 2  # Allow 2x between chunks
+            )
+            
             async with aiohttp.ClientSession() as session:
                 async with session.post(
                         f"{self.base_url}/api/generate",
                         json=request_data,
-                        timeout=aiohttp.ClientTimeout(total=self.config.timeout)
+                        timeout=timeout_config
                 ) as response:
                     if response.status != 200:
                         error_text = await response.text()
@@ -170,8 +179,8 @@ class OllamaModel(BaseLLMModel):
             logger.error(error_msg)
             raise Exception(error_msg)
             
-        except aiohttp.ServerTimeoutError as e:
-            error_msg = f"Ollama request timeout: {str(e)}"
+        except (aiohttp.ServerTimeoutError, asyncio.TimeoutError) as e:
+            error_msg = f"Ollama request timeout: The request took too long. This might mean the Ollama server is not responding or the model is taking too long to generate. Error: {str(e)}"
             logger.error(error_msg)
             raise Exception(error_msg)
             
@@ -182,7 +191,7 @@ class OllamaModel(BaseLLMModel):
             
         except Exception as e:
             error_msg = f"Unexpected error during Ollama generation: {str(e)}"
-            logger.error(error_msg)
+            logger.error(error_msg, exc_info=True)
             raise Exception(error_msg)
 
     def _estimate_token_count(self, text: str) -> int:

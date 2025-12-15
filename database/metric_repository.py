@@ -35,12 +35,26 @@ class MetricRepository:
         """Get a metric by ID."""
         collection = self._get_collection()
         try:
-            doc = await collection.find_one({"_id": ObjectId(metric_id)})
+            # Validate ObjectId format
+            try:
+                object_id = ObjectId(metric_id)
+            except Exception as e:
+                logger.error(f"Invalid ObjectId format: {metric_id} - {e}")
+                return None
+            
+            # Try to find with ObjectId first (correct format)
+            doc = await collection.find_one({"_id": object_id})
+            
+            # If not found, try with string (for backwards compatibility with old data)
+            if not doc:
+                doc = await collection.find_one({"_id": metric_id})
+            
             if doc:
                 return MetricDocument.from_dict(doc)
+            logger.warning(f"Metric not found with ID: {metric_id}")
             return None
         except Exception as e:
-            logger.error(f"Error getting metric {metric_id}: {e}")
+            logger.error(f"Error getting metric {metric_id}: {e}", exc_info=True)
             return None
     
     async def get_by_name(self, name: str) -> Optional[MetricDocument]:
@@ -86,10 +100,18 @@ class MetricRepository:
         updates["updated_at"] = datetime.utcnow()
         
         try:
+            object_id = ObjectId(metric_id)
+            # Try with ObjectId first
             result = await collection.update_one(
-                {"_id": ObjectId(metric_id)},
+                {"_id": object_id},
                 {"$set": updates}
             )
+            # If not found, try with string (for backwards compatibility)
+            if result.matched_count == 0:
+                result = await collection.update_one(
+                    {"_id": metric_id},
+                    {"$set": updates}
+                )
             return result.modified_count > 0
         except Exception as e:
             logger.error(f"Error updating metric {metric_id}: {e}")
@@ -99,7 +121,12 @@ class MetricRepository:
         """Delete a metric document."""
         collection = self._get_collection()
         try:
-            result = await collection.delete_one({"_id": ObjectId(metric_id)})
+            object_id = ObjectId(metric_id)
+            # Try with ObjectId first
+            result = await collection.delete_one({"_id": object_id})
+            # If not found, try with string (for backwards compatibility)
+            if result.deleted_count == 0:
+                result = await collection.delete_one({"_id": metric_id})
             return result.deleted_count > 0
         except Exception as e:
             logger.error(f"Error deleting metric {metric_id}: {e}")

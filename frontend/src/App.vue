@@ -39,10 +39,10 @@
             <v-icon start icon="mdi-play-circle"></v-icon>
             Benchmarks
           </v-tab>
-          <v-tab value="results" :disabled="!selectedBenchmarkId">
+          <!-- <v-tab value="results" :disabled="!selectedBenchmarkId">
             <v-icon start icon="mdi-chart-box"></v-icon>
             Results
-          </v-tab>
+          </v-tab> -->
           <v-tab value="settings">
             <v-icon start icon="mdi-cog"></v-icon>
             Settings

@@ -12,10 +12,12 @@ from datetime import datetime
 from pathlib import Path
 
 from models.ollama_mcp_model import OllamaWithMCPModel, OllamaMCPConfig, MCPServerConfig
-from metrics import MetricFactory, EvaluatorFactory
+from metrics import EvaluatorFactory
+from metrics.database_loader import load_metrics_from_db
 from benchmark.runner import BenchmarkRunner
 from dashboard import generate_html_dashboard
 from dataset import DatasetLoader
+from database.connection import Database
 
 # MCP Server configuration
 REMOTE_OLLAMA_URL = "http://ollama.ios.htwg-konstanz.de:11434"
@@ -32,6 +34,10 @@ logger = logging.getLogger(__name__)
 
 async def main():
     logger.info("Starting MCP Tool Usage Benchmark")
+
+    # Ensure database is connected
+    if not Database.is_connected():
+        await Database.connect()
 
     results_dir = Path(".doc/benchmark_results/mcp_benchmark_results")
     results_dir.mkdir(exist_ok=True)
@@ -90,13 +96,13 @@ async def main():
         evaluator = EvaluatorFactory.create_evaluator(evaluator_models)
         logger.info(f"Evaluator models: {[m.model_name for m in evaluator_models]}")
 
-        # Metrics
+        # Metrics - load from database
         mcp_metrics = [
             'tool_usage_accuracy',
             'information_retrieval_quality',
             'contextual_awareness'
         ]
-        metrics = MetricFactory.create_metrics_by_names(mcp_metrics)
+        metrics = await load_metrics_from_db(metric_names=mcp_metrics, metric_type="mcp")
         logger.info(f"Metrics: {[metric.name for metric in metrics]}")
 
         # Run benchmark
@@ -123,6 +129,10 @@ async def main():
     except Exception as e:
         logger.error(f"MCP benchmark failed: {e}", exc_info=True)
         return 1
+    finally:
+        # Ensure database is disconnected
+        if Database.is_connected():
+            await Database.disconnect()
 
     return 0
 

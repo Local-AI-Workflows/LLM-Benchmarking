@@ -23,10 +23,12 @@ from pathlib import Path
 
 from models.ollama_mcp_model import OllamaWithMCPModel, OllamaMCPConfig, MCPServerConfig
 from models.ollama_model import OllamaModel, OllamaConfig
-from metrics import MetricFactory, EvaluatorFactory
+from metrics import EvaluatorFactory
+from metrics.database_loader import load_metrics_from_db
 from benchmark.runner import BenchmarkRunner
 from dashboard import generate_html_dashboard
 from dataset import DatasetLoader
+from database.connection import Database
 
 # Server configuration
 REMOTE_OLLAMA_URL = "http://ollama.ios.htwg-konstanz.de:11434"
@@ -161,6 +163,10 @@ async def main():
     logger.info("Testing fogcast-weather tool with multiple models")
     logger.info("="*80)
     
+    # Ensure database is connected
+    if not Database.is_connected():
+        await Database.connect()
+    
     # Setup results directory
     results_dir = Path("results/weather_mcp_benchmark")
     results_dir.mkdir(parents=True, exist_ok=True)
@@ -184,14 +190,14 @@ async def main():
         evaluator = EvaluatorFactory.create_evaluator(evaluator_models)
         logger.info(f"\nJudge models: {[m.model_name for m in evaluator_models]}")
         
-        # Create metrics
+        # Create metrics - load from database
         mcp_metrics = [
             'tool_usage_accuracy',
             'information_retrieval_quality',
             'contextual_awareness',
             'tool_selection_efficiency'
         ]
-        metrics = MetricFactory.create_metrics_by_names(mcp_metrics)
+        metrics = await load_metrics_from_db(metric_names=mcp_metrics, metric_type="mcp")
         logger.info(f"Metrics: {[metric.name for metric in metrics]}")
         
         # Models to test (same model twice for consistency testing)
@@ -246,6 +252,10 @@ async def main():
     except Exception as e:
         logger.error(f"Benchmark failed: {e}", exc_info=True)
         return 1
+    finally:
+        # Ensure database is disconnected
+        if Database.is_connected():
+            await Database.disconnect()
 
 
 if __name__ == "__main__":

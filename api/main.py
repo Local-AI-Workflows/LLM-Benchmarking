@@ -139,32 +139,9 @@ def benchmark_doc_to_response(doc: BenchmarkDocument) -> BenchmarkResponse:
 
 def load_metric_from_db(metric_doc: MetricDocument):
     """Load a metric instance from database document, using stored configuration."""
-    if not metric_doc.class_path:
-        raise ValueError(f"Metric {metric_doc.name} has no class_path configured. Cannot load metric.")
-    
-    try:
-        module_path, class_name = metric_doc.class_path.rsplit('.', 1)
-        module = importlib.import_module(module_path)
-        metric_class = getattr(module, class_name)
-        
-        # Check if it's a StandardMetric that accepts configuration
-        from metrics.metric_base import StandardMetric
-        if issubclass(metric_class, StandardMetric):
-            # Create metric with configuration from database
-            return metric_class(
-                name=metric_doc.name,
-                description=metric_doc.description,
-                evaluation_instructions=metric_doc.evaluation_instructions or "",
-                scale_min=metric_doc.scale_min,
-                scale_max=metric_doc.scale_max,
-                custom_format=metric_doc.custom_format,
-                additional_context=metric_doc.additional_context
-            )
-        else:
-            # For non-StandardMetric classes, use default initialization
-            return metric_class()
-    except Exception as e:
-        raise ValueError(f"Failed to load metric {metric_doc.name} from class_path {metric_doc.class_path}: {e}")
+    # Use the database_loader function which handles class_path inference
+    from metrics.database_loader import load_metric_from_db as db_load_metric
+    return db_load_metric(metric_doc)
 
 
 async def run_benchmark_task(benchmark_id: str, request: BenchmarkCreateRequest):
@@ -237,17 +214,18 @@ async def run_benchmark_task(benchmark_id: str, request: BenchmarkCreateRequest)
             )
             test_model = OllamaWithMCPModel(config=mcp_config)
         else:
-            test_model = OllamaModel(config=OllamaConfig(
-                model_name=request.model_name,
-                base_url=request.model_base_url
-            ))
+            # Only pass base_url if it's provided (not None)
+            config_kwargs = {"model_name": request.model_name}
+            if request.model_base_url:
+                config_kwargs["base_url"] = request.model_base_url
+            test_model = OllamaModel(config=OllamaConfig(**config_kwargs))
         
         # Initialize evaluator models
         if request.evaluator_models:
             evaluator_models = [
                 OllamaModel(config=OllamaConfig(
                     model_name=eval_config.model_name,
-                    base_url=eval_config.base_url
+                    **({"base_url": eval_config.base_url} if eval_config.base_url else {})
                 ))
                 for eval_config in request.evaluator_models
             ]
@@ -374,13 +352,18 @@ async def create_benchmark(
     if request.mcp_tools:
         mcp_tools_dict = [tool.dict() for tool in request.mcp_tools]
     
+    # Extract model names from EvaluatorModelConfig objects
+    evaluator_model_names = []
+    if request.evaluator_models:
+        evaluator_model_names = [model.model_name for model in request.evaluator_models]
+    
     benchmark = BenchmarkDocument(
         status=BenchmarkStatus.PENDING,
         model_name=request.model_name,
         dataset_id=request.dataset_id,
         metric_type=request.metric_type,
         metric_ids=request.metric_ids,
-        evaluator_models=request.evaluator_models or [],
+        evaluator_models=evaluator_model_names,
         mcp_tools=mcp_tools_dict
     )
     
@@ -518,7 +501,7 @@ class MetricResponse(BaseModel):
     name: str
     type: str
     description: str
-    class_path: Optional[str] = None
+    class_path: Optional[str] = None  # DEPRECATED: No longer stored, inferred automatically
     enabled: bool
     created_at: str
     updated_at: str
@@ -538,7 +521,7 @@ def metric_doc_to_response(doc: MetricDocument) -> MetricResponse:
         name=doc.name,
         type=doc.type,
         description=doc.description,
-        class_path=doc.class_path,
+        class_path=doc.class_path,  # May be None, will be inferred automatically
         enabled=doc.enabled,
         created_at=doc.created_at.isoformat(),
         updated_at=doc.updated_at.isoformat(),
@@ -574,27 +557,13 @@ async def get_metric(metric_id: str):
 
 
 def get_class_path_for_metric(name: str, metric_type: str) -> Optional[str]:
-    """Get class path for a metric based on name and type."""
-    # Map of metric names to their class paths
-    metric_class_paths = {
-        # Standard metrics
-        'relevance': 'metrics.general.relevance.RelevanceMetric',
-        'hallucinations': 'metrics.general.hallucinations.HallucinationsMetric',
-        'fairness': 'metrics.general.fairness.FairnessMetric',
-        'robustness': 'metrics.general.robustness.RobustnessMetric',
-        'bias': 'metrics.general.bias.BiasMetric',
-        'toxicity': 'metrics.general.toxicity.ToxicityMetric',
-        'email_professionalism': 'metrics.email.email_professionalism.EmailProfessionalismMetric',
-        'email_responsiveness': 'metrics.email.email_responsiveness.EmailResponsivenessMetric',
-        'email_clarity': 'metrics.email.email_clarity.EmailClarityMetric',
-        'email_empathy': 'metrics.email.email_empathy.EmailEmpathyMetric',
-        # MCP metrics
-        'tool_usage_accuracy': 'metrics.mcp.tool_usage_accuracy.ToolUsageAccuracyMetric',
-        'information_retrieval_quality': 'metrics.mcp.information_retrieval_quality.InformationRetrievalQualityMetric',
-        'contextual_awareness': 'metrics.mcp.contextual_awareness.ContextualAwarenessMetric',
-        'tool_selection_efficiency': 'metrics.mcp.tool_selection_efficiency.ToolSelectionEfficiencyMetric',
-    }
-    return metric_class_paths.get(name)
+    """Get class path for a metric based on name and type.
+    
+    DEPRECATED: class_path is no longer needed. We use GenericMetric for all metrics.
+    This function is kept for backwards compatibility only.
+    """
+    # Return None - we don't need class_path anymore
+    return None
 
 
 @app.post("/api/metrics", response_model=MetricResponse, status_code=201)
@@ -608,33 +577,21 @@ async def create_metric(request: MetricCreateRequest):
     if existing:
         raise HTTPException(status_code=400, detail="Metric with this name already exists")
     
-    # Auto-generate class_path based on name
-    class_path = get_class_path_for_metric(request.name, request.type)
-    if not class_path:
+    # No need to validate class_path - we use GenericMetric for all metrics
+    # Just validate that the name follows the expected pattern
+    if not request.name or len(request.name.strip()) == 0:
         raise HTTPException(
-            status_code=400, 
-            detail=f"Cannot determine class_path for metric '{request.name}'. Only predefined metrics can be added."
+            status_code=400,
+            detail="Metric name cannot be empty"
         )
     
-    # If evaluation_instructions is empty, try to extract from default metric instance
+    # Convert request to metric data
     metric_data = request.model_dump()
-    metric_data['class_path'] = class_path
+    # Don't store class_path - it's inferred automatically when loading
     
-    # If no evaluation_instructions provided, try to get defaults from metric class
-    if not metric_data.get('evaluation_instructions'):
-        try:
-            metric_instance = MetricFactory.create_metric(request.name)
-            if not metric_data.get('evaluation_instructions'):
-                metric_data['evaluation_instructions'] = getattr(metric_instance, 'evaluation_instructions', '')
-            if metric_data.get('scale_min') == 0 and metric_data.get('scale_max') == 10:
-                metric_data['scale_min'] = getattr(metric_instance, 'scale_min', 0)
-                metric_data['scale_max'] = getattr(metric_instance, 'scale_max', 10)
-            if not metric_data.get('custom_format'):
-                metric_data['custom_format'] = getattr(metric_instance, 'custom_format', None)
-            if not metric_data.get('additional_context'):
-                metric_data['additional_context'] = getattr(metric_instance, 'additional_context', None)
-        except Exception as e:
-            logger.warning(f"Could not extract default config for {request.name}: {e}")
+    # If evaluation_instructions is empty, that's fine - user can add it later
+    # We no longer try to get defaults from metric classes since we use GenericMetric
+    # All configuration comes from the database
     
     metric = MetricDocument(**metric_data)
     metric_id = await metric_repository.create(metric)

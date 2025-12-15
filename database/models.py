@@ -119,7 +119,7 @@ class MetricDocument(BaseModel):
     name: str = Field(..., min_length=1)
     type: str = Field(..., description="standard or mcp")
     description: str = ""
-    class_path: Optional[str] = None  # Python class path for dynamic loading
+    class_path: Optional[str] = None  # DEPRECATED: No longer stored, inferred automatically from name and type
     enabled: bool = Field(default=True)
     created_at: datetime = Field(default_factory=datetime.utcnow)
     updated_at: datetime = Field(default_factory=datetime.utcnow)

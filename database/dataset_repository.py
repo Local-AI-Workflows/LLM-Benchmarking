@@ -35,12 +35,26 @@ class DatasetRepository:
         """Get a dataset by ID."""
         collection = self._get_collection()
         try:
-            doc = await collection.find_one({"_id": ObjectId(dataset_id)})
+            # Validate ObjectId format
+            try:
+                object_id = ObjectId(dataset_id)
+            except Exception as e:
+                logger.error(f"Invalid ObjectId format: {dataset_id} - {e}")
+                return None
+            
+            # Try to find with ObjectId first (correct format)
+            doc = await collection.find_one({"_id": object_id})
+            
+            # If not found, try with string (for backwards compatibility with old data)
+            if not doc:
+                doc = await collection.find_one({"_id": dataset_id})
+            
             if doc:
                 return DatasetDocument.from_dict(doc)
+            logger.warning(f"Dataset not found with ID: {dataset_id}")
             return None
         except Exception as e:
-            logger.error(f"Error getting dataset {dataset_id}: {e}")
+            logger.error(f"Error getting dataset {dataset_id}: {e}", exc_info=True)
             return None
     
     async def get_by_name(self, name: str) -> Optional[DatasetDocument]:
@@ -83,10 +97,18 @@ class DatasetRepository:
         updates["updated_at"] = datetime.utcnow()
         
         try:
+            object_id = ObjectId(dataset_id)
+            # Try with ObjectId first
             result = await collection.update_one(
-                {"_id": ObjectId(dataset_id)},
+                {"_id": object_id},
                 {"$set": updates}
             )
+            # If not found, try with string (for backwards compatibility)
+            if result.matched_count == 0:
+                result = await collection.update_one(
+                    {"_id": dataset_id},
+                    {"$set": updates}
+                )
             return result.modified_count > 0
         except Exception as e:
             logger.error(f"Error updating dataset {dataset_id}: {e}")
@@ -96,7 +118,12 @@ class DatasetRepository:
         """Delete a dataset document."""
         collection = self._get_collection()
         try:
-            result = await collection.delete_one({"_id": ObjectId(dataset_id)})
+            object_id = ObjectId(dataset_id)
+            # Try with ObjectId first
+            result = await collection.delete_one({"_id": object_id})
+            # If not found, try with string (for backwards compatibility)
+            if result.deleted_count == 0:
+                result = await collection.delete_one({"_id": dataset_id})
             return result.deleted_count > 0
         except Exception as e:
             logger.error(f"Error deleting dataset {dataset_id}: {e}")

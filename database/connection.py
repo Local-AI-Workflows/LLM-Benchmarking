@@ -44,4 +44,9 @@ class Database:
         if cls.database is None:
             raise RuntimeError("Database not connected. Call Database.connect() first.")
         return cls.database
+    
+    @classmethod
+    def is_connected(cls) -> bool:
+        """Check if database is connected."""
+        return cls.database is not None and cls.client is not None
 
