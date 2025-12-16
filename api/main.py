@@ -16,10 +16,8 @@ from database.models import (
     BenchmarkDocument, BenchmarkStatus, MetricDocument, 
     DatasetDocument, MetricType
 )
-from metrics.responses import BenchmarkResult
 from benchmark.runner import BenchmarkRunner
 from metrics import EvaluatorFactory
-from metrics.metric_factory import MetricFactory
 from models.ollama_model import OllamaModel, OllamaConfig
 from models.ollama_mcp_model import OllamaWithMCPModel, OllamaMCPConfig, MCPServerConfig
 from dataset import DatasetLoader, Dataset
@@ -914,6 +912,44 @@ async def delete_dataset(dataset_id: str):
     if not success:
         raise HTTPException(status_code=404, detail="Dataset not found")
     return None
+
+
+@app.get("/api/models/list")
+async def list_available_models(base_url: Optional[str] = None):
+    """
+    List available models from an Ollama server.
+    
+    Args:
+        base_url: Base URL of the Ollama server. Defaults to http://localhost:11434
+    
+    Returns:
+        List of available model names
+    """
+    import aiohttp
+    from aiohttp import ClientTimeout
+    
+    # Default to local Ollama
+    if not base_url:
+        base_url = "http://localhost:11434"
+    
+    # Ensure base_url doesn't end with /
+    base_url = base_url.rstrip('/')
+    
+    try:
+        async with aiohttp.ClientSession() as session:
+            async with session.get(f"{base_url}/api/tags", timeout=ClientTimeout(total=5)) as response:
+                if response.status == 200:
+                    data = await response.json()
+                    models = [model.get("name", "") for model in data.get("models", [])]
+                    return {"models": models, "base_url": base_url}
+                else:
+                    raise HTTPException(status_code=response.status, detail=f"Failed to fetch models: {response.status}")
+    except aiohttp.ClientError as e:
+        logger.error(f"Error connecting to Ollama server at {base_url}: {e}")
+        raise HTTPException(status_code=503, detail=f"Could not connect to Ollama server at {base_url}")
+    except Exception as e:
+        logger.error(f"Unexpected error fetching models: {e}")
+        raise HTTPException(status_code=500, detail=f"Error fetching models: {str(e)}")
 
 
 @app.get("/health")
