@@ -310,7 +310,7 @@
           block
           size="large"
           :loading="loading"
-          :disabled="loading"
+          :disabled="loading || !isFormValid"
         >
           <v-icon start icon="mdi-play"></v-icon>
           {{ loading ? 'Starting...' : 'Start Benchmark' }}
@@ -375,6 +375,43 @@ export default {
         const ipRegex = /^(\d{1,3}\.){3}\d{1,3}(:\d+)?$/
         return ipRegex.test(this.form.model_base_url) || this.form.model_base_url.startsWith('http://') || this.form.model_base_url.startsWith('https://')
       }
+    },
+    isFormValid() {
+      // Dataset is always required
+      if (!this.form.dataset_id) {
+        return false
+      }
+
+      // Validation for email_categorization
+      if (this.form.metric_type === 'email_categorization') {
+        // Must have at least one instructional prompt
+        if (!this.form.instructional_prompts || this.form.instructional_prompts.length === 0) {
+          return false
+        }
+        // All instructional prompts must be non-empty (after trimming)
+        if (this.form.instructional_prompts.some(prompt => !prompt || !prompt.trim())) {
+          return false
+        }
+        return true
+      }
+
+      // Validation for other metric types (standard, mcp)
+      // Must have at least one metric selected
+      if (!this.form.metric_ids || this.form.metric_ids.length === 0) {
+        return false
+      }
+
+      // Must have at least one evaluator model
+      if (!this.form.evaluator_models || this.form.evaluator_models.length === 0) {
+        return false
+      }
+
+      // All evaluator models must have a model_name selected
+      if (this.form.evaluator_models.some(evalModel => !evalModel.model_name || !evalModel.model_name.trim())) {
+        return false
+      }
+
+      return true
     }
   },
   mounted() {
@@ -452,7 +489,7 @@ export default {
       // Clear available models and selected model when hostname changes
       this.availableModels = []
       this.form.model_name = ''
-      
+
       // Auto-refresh if URL is valid, or reload for localhost if cleared
       if (this.form.model_base_url && this.isValidUrl) {
         // Debounce the refresh
@@ -491,11 +528,11 @@ export default {
     onEvaluatorHostnameChange(index) {
       const evalModel = this.form.evaluator_models[index]
       if (!evalModel) return
-      
+
       // Clear available models and selected model when hostname changes
       this.evaluatorAvailableModels[index] = []
       evalModel.model_name = ''
-      
+
       // Check if URL is valid
       const isValidUrl = (url) => {
         if (!url) return true // Empty is valid (will use default)
@@ -508,7 +545,7 @@ export default {
           return ipRegex.test(url) || url.startsWith('http://') || url.startsWith('https://')
         }
       }
-      
+
       // Auto-refresh if URL is valid, or reload for localhost if cleared
       if (evalModel.base_url && isValidUrl(evalModel.base_url)) {
         // Debounce the refresh
