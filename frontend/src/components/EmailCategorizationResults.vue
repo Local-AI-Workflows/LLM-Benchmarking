@@ -108,19 +108,27 @@
         </v-card-text>
       </v-card>
 
-      <!-- Best Prompt Highlight -->
-      <v-card v-if="bestPrompt" color="success" variant="tonal" class="mb-4">
+      <!-- Best Prompts Highlight -->
+      <v-card v-if="bestPrompts.length > 0" color="success" variant="tonal" class="mb-4">
         <v-card-title>
           <v-icon icon="mdi-trophy" class="mr-2"></v-icon>
-          Best Performing Prompt
+          Best Performing Prompt{{ bestPrompts.length > 1 ? 's' : '' }}
         </v-card-title>
         <v-card-text>
-          <v-chip color="success" size="large" class="mb-2">
-            Accuracy: {{ bestPrompt.accuracy.toFixed(1) }}%
+          <v-chip color="success" size="large" class="mb-3">
+            Accuracy: {{ bestPrompts[0].accuracy.toFixed(1) }}%
           </v-chip>
-          <div class="mt-2">
-            <strong>Prompt:</strong>
-            <pre class="prompt-full-text mt-2">{{ bestPrompt.prompt }}</pre>
+          <div v-for="(prompt, index) in bestPrompts" :key="index" class="mt-3">
+            <div v-if="bestPrompts.length > 1" class="mb-2">
+              <v-chip color="success" size="small" variant="flat" class="mr-2">
+                Prompt {{ index + 1 }}
+              </v-chip>
+            </div>
+            <div class="mt-2">
+              <strong>Prompt{{ bestPrompts.length > 1 ? ` ${index + 1}` : '' }}:</strong>
+              <pre class="prompt-full-text mt-2">{{ prompt.prompt }}</pre>
+            </div>
+            <v-divider v-if="index < bestPrompts.length - 1" class="my-3"></v-divider>
           </div>
         </v-card-text>
       </v-card>
@@ -138,6 +146,19 @@
         </v-card-text>
       </v-card>
 
+      <!-- Performance by Prompt and Category -->
+      <v-card class="mb-4">
+        <v-card-title>
+          <v-icon icon="mdi-chart-box" class="mr-2"></v-icon>
+          Performance by Prompt and Category
+        </v-card-title>
+        <v-card-text>
+          <div style="height: 400px; position: relative;">
+            <canvas ref="promptCategoryChart"></canvas>
+          </div>
+        </v-card-text>
+      </v-card>
+
       <!-- Email Categorization Details -->
       <v-card>
         <v-card-title>
@@ -145,41 +166,125 @@
           Email Categorization Details
         </v-card-title>
         <v-card-text>
-          <!-- Filters -->
-          <v-row class="mb-3">
-            <v-col cols="12" md="6">
-              <v-select
-                v-model="categoryFilter"
-                :items="categoryOptions"
-                label="Filter by Category"
-                clearable
-                variant="outlined"
-                density="compact"
-                prepend-inner-icon="mdi-filter"
-              ></v-select>
-            </v-col>
-            <v-col cols="12" md="6">
-              <v-select
-                v-model="promptFilter"
-                :items="promptOptions"
-                label="Filter by Instructional Prompt"
-                clearable
-                variant="outlined"
-                density="compact"
-                prepend-inner-icon="mdi-filter"
-              >
-                <template v-slot:item="{ props, item }">
-                  <v-list-item v-bind="props">
-                    <template v-slot:title>
-                      <div class="text-truncate" style="max-width: 400px;">
-                        {{ item.raw }}
-                      </div>
-                    </template>
-                  </v-list-item>
+          <!-- Dynamic Filters -->
+          <div class="mb-3">
+            <div class="d-flex align-center mb-2">
+              <v-icon icon="mdi-filter" class="mr-2"></v-icon>
+              <span class="text-subtitle-1">Filters</span>
+              <v-spacer></v-spacer>
+              <v-menu>
+                <template v-slot:activator="{ props }">
+                  <v-btn
+                    v-bind="props"
+                    color="primary"
+                    size="small"
+                    variant="outlined"
+                  >
+                    <v-icon start icon="mdi-plus"></v-icon>
+                    Add Filter
+                  </v-btn>
                 </template>
-              </v-select>
-            </v-col>
-          </v-row>
+                <v-list>
+                  <v-list-item
+                    v-if="!activeFilters.includes('category')"
+                    @click="addFilter('category')"
+                  >
+                    <v-list-item-title>
+                      <v-icon icon="mdi-tag" class="mr-2"></v-icon>
+                      Filter by Category
+                    </v-list-item-title>
+                  </v-list-item>
+                  <v-list-item
+                    v-if="!activeFilters.includes('prompt')"
+                    @click="addFilter('prompt')"
+                  >
+                    <v-list-item-title>
+                      <v-icon icon="mdi-text" class="mr-2"></v-icon>
+                      Filter by Prompt
+                    </v-list-item-title>
+                  </v-list-item>
+                  <v-list-item
+                    v-if="!activeFilters.includes('correctness')"
+                    @click="addFilter('correctness')"
+                  >
+                    <v-list-item-title>
+                      <v-icon icon="mdi-check-circle" class="mr-2"></v-icon>
+                      Filter by Correctness
+                    </v-list-item-title>
+                  </v-list-item>
+                </v-list>
+              </v-menu>
+            </div>
+            
+            <!-- Active Filters -->
+            <v-row v-if="activeFilters.length > 0" class="mb-2">
+              <v-col
+                v-for="filterType in activeFilters"
+                :key="filterType"
+                cols="12"
+                :md="activeFilters.length === 1 ? 12 : activeFilters.length === 2 ? 6 : 4"
+              >
+                <v-card variant="outlined" class="pa-2">
+                  <div class="d-flex align-center">
+                    <v-select
+                      v-if="filterType === 'category'"
+                      v-model="categoryFilter"
+                      :items="categoryOptions"
+                      label="Category"
+                      clearable
+                      variant="outlined"
+                      density="compact"
+                      hide-details
+                      prepend-inner-icon="mdi-tag"
+                      class="flex-grow-1"
+                    ></v-select>
+                    <v-select
+                      v-else-if="filterType === 'prompt'"
+                      v-model="promptFilter"
+                      :items="promptOptions"
+                      label="Instructional Prompt"
+                      clearable
+                      variant="outlined"
+                      density="compact"
+                      hide-details
+                      prepend-inner-icon="mdi-text"
+                      class="flex-grow-1"
+                    >
+                      <template v-slot:item="{ props, item }">
+                        <v-list-item v-bind="props">
+                          <template v-slot:title>
+                            <div class="text-truncate" style="max-width: 400px;">
+                              {{ item.raw }}
+                            </div>
+                          </template>
+                        </v-list-item>
+                      </template>
+                    </v-select>
+                    <v-select
+                      v-else-if="filterType === 'correctness'"
+                      v-model="correctnessFilter"
+                      :items="correctnessOptions"
+                      label="Correctness"
+                      clearable
+                      variant="outlined"
+                      density="compact"
+                      hide-details
+                      prepend-inner-icon="mdi-check-circle"
+                      class="flex-grow-1"
+                    ></v-select>
+                    <v-btn
+                      @click="removeFilter(filterType)"
+                      icon="mdi-close"
+                      size="small"
+                      variant="text"
+                      color="error"
+                      class="ml-2"
+                    ></v-btn>
+                  </div>
+                </v-card>
+              </v-col>
+            </v-row>
+          </div>
           
           <v-data-table
             :headers="emailHeaders"
@@ -252,6 +357,7 @@ export default {
   data() {
     return {
       accuracyChart: null,
+      promptCategoryChart: null,
       promptHeaders: [
         { title: 'Rank', key: 'rank', sortable: true },
         { title: 'Instructional Prompt', key: 'prompt', sortable: false },
@@ -265,8 +371,16 @@ export default {
         { title: 'Correct', key: 'is_correct', sortable: true },
         { title: 'Instructional Prompt', key: 'instructional_prompt', sortable: true }
       ],
+      promptCategoryHeaders: [
+        { title: 'Instructional Prompt', key: 'instructional_prompt', sortable: true },
+        { title: 'Expected Category', key: 'expected_category', sortable: true },
+        { title: 'Accuracy', key: 'accuracy', sortable: true },
+        { title: 'Correct/Total', key: 'correct', sortable: true }
+      ],
       categoryFilter: '',
-      promptFilter: ''
+      promptFilter: '',
+      correctnessFilter: '',
+      activeFilters: []
     }
   },
   computed: {
@@ -384,11 +498,12 @@ export default {
           }))
           
           results.sort((a, b) => b.accuracy - a.accuracy)
-          if (results.length > 0) {
-            results[0].isBest = true
-          }
+          
+          // Find the best accuracy and mark all prompts with that accuracy
+          const bestAccuracy = results.length > 0 ? results[0].accuracy : 0
           results.forEach((result, index) => {
             result.rank = index + 1
+            result.isBest = result.accuracy === bestAccuracy
           })
           
           return results
@@ -446,20 +561,37 @@ export default {
           accuracy: accuracyNum,
           correct: finalCorrect,
           total: finalTotal,
-          isBest: prompt === bestPrompt
+          isBest: false // Will be set after sorting
         }
       })
       
       // Sort by accuracy descending and add rank
       results.sort((a, b) => b.accuracy - a.accuracy)
+      
+      // Find the best accuracy (highest)
+      const bestAccuracy = results.length > 0 ? results[0].accuracy : 0
+      
+      // Mark all prompts with best accuracy as isBest
       results.forEach((result, index) => {
         result.rank = index + 1
+        result.isBest = result.accuracy === bestAccuracy
       })
       
       return results
     },
     bestPrompt() {
-      return this.promptResults.find(p => p.isBest) || this.promptResults[0]
+      // Return the first best prompt (for backward compatibility)
+      return this.bestPrompts[0] || this.promptResults[0]
+    },
+    bestPrompts() {
+      // Return all prompts with the best accuracy
+      if (!this.promptResults || this.promptResults.length === 0) return []
+      
+      // Find the highest accuracy
+      const maxAccuracy = Math.max(...this.promptResults.map(p => p.accuracy))
+      
+      // Return all prompts with that accuracy
+      return this.promptResults.filter(p => p.accuracy === maxAccuracy)
     },
     emailDetails() {
       if (!this.resultData || !this.resultData.prompt_evaluations) return []
@@ -610,6 +742,12 @@ export default {
       const allPromptsSet = new Set([...promptsFromDetails, ...promptsFromMetadata])
       return Array.from(allPromptsSet).sort()
     },
+    correctnessOptions() {
+      return [
+        { title: 'Correct', value: 'correct' },
+        { title: 'Incorrect', value: 'incorrect' }
+      ]
+    },
     filteredEmailDetails() {
       let filtered = this.emailDetails
       
@@ -629,25 +767,193 @@ export default {
         })
       }
       
+      if (this.correctnessFilter) {
+        if (this.correctnessFilter === 'correct') {
+          filtered = filtered.filter(e => e.is_correct === true)
+        } else if (this.correctnessFilter === 'incorrect') {
+          filtered = filtered.filter(e => e.is_correct === false)
+        }
+      }
+      
       return filtered
+    },
+    promptCategoryStats() {
+      // Calculate statistics grouped by prompt and expected category
+      if (!this.emailDetails || this.emailDetails.length === 0) return []
+      
+      // Group by prompt and category
+      const statsMap = new Map()
+      
+      this.emailDetails.forEach(detail => {
+        const prompt = detail.instructional_prompt || 'N/A'
+        const category = detail.expected_category || 'N/A'
+        const key = `${prompt}|||${category}`
+        
+        if (!statsMap.has(key)) {
+          statsMap.set(key, {
+            instructional_prompt: prompt,
+            expected_category: category,
+            correct: 0,
+            total: 0
+          })
+        }
+        
+        const stats = statsMap.get(key)
+        stats.total++
+        if (detail.is_correct) {
+          stats.correct++
+        }
+      })
+      
+      // Convert to array and calculate accuracy
+      const stats = Array.from(statsMap.values()).map(item => ({
+        ...item,
+        accuracy: item.total > 0 ? (item.correct / item.total) * 100 : 0
+      }))
+      
+      // Sort by prompt, then by category
+      stats.sort((a, b) => {
+        if (a.instructional_prompt !== b.instructional_prompt) {
+          return a.instructional_prompt.localeCompare(b.instructional_prompt)
+        }
+        return a.expected_category.localeCompare(b.expected_category)
+      })
+      
+      return stats
     }
   },
   mounted() {
     this.renderChart()
+    this.renderPromptCategoryChart()
   },
   watch: {
     promptResults() {
       this.$nextTick(() => {
         this.renderChart()
       })
+    },
+    promptCategoryStats() {
+      this.$nextTick(() => {
+        this.renderPromptCategoryChart()
+      })
     }
   },
   methods: {
+    addFilter(filterType) {
+      if (!this.activeFilters.includes(filterType)) {
+        this.activeFilters.push(filterType)
+      }
+    },
+    removeFilter(filterType) {
+      const index = this.activeFilters.indexOf(filterType)
+      if (index > -1) {
+        this.activeFilters.splice(index, 1)
+        // Clear the filter value when removing
+        if (filterType === 'category') {
+          this.categoryFilter = ''
+        } else if (filterType === 'prompt') {
+          this.promptFilter = ''
+        } else if (filterType === 'correctness') {
+          this.correctnessFilter = ''
+        }
+      }
+    },
     getAccuracyColor(accuracy) {
       if (accuracy >= 90) return 'success'
       if (accuracy >= 70) return 'info'
       if (accuracy >= 50) return 'warning'
       return 'error'
+    },
+    renderPromptCategoryChart() {
+      if (!this.$refs.promptCategoryChart || !this.promptCategoryStats || this.promptCategoryStats.length === 0) return
+      
+      if (this.promptCategoryChart) {
+        this.promptCategoryChart.destroy()
+      }
+      
+      // Group data by category, then by prompt
+      const categories = [...new Set(this.promptCategoryStats.map(s => s.expected_category))].sort()
+      const prompts = [...new Set(this.promptCategoryStats.map(s => s.instructional_prompt))].sort()
+      
+      // Create datasets for each prompt
+      const colors = [
+        'rgba(33, 150, 243, 0.8)',   // Blue
+        'rgba(76, 175, 80, 0.8)',    // Green
+        'rgba(255, 152, 0, 0.8)',    // Orange
+        'rgba(156, 39, 176, 0.8)',   // Purple
+        'rgba(244, 67, 54, 0.8)',    // Red
+        'rgba(0, 188, 212, 0.8)'     // Cyan
+      ]
+      
+      const datasets = prompts.map((prompt, promptIdx) => {
+        const data = categories.map(category => {
+          const stat = this.promptCategoryStats.find(s => 
+            s.instructional_prompt === prompt && s.expected_category === category
+          )
+          return stat ? stat.accuracy : 0
+        })
+        
+        // Truncate prompt name for label
+        const promptLabel = prompt.length > 30 ? prompt.substring(0, 30) + '...' : prompt
+        
+        return {
+          label: `Prompt ${promptIdx + 1}`,
+          data: data,
+          backgroundColor: colors[promptIdx % colors.length],
+          borderColor: colors[promptIdx % colors.length].replace('0.8', '1'),
+          borderWidth: 2
+        }
+      })
+      
+      const ctx = this.$refs.promptCategoryChart.getContext('2d')
+      this.promptCategoryChart = new Chart(ctx, {
+        type: 'bar',
+        data: {
+          labels: categories,
+          datasets: datasets
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          plugins: {
+            legend: {
+              display: true,
+              position: 'top'
+            },
+            tooltip: {
+              callbacks: {
+                afterLabel: (context) => {
+                  const category = categories[context.dataIndex]
+                  const prompt = prompts[context.datasetIndex]
+                  const stat = this.promptCategoryStats.find(s => 
+                    s.instructional_prompt === prompt && s.expected_category === category
+                  )
+                  if (stat) {
+                    return `Correct: ${stat.correct}/${stat.total}`
+                  }
+                  return ''
+                }
+              }
+            }
+          },
+          scales: {
+            y: {
+              beginAtZero: true,
+              max: 100,
+              title: {
+                display: true,
+                text: 'Accuracy (%)'
+              }
+            },
+            x: {
+              title: {
+                display: true,
+                text: 'Expected Category'
+              }
+            }
+          }
+        }
+      })
     },
     renderChart() {
       if (!this.$refs.accuracyChart || this.promptResults.length <= 1) return
