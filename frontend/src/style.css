@@ -1,0 +1,8 @@
+/* Minimal custom styles - Vuetify handles most styling */
+
+body {
+  margin: 0;
+  padding: 0;
+}
+
+/* Custom overrides if needed */

@@ -37,9 +37,9 @@ pip-delete-this-directory.txt
 #  Usually contains the output of `pyinstaller`
 *.manifest
 *.spec
+frontend/node_modules/
 
 # Installer logs
-pip-log.txt
 
 # Unit test / coverage reports
 htmlcov/
@@ -87,7 +87,6 @@ Desktop.ini
 
 # IDE
 .idea/
-.vscode/
 *.swp
 *.swo
 
@@ -97,6 +96,8 @@ results/
 *.csv
 *.json
 *.log
+
+!weather_mcp_test_dataset.json
 
 # Environment variables
 .env

@@ -3,12 +3,14 @@ import argparse
 import os
 from datetime import datetime
 from models.ollama_model import OllamaModel, OllamaConfig
-from metrics import MetricFactory, EvaluatorFactory
+from metrics import EvaluatorFactory
+from metrics.database_loader import load_metrics_from_db, list_available_metrics_from_db
 from metrics.responses import BenchmarkResult
 from benchmark.runner import BenchmarkRunner
 from visualizations.evaluation_visualizer import EvaluationVisualizer
 from dashboard import generate_html_dashboard
 from dataset import DatasetLoader, Dataset, Question
+from database.connection import Database
 
 
 def create_default_dataset() -> Dataset:
@@ -39,6 +41,10 @@ def create_default_dataset() -> Dataset:
 
 async def run_new_benchmark(dataset: Dataset, selected_metrics: list = None):
     """Run a new benchmark and return the results."""
+    # Ensure database is connected
+    if not Database.is_connected():
+        await Database.connect()
+    
     # Initialize the model to evaluate
     test_model = OllamaModel(config=OllamaConfig(model_name="llama3.2:latest"))
     
@@ -50,13 +56,13 @@ async def run_new_benchmark(dataset: Dataset, selected_metrics: list = None):
     ]
     evaluator = EvaluatorFactory.create_evaluator(evaluator_models)
     
-    # Initialize metrics using the factory
+    # Initialize metrics from database
     if selected_metrics:
         print(f"Using selected metrics: {', '.join(selected_metrics)}")
-        metrics = MetricFactory.create_metrics_by_names(selected_metrics)
+        metrics = await load_metrics_from_db(metric_names=selected_metrics)
     else:
-        print("Using all available metrics")
-        metrics = MetricFactory.create_all_metrics()
+        print("Using all available metrics from database")
+        metrics = await load_metrics_from_db()
     
     # Create benchmark runner
     runner = BenchmarkRunner(evaluator, metrics)
@@ -118,12 +124,16 @@ def load_dataset(args) -> Dataset:
         return create_default_dataset()
 
 
-def parse_metrics(args) -> list:
+async def parse_metrics(args) -> list:
     """Parse and validate metric selection from command line arguments."""
     if not args.metrics:
         return None  # Use all metrics
     
-    available_metrics = MetricFactory.list_available_metrics()
+    # Ensure database is connected
+    if not Database.is_connected():
+        await Database.connect()
+    
+    available_metrics = await list_available_metrics_from_db()
     selected_metrics = [m.strip() for m in args.metrics.split(',')]
     
     # Validate metric names
@@ -230,7 +240,7 @@ async def main():
     parser.add_argument(
         "--metrics",
         type=str,
-        help=f"Comma-separated list of metrics to use. Available: {', '.join(MetricFactory.list_available_metrics())}"
+        help="Comma-separated list of metrics to use. Use --list-metrics to see available metrics."
     )
     parser.add_argument(
         "--list-metrics",
@@ -253,19 +263,33 @@ async def main():
     
     args = parser.parse_args()
     
+    # Ensure database is connected
+    if not Database.is_connected():
+        await Database.connect()
+    
     # Handle list metrics option
     if args.list_metrics:
-        print("Available metrics:")
-        for metric_name in MetricFactory.list_available_metrics():
-            metric_class = MetricFactory.create_metric(metric_name)
-            print(f"  {metric_name}: {metric_class.description}")
+        print("Available metrics from database:")
+        try:
+            available_metrics = await list_available_metrics_from_db()
+            from database.metric_repository import MetricRepository
+            repo = MetricRepository()
+            for metric_name in available_metrics:
+                metric_doc = await repo.get_by_name(metric_name)
+                if metric_doc:
+                    print(f"  {metric_name} ({metric_doc.type}): {metric_doc.description}")
+        except Exception as e:
+            print(f"Error loading metrics: {e}")
+        finally:
+            await Database.disconnect()
         return
     
     # Parse metric selection
     try:
-        selected_metrics = parse_metrics(args)
+        selected_metrics = await parse_metrics(args)
     except ValueError as e:
         print(str(e))
+        await Database.disconnect()
         return
     
     # Import existing results or run new benchmark
@@ -284,14 +308,18 @@ async def main():
             
         except Exception as e:
             print(f"Failed to import JSON file: {e}")
+            await Database.disconnect()
             return
     else:
         # Load dataset
         dataset = load_dataset(args)
         
         # Run new benchmark
-        benchmark_result = await run_new_benchmark(dataset, selected_metrics)
-        print("✓ Benchmark completed successfully")
+        try:
+            benchmark_result = await run_new_benchmark(dataset, selected_metrics)
+            print("✓ Benchmark completed successfully")
+        finally:
+            await Database.disconnect()
     
     # Export results to JSON if requested or if running new benchmark
     export_path = args.export_json
@@ -370,6 +398,10 @@ async def main():
         print(f"  # Open interactive dashboard:")
         print(f"  open {args.results_dir}/dashboard.html")
         print(f"  # Or view static charts in: {args.results_dir}/")
+    
+    # Ensure database is disconnected
+    if Database.is_connected():
+        await Database.disconnect()
 
 
 if __name__ == "__main__":

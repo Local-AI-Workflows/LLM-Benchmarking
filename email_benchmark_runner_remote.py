@@ -12,11 +12,13 @@ from datetime import datetime
 from pathlib import Path
 
 from models.ollama_model import OllamaModel, OllamaConfig
-from metrics import MetricFactory, EvaluatorFactory
+from metrics import EvaluatorFactory
+from metrics.database_loader import load_metrics_from_db
 from benchmark.runner import BenchmarkRunner
 from visualizations.evaluation_visualizer import EvaluationVisualizer
 from dashboard import generate_html_dashboard
 from dataset import DatasetLoader
+from database.connection import Database
 
 REMOTE_OLLAMA_URL = "http://ollama.ios.htwg-konstanz.de:11434"
 
@@ -30,6 +32,10 @@ logger = logging.getLogger(__name__)
 async def main():
     """Run the email response quality benchmark on a remote server."""
     logger.info("Starting Email Response Quality Benchmark")
+
+    # Ensure database is connected
+    if not Database.is_connected():
+        await Database.connect()
 
     results_dir = Path(".doc/benchmark_results/email_benchmark_results")
     results_dir.mkdir(exist_ok=True)
@@ -69,14 +75,14 @@ async def main():
         evaluator = EvaluatorFactory.create_evaluator(evaluator_models)
         logger.info("Evaluator models: %s", [m.model_name for m in evaluator_models])
 
-        # Initialize metrics
+        # Initialize metrics - load from database
         email_metrics = [
             'email_professionalism',
             'email_responsiveness',
             'email_clarity',
             'email_empathy'
         ]
-        metrics = MetricFactory.create_metrics_by_names(email_metrics)
+        metrics = await load_metrics_from_db(metric_names=email_metrics, metric_type="standard")
         logger.info("Email metrics loaded: %s", [m.name for m in metrics])
 
         # Run benchmark
@@ -127,6 +133,10 @@ async def main():
     except Exception as e:
         logger.error("Benchmark failed: %s", e, exc_info=True)
         return 1
+    finally:
+        # Ensure database is disconnected
+        if Database.is_connected():
+            await Database.disconnect()
 
     return 0
 

@@ -1,0 +1,249 @@
+{
+  "name": "Weather MCP Tool Usage Test Dataset",
+  "description": "Test dataset for evaluating LLM performance with the fogcast-weather MCP tool. Questions range from simple current weather queries to complex multi-step historical analysis.",
+  "version": "1.0.0",
+  "created_at": "2025-10-25",
+  "metadata": {
+    "domain": "weather",
+    "mcp_tool": "fogcast-weather",
+    "mcp_server_url": "http://ollama.ios.htwg-konstanz.de:8000",
+    "location": "Konstanz, Germany",
+    "difficulty_levels": ["easy", "medium", "hard", "expert"]
+  },
+  "questions": [
+    {
+      "id": "weather_easy_01",
+      "text": "What's the current weather in Konstanz?",
+      "metadata": {
+        "difficulty": "easy",
+        "expected_tools": ["get_current_weather_summary"],
+        "tool_count": 1,
+        "reasoning": "Direct single-tool query requiring only current weather data"
+      },
+      "answer_key_points": [
+        "Current temperature",
+        "Weather conditions",
+        "Humidity or wind information"
+      ]
+    },
+    {
+      "id": "weather_easy_02",
+      "text": "Is it raining in Konstanz right now?",
+      "metadata": {
+        "difficulty": "easy",
+        "expected_tools": ["get_current_weather_summary"],
+        "tool_count": 1,
+        "reasoning": "Simple yes/no question requiring current weather check"
+      },
+      "answer_key_points": [
+        "Yes/No answer about precipitation",
+        "Current precipitation data"
+      ]
+    },
+    {
+      "id": "weather_easy_03",
+      "text": "What will the weather be like tomorrow in Konstanz?",
+      "metadata": {
+        "difficulty": "easy",
+        "expected_tools": ["get_forecast_summary"],
+        "tool_count": 1,
+        "reasoning": "Simple forecast query for next day"
+      },
+      "answer_key_points": [
+        "Tomorrow's temperature forecast",
+        "Expected weather conditions",
+        "Any precipitation forecast"
+      ]
+    },
+    {
+      "id": "weather_medium_01",
+      "text": "How does today's temperature compare to the forecast that was made for today?",
+      "metadata": {
+        "difficulty": "medium",
+        "expected_tools": ["get_current_weather_summary", "get_forecast_summary"],
+        "tool_count": 2,
+        "reasoning": "Requires comparing current weather with today's forecast, needs both tools"
+      },
+      "answer_key_points": [
+        "Current actual temperature",
+        "Forecasted temperature for today",
+        "Comparison or difference between them"
+      ]
+    },
+    {
+      "id": "weather_medium_02",
+      "text": "Will I need an umbrella this weekend in Konstanz?",
+      "metadata": {
+        "difficulty": "medium",
+        "expected_tools": ["get_forecast_summary"],
+        "tool_count": 2,
+        "reasoning": "Requires checking forecast for Saturday and Sunday (weekend)"
+      },
+      "answer_key_points": [
+        "Precipitation forecast for Saturday",
+        "Precipitation forecast for Sunday",
+        "Clear recommendation about umbrella"
+      ]
+    },
+    {
+      "id": "weather_medium_03",
+      "text": "What's the temperature trend for the next 5 days in Konstanz?",
+      "metadata": {
+        "difficulty": "medium",
+        "expected_tools": ["get_forecast_summary"],
+        "tool_count": 1,
+        "reasoning": "Single forecast call but requires analyzing temperature progression"
+      },
+      "answer_key_points": [
+        "Temperature forecast for multiple days",
+        "Trend description (increasing/decreasing/stable)",
+        "Specific temperature values"
+      ]
+    },
+    {
+      "id": "weather_hard_01",
+      "text": "Was last week warmer than this week in Konstanz? Compare average temperatures.",
+      "metadata": {
+        "difficulty": "hard",
+        "expected_tools": ["get_weather_history", "get_current_weather_summary"],
+        "tool_count": 2,
+        "reasoning": "Requires historical data for last week and current week data, plus averaging"
+      },
+      "answer_key_points": [
+        "Last week's average temperature",
+        "This week's average temperature",
+        "Clear comparison statement",
+        "Calculation methodology"
+      ]
+    },
+    {
+      "id": "weather_hard_02",
+      "text": "How many days in the past month had temperatures above 20°C in Konstanz?",
+      "metadata": {
+        "difficulty": "hard",
+        "expected_tools": ["get_weather_history"],
+        "tool_count": 1,
+        "reasoning": "Requires historical data analysis with date range calculation and filtering"
+      },
+      "answer_key_points": [
+        "Specific count of days",
+        "Reference to 30-day period",
+        "Temperature threshold (20°C) mentioned"
+      ]
+    },
+    {
+      "id": "weather_hard_03",
+      "text": "Based on historical patterns from the last 2 weeks, is the current temperature above or below normal for Konstanz?",
+      "metadata": {
+        "difficulty": "hard",
+        "expected_tools": ["get_weather_history", "get_current_weather_summary"],
+        "tool_count": 2,
+        "reasoning": "Requires historical baseline calculation and comparison with current conditions"
+      },
+      "answer_key_points": [
+        "Historical average from past 2 weeks",
+        "Current temperature",
+        "Above/below normal determination",
+        "Reference to statistical analysis"
+      ]
+    },
+    {
+      "id": "weather_expert_01",
+      "text": "Analyze the correlation between humidity and precipitation over the last 10 days in Konstanz, and predict if it will rain in the next 3 days based on current humidity levels.",
+      "metadata": {
+        "difficulty": "expert",
+        "expected_tools": ["get_weather_history", "get_current_weather_summary", "get_forecast_summary"],
+        "tool_count": 3,
+        "reasoning": "Complex multi-step: historical analysis, pattern recognition, current state, and forecast validation"
+      },
+      "answer_key_points": [
+        "Historical humidity and precipitation data",
+        "Correlation analysis or pattern description",
+        "Current humidity level",
+        "Forecast for next 3 days",
+        "Evidence-based prediction"
+      ]
+    },
+    {
+      "id": "weather_expert_02",
+      "text": "Create a 7-day temperature outlook for Konstanz, comparing forecasted values against the historical average for this time period from the last 30 days. Identify any significant deviations.",
+      "metadata": {
+        "difficulty": "expert",
+        "expected_tools": ["get_forecast_summary", "get_weather_history"],
+        "tool_count": 2,
+        "reasoning": "Requires comprehensive analysis combining forecast and historical baselines with anomaly detection"
+      },
+      "answer_key_points": [
+        "7-day forecast temperatures",
+        "Historical 30-day baseline",
+        "Day-by-day comparison",
+        "Identification of deviations",
+        "Statistical context"
+      ]
+    },
+    {
+      "id": "weather_expert_03",
+      "text": "Evaluate weather stability in Konstanz by comparing daily temperature variance over the past 2 weeks with the forecasted variance for the next week. Should I plan outdoor activities?",
+      "metadata": {
+        "difficulty": "expert",
+        "expected_tools": ["get_weather_history", "get_forecast_summary"],
+        "tool_count": 2,
+        "reasoning": "Advanced statistical analysis requiring variance calculation from historical and forecast data"
+      },
+      "answer_key_points": [
+        "Historical temperature variance calculation",
+        "Forecast temperature variance",
+        "Stability comparison",
+        "Weather pattern analysis",
+        "Clear recommendation for outdoor activities"
+      ]
+    },
+    {
+      "id": "weather_medium_04",
+      "text": "Is there any fog expected in Konstanz this week?",
+      "metadata": {
+        "difficulty": "medium",
+        "expected_tools": ["get_forecast_summary"],
+        "tool_count": 1,
+        "reasoning": "Requires checking forecast for fog conditions specifically"
+      },
+      "answer_key_points": [
+        "Fog forecast information",
+        "Time period (this week)",
+        "Yes/No answer with details"
+      ]
+    },
+    {
+      "id": "weather_hard_04",
+      "text": "What's the typical daily temperature fluctuation in Konstanz? Compare the average difference between day and night temperatures over the last week.",
+      "metadata": {
+        "difficulty": "hard",
+        "expected_tools": ["get_weather_history"],
+        "tool_count": 1,
+        "reasoning": "Requires hourly or detailed historical data to calculate daily temperature ranges"
+      },
+      "answer_key_points": [
+        "Temperature range calculation",
+        "Day vs night temperature patterns",
+        "Average fluctuation value",
+        "Time period (last week)"
+      ]
+    },
+    {
+      "id": "weather_edge_01",
+      "text": "What was the weather like on October 15th, 2025 in Konstanz?",
+      "metadata": {
+        "difficulty": "medium",
+        "expected_tools": ["get_weather_history"],
+        "tool_count": 1,
+        "reasoning": "Specific historical date query, tests date formatting and historical data retrieval"
+      },
+      "answer_key_points": [
+        "Specific date mentioned (Oct 15, 2025)",
+        "Temperature data",
+        "Weather conditions for that day"
+      ]
+    }
+  ]
+}
+

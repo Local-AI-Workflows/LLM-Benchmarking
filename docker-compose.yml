@@ -1,0 +1,57 @@
+version: '3.8'
+
+services:
+  mongodb:
+    image: mongo:7.0
+    container_name: llm_benchmark_mongodb
+    restart: unless-stopped
+    ports:
+      - "27017:27017"
+    environment:
+      MONGO_INITDB_DATABASE: llm_benchmark
+    volumes:
+      - mongodb_data:/data/db
+      - mongodb_config:/data/configdb
+    networks:
+      - llm_benchmark_network
+    healthcheck:
+      test: echo 'db.runCommand("ping").ok' | mongosh localhost:27017/test --quiet
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # Optional: API server in Docker (uncomment if you want to run API in Docker)
+  # api:
+  #   build:
+  #     context: .
+  #     dockerfile: Dockerfile.api
+  #   container_name: llm_benchmark_api
+  #   restart: unless-stopped
+  #   ports:
+  #     - "8000:8000"
+  #   environment:
+  #     MONGODB_URL: mongodb://mongodb:27017
+  #     MONGODB_DB_NAME: llm_benchmark
+  #     API_HOST: 0.0.0.0
+  #     API_PORT: 8000
+  #   depends_on:
+  #     mongodb:
+  #       condition: service_healthy
+  #   networks:
+  #     - llm_benchmark_network
+  #   volumes:
+  #     - ./results:/app/results
+  #     - ./dataset:/app/dataset
+
+volumes:
+  mongodb_data:
+    driver: local
+  mongodb_config:
+    driver: local
+
+networks:
+  llm_benchmark_network:
+    driver: bridge
+
+
+

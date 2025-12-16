@@ -1,4 +1,4 @@
-from typing import List, Dict, Any, Union
+from typing import List, Union, Optional
 from models.base_model import BaseLLMModel
 from metrics.evaluator import BaseEvaluator
 from metrics.metric_base import BaseMetric
@@ -9,12 +9,12 @@ from dataset import Dataset, Question
 class BenchmarkRunner:
     """Runs benchmarks across multiple prompts and metrics."""
 
-    def __init__(self, evaluator: BaseEvaluator, metrics: List[BaseMetric]):
+    def __init__(self, evaluator: Optional[BaseEvaluator], metrics: List[BaseMetric]):
         """
         Initialize the benchmark runner.
         
         Args:
-            evaluator: The evaluator to use for assessing responses
+            evaluator: The evaluator to use for assessing responses (can be None for email categorization)
             metrics: List of metrics to use for evaluation
         """
         self.evaluator = evaluator
@@ -50,15 +50,43 @@ class BenchmarkRunner:
         
         # Get responses from the model
         model_responses = {}
+        model_response_objects = {}  # Store full response objects for metadata access
         for question, prompt_string in zip(questions, prompt_strings):
             response = await model.generate(prompt_string)
             # Store responses using the full prompt string as key for metrics compatibility
             model_responses[prompt_string] = response.text
-        
+            
+            # Add question metadata to response object for email categorization
+            if hasattr(response, 'metadata'):
+                # Add expected category from question if available
+                if hasattr(question, 'expected_answer') and question.expected_answer:
+                    response.metadata['expected_category'] = question.expected_answer
+                # Also add other question metadata
+                if hasattr(question, 'metadata') and question.metadata:
+                    if 'expected_category' in question.metadata:
+                        response.metadata['expected_category'] = question.metadata['expected_category']
+            else:
+                # Create metadata if it doesn't exist
+                response.metadata = {}
+                if hasattr(question, 'expected_answer') and question.expected_answer:
+                    response.metadata['expected_category'] = question.expected_answer
+                if hasattr(question, 'metadata') and question.metadata:
+                    if 'expected_category' in question.metadata:
+                        response.metadata['expected_category'] = question.metadata['expected_category']
+            
+            model_response_objects[prompt_string] = response  # Store full object for metadata
+
         # Run each metric
         results = []
         for metric in self.metrics:
-            result = await metric.evaluate_batch(prompt_strings, model_responses, self.evaluator)
+            # Pass both text responses and full response objects with metadata
+            # For email categorization, evaluator is None but still passed for interface compatibility
+            result = await metric.evaluate_batch(
+                prompt_strings,
+                model_responses,
+                self.evaluator,
+                response_objects=model_response_objects  # Pass full response objects
+            )
             results.append(result)
         
         # Combine results from all metrics and add dataset information
