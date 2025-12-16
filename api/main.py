@@ -77,11 +77,13 @@ class BenchmarkCreateRequest(BaseModel):
     model_name: str = "llama3.2:latest"
     model_base_url: Optional[str] = None  # Base URL for test model
     dataset_id: Optional[str] = None  # Use dataset from database
-    metric_type: str = "standard"  # "standard" or "mcp"
+    metric_type: str = "standard"  # "standard", "mcp", or "email_categorization"
     metric_ids: List[str] = []  # Metric IDs from database
     evaluator_models: Optional[List[EvaluatorModelConfig]] = None  # Evaluator models with base URLs
     # MCP-specific
     mcp_tools: Optional[List[MCPServerConfigRequest]] = None
+    # Email categorization specific
+    instructional_prompts: Optional[List[str]] = None  # Instructional prompts for email categorization
 
 
 class BenchmarkResponse(BaseModel):
@@ -94,6 +96,7 @@ class BenchmarkResponse(BaseModel):
     completed_at: Optional[str] = None
     model_name: Optional[str] = None
     dataset_name: Optional[str] = None
+    metric_type: Optional[str] = None
     metrics: List[str] = []
     evaluator_models: List[str] = []
     error_message: Optional[str] = None
@@ -129,7 +132,8 @@ def benchmark_doc_to_response(doc: BenchmarkDocument) -> BenchmarkResponse:
         started_at=doc.started_at.isoformat() if doc.started_at else None,
         completed_at=doc.completed_at.isoformat() if doc.completed_at else None,
         model_name=doc.model_name,
-        dataset_name=doc.dataset_name,
+        dataset_name=doc.dataset_name or "Unknown Dataset",
+        metric_type=doc.metric_type or "standard",
         metrics=doc.metrics,
         evaluator_models=doc.evaluator_models,
         error_message=doc.error_message,
@@ -220,60 +224,112 @@ async def run_benchmark_task(benchmark_id: str, request: BenchmarkCreateRequest)
                 config_kwargs["base_url"] = request.model_base_url
             test_model = OllamaModel(config=OllamaConfig(**config_kwargs))
         
-        # Initialize evaluator models
-        if request.evaluator_models:
-            evaluator_models = [
-                OllamaModel(config=OllamaConfig(
-                    model_name=eval_config.model_name,
-                    **({"base_url": eval_config.base_url} if eval_config.base_url else {})
-                ))
-                for eval_config in request.evaluator_models
-            ]
+        # Initialize evaluator models (not needed for email categorization)
+        if request.metric_type == MetricType.EMAIL_CATEGORIZATION:
+            # Email categorization doesn't use evaluator models
+            evaluator_models = []
+            evaluator = None  # Will be passed but not used
+            evaluator_model_names = []
         else:
-            evaluator_models = [
-                OllamaModel(config=OllamaConfig(model_name="deepseek-r1:1.5b")),
-                OllamaModel(config=OllamaConfig(model_name="gemma3:1b")),
-                OllamaModel(config=OllamaConfig(model_name="llama3.2:latest"))
-            ]
-        
-        evaluator = EvaluatorFactory.create_evaluator(evaluator_models)
-        evaluator_model_names = [m.model_name for m in evaluator_models]
+            if request.evaluator_models:
+                evaluator_models = [
+                    OllamaModel(config=OllamaConfig(
+                        model_name=eval_config.model_name,
+                        **({"base_url": eval_config.base_url} if eval_config.base_url else {})
+                    ))
+                    for eval_config in request.evaluator_models
+                ]
+            else:
+                evaluator_models = [
+                    OllamaModel(config=OllamaConfig(model_name="deepseek-r1:1.5b")),
+                    OllamaModel(config=OllamaConfig(model_name="gemma3:1b")),
+                    OllamaModel(config=OllamaConfig(model_name="llama3.2:latest"))
+                ]
+            
+            evaluator = EvaluatorFactory.create_evaluator(evaluator_models)
+            evaluator_model_names = [m.model_name for m in evaluator_models]
         
         # Load metrics from database
         metrics = []
         metric_names = []
         metric_ids = []
         
-        if request.metric_ids:
-            for metric_id in request.metric_ids:
-                metric_doc = await metric_repository.get_by_id(metric_id)
-                if not metric_doc:
-                    raise ValueError(f"Metric not found: {metric_id}")
-                if not metric_doc.enabled:
-                    logger.warning(f"Metric {metric_doc.name} is disabled, skipping")
-                    continue
-                if metric_doc.type != request.metric_type:
-                    logger.warning(f"Metric {metric_doc.name} type mismatch, skipping")
-                    continue
+        # For email categorization, automatically create metric if none provided
+        if request.metric_type == MetricType.EMAIL_CATEGORIZATION:
+            if request.metric_ids:
+                # Use specified metrics if provided
+                for metric_id in request.metric_ids:
+                    metric_doc = await metric_repository.get_by_id(metric_id)
+                    if not metric_doc:
+                        raise ValueError(f"Metric not found: {metric_id}")
+                    if metric_doc.type != request.metric_type:
+                        logger.warning(f"Metric {metric_doc.name} type mismatch, skipping")
+                        continue
+                    
+                    metric = load_metric_from_db(metric_doc)
+                    metrics.append(metric)
+                    metric_names.append(metric_doc.name)
+                    metric_ids.append(metric_id)
+            
+            # If no metrics found, create one automatically
+            if not metrics:
+                from metrics.email_categorization_metric import EmailCategorizationMetric
                 
-                metric = load_metric_from_db(metric_doc)
-                metrics.append(metric)
-                metric_names.append(metric_doc.name)
-                metric_ids.append(metric_id)
+                # Extract categories from dataset metadata if available
+                categories = None
+                if dataset and hasattr(dataset, 'metadata') and dataset.metadata:
+                    categories_dict = dataset.metadata.get('categories', {})
+                    if categories_dict:
+                        categories = list(categories_dict.keys())
+                    # Also try to extract from questions
+                    if not categories and dataset.questions:
+                        categories = list(set([
+                            q.expected_answer for q in dataset.questions 
+                            if q.expected_answer
+                        ]))
+                
+                # Create email categorization metric
+                email_metric = EmailCategorizationMetric(
+                    name="email_categorization",
+                    description="Email categorization accuracy metric",
+                    categories=categories
+                )
+                metrics.append(email_metric)
+                metric_names.append("email_categorization")
+                metric_ids.append("auto-generated")
+                logger.info(f"Auto-created email categorization metric with categories: {categories}")
         else:
-            # Load all enabled metrics of the specified type
-            metric_docs = await metric_repository.get_all(
-                metric_type=request.metric_type,
-                enabled_only=True
-            )
-            for metric_doc in metric_docs:
-                metric = load_metric_from_db(metric_doc)
-                metrics.append(metric)
-                metric_names.append(metric_doc.name)
-                metric_ids.append(str(metric_doc.id))
-        
-        if not metrics:
-            raise ValueError(f"No enabled {request.metric_type} metrics found")
+            # Standard metric loading for other types
+            if request.metric_ids:
+                for metric_id in request.metric_ids:
+                    metric_doc = await metric_repository.get_by_id(metric_id)
+                    if not metric_doc:
+                        raise ValueError(f"Metric not found: {metric_id}")
+                    if not metric_doc.enabled:
+                        logger.warning(f"Metric {metric_doc.name} is disabled, skipping")
+                        continue
+                    if metric_doc.type != request.metric_type:
+                        logger.warning(f"Metric {metric_doc.name} type mismatch, skipping")
+                        continue
+                    
+                    metric = load_metric_from_db(metric_doc)
+                    metrics.append(metric)
+                    metric_names.append(metric_doc.name)
+                    metric_ids.append(metric_id)
+            else:
+                # Load all enabled metrics of the specified type
+                metric_docs = await metric_repository.get_all(
+                    metric_type=request.metric_type,
+                    enabled_only=True
+                )
+                for metric_doc in metric_docs:
+                    metric = load_metric_from_db(metric_doc)
+                    metrics.append(metric)
+                    metric_names.append(metric_doc.name)
+                    metric_ids.append(str(metric_doc.id))
+            
+            if not metrics:
+                raise ValueError(f"No enabled {request.metric_type} metrics found")
         
         # Update benchmark with configuration
         mcp_tools_dict = None
@@ -290,8 +346,74 @@ async def run_benchmark_task(benchmark_id: str, request: BenchmarkCreateRequest)
         })
         
         # Run benchmark
-        runner = BenchmarkRunner(evaluator, metrics)
-        benchmark_result = await runner.run_benchmark(test_model, dataset)
+        # For email categorization with instructional prompts, use specialized runner
+        if request.metric_type == MetricType.EMAIL_CATEGORIZATION:
+            from benchmark.email_benchmark_runner import EmailBenchmarkRunner
+            email_runner = EmailBenchmarkRunner(metrics)
+            
+            # Use provided prompts or default prompt
+            instructional_prompts = request.instructional_prompts or [
+                "Categorize the following email into one of these categories: contract_submission, international_office_question, internship_postponement, uncategorized. Respond with only the category name."
+            ]
+            
+            results_by_prompt = await email_runner.run_benchmark_with_prompts(
+                test_model,
+                dataset,
+                instructional_prompts
+            )
+            
+            # Combine results from all prompts
+            # Get the best prompt for metadata
+            best_prompt = email_runner.get_best_prompt(results_by_prompt)
+            
+            # Combine all prompt_evaluations from all prompts
+            all_prompt_evaluations = []
+            for prompt, result in results_by_prompt.items():
+                # Add all prompt evaluations from this prompt
+                # Each result contains evaluations for all emails with this prompt
+                logger.info(f"Adding {len(result.prompt_evaluations)} prompt evaluations from prompt (index {results_by_prompt[prompt].metadata.get('instructional_prompt_index', 'unknown')})")
+                all_prompt_evaluations.extend(result.prompt_evaluations)
+            
+            expected_total = len(instructional_prompts) * len(dataset.questions) if dataset else 0
+            logger.info(f"Total prompt evaluations after combining: {len(all_prompt_evaluations)} (expected: {expected_total})")
+            
+            if len(all_prompt_evaluations) != expected_total:
+                logger.warning(f"Mismatch in prompt evaluations count! Got {len(all_prompt_evaluations)}, expected {expected_total}")
+                logger.warning(f"Prompts: {len(instructional_prompts)}, Questions: {len(dataset.questions) if dataset else 0}")
+                for prompt, result in results_by_prompt.items():
+                    logger.warning(f"  Prompt '{prompt[:50]}...' has {len(result.prompt_evaluations)} evaluations")
+            
+            # Calculate overall stats from all prompts
+            total_emails = len(dataset.questions) if dataset else 0
+            best_result = results_by_prompt[best_prompt]
+            
+            # Create a combined benchmark result with all prompt evaluations
+            from metrics.responses import BenchmarkResult
+            benchmark_result = BenchmarkResult(
+                prompt_evaluations=all_prompt_evaluations,
+                metadata={
+                    "model_name": test_model.model_name,
+                    "num_prompts": len(instructional_prompts),
+                    "num_metrics": 1,
+                    "metrics": ["email_categorization"],
+                    "evaluator_models": [],
+                    "accuracy_percentage": best_result.metadata.get("accuracy_percentage", 0.0),
+                    "correct_count": best_result.metadata.get("correct_count", 0),
+                    "total_count": total_emails  # Total emails (same for all prompts)
+                }
+            )
+            
+            # Add information about all prompts to metadata
+            prompt_accuracies = {
+                prompt: result.metadata.get("accuracy_percentage", 0.0)
+                for prompt, result in results_by_prompt.items()
+            }
+            benchmark_result.metadata["all_prompt_results"] = prompt_accuracies
+            benchmark_result.metadata["best_prompt"] = best_prompt
+        else:
+            # Standard benchmark runner
+            runner = BenchmarkRunner(evaluator, metrics)
+            benchmark_result = await runner.run_benchmark(test_model, dataset)
         
         # Convert result to dict
         result_dict = benchmark_result.to_json()
@@ -322,8 +444,8 @@ async def create_benchmark(
 ):
     """Create and start a new benchmark."""
     # Validate metric type
-    if request.metric_type not in [MetricType.STANDARD, MetricType.MCP]:
-        raise HTTPException(status_code=400, detail="metric_type must be 'standard' or 'mcp'")
+    if request.metric_type not in [MetricType.STANDARD, MetricType.MCP, MetricType.EMAIL_CATEGORIZATION]:
+        raise HTTPException(status_code=400, detail="metric_type must be 'standard', 'mcp', or 'email_categorization'")
     
     # Validate dataset exists if provided
     if request.dataset_id:
@@ -569,8 +691,8 @@ def get_class_path_for_metric(name: str, metric_type: str) -> Optional[str]:
 @app.post("/api/metrics", response_model=MetricResponse, status_code=201)
 async def create_metric(request: MetricCreateRequest):
     """Create a new metric."""
-    if request.type not in [MetricType.STANDARD, MetricType.MCP]:
-        raise HTTPException(status_code=400, detail="Type must be 'standard' or 'mcp'")
+    if request.type not in [MetricType.STANDARD, MetricType.MCP, MetricType.EMAIL_CATEGORIZATION]:
+        raise HTTPException(status_code=400, detail="Type must be 'standard', 'mcp', or 'email_categorization'")
     
     # Check if name already exists
     existing = await metric_repository.get_by_name(request.name)
@@ -727,7 +849,13 @@ async def import_dataset(request: DatasetImportRequest):
     try:
         # Load dataset
         if request.file_format == 'json':
-            dataset = DatasetLoader.from_json_file(temp_path)
+            # Try email format first, then fall back to standard format
+            try:
+                from dataset.email_loader import EmailDatasetLoader
+                dataset = EmailDatasetLoader.from_json_file(temp_path)
+            except (ValueError, KeyError):
+                # Not an email format, try standard format
+                dataset = DatasetLoader.from_json_file(temp_path)
         elif request.file_format == 'csv':
             dataset = DatasetLoader.from_csv_file(temp_path)
         elif request.file_format == 'yaml':

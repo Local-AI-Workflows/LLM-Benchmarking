@@ -30,7 +30,7 @@
 
         <v-select
           v-model="form.metric_type"
-          :items="['standard', 'mcp']"
+          :items="['standard', 'mcp', 'email_categorization']"
           label="Metric Type"
           prepend-inner-icon="mdi-ruler"
           variant="outlined"
@@ -38,6 +38,47 @@
           @update:model-value="$emit('metric-type-change')"
           class="mb-2"
         ></v-select>
+
+        <!-- Instructional Prompts for Email Categorization -->
+        <v-expand-transition>
+          <div v-if="form.metric_type === 'email_categorization'">
+            <v-card variant="outlined" class="mb-2">
+              <v-card-title class="text-subtitle-2">Instructional Prompts</v-card-title>
+              <v-card-text>
+                <div v-for="(prompt, index) in form.instructional_prompts" :key="index" class="mb-2">
+                  <v-textarea
+                    v-model="form.instructional_prompts[index]"
+                    :label="`Prompt ${index + 1}`"
+                    variant="outlined"
+                    density="compact"
+                    rows="3"
+                    auto-grow
+                  ></v-textarea>
+                  <v-btn
+                    @click="removeInstructionalPrompt(index)"
+                    color="error"
+                    size="small"
+                    variant="text"
+                    class="mt-1"
+                  >
+                    <v-icon start icon="mdi-delete"></v-icon>
+                    Remove
+                  </v-btn>
+                </div>
+                <v-btn
+                  @click="addInstructionalPrompt"
+                  color="primary"
+                  size="small"
+                  variant="outlined"
+                  block
+                >
+                  <v-icon start icon="mdi-plus"></v-icon>
+                  Add Instructional Prompt
+                </v-btn>
+              </v-card-text>
+            </v-card>
+          </div>
+        </v-expand-transition>
 
         <v-select
           v-model="form.dataset_id"
@@ -68,13 +109,14 @@
           :items="filteredMetrics"
           item-title="name"
           item-value="id"
-          label="Metrics"
+          :label="form.metric_type === 'email_categorization' ? 'Metrics (optional - auto-created if empty)' : 'Metrics'"
           prepend-inner-icon="mdi-chart-bar"
           variant="outlined"
           density="compact"
           multiple
           chips
           closable-chips
+          :required="form.metric_type !== 'email_categorization'"
           class="mb-2"
         >
           <template v-slot:item="{ props, item }">
@@ -155,9 +197,9 @@
           </div>
         </v-expand-transition>
 
-        <!-- Evaluator Models -->
+        <!-- Evaluator Models (hidden for email categorization) -->
         <v-expand-transition>
-          <div class="mb-4">
+          <div v-if="form.metric_type !== 'email_categorization'" class="mb-4">
             <v-card variant="outlined" class="pa-3">
               <v-card-title class="text-subtitle-1 mb-2">
                 <v-icon icon="mdi-account-multiple" class="mr-2"></v-icon>
@@ -250,7 +292,8 @@ export default {
         dataset_id: '',
         metric_ids: [],
         evaluator_models: [],
-        mcp_tools: []
+        mcp_tools: [],
+        instructional_prompts: []
       }
     }
   },
@@ -281,6 +324,12 @@ export default {
     removeEvaluator(index) {
       this.form.evaluator_models.splice(index, 1)
     },
+    addInstructionalPrompt() {
+      this.form.instructional_prompts.push('')
+    },
+    removeInstructionalPrompt(index) {
+      this.form.instructional_prompts.splice(index, 1)
+    },
     handleSubmit() {
       this.$emit('submit', { ...this.form })
     },
@@ -292,7 +341,8 @@ export default {
         dataset_id: '',
         metric_ids: [],
         evaluator_models: [],
-        mcp_tools: []
+        mcp_tools: [],
+        instructional_prompts: []
       }
     }
   }

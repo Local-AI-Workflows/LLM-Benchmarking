@@ -110,6 +110,7 @@ class MetricType:
     """Metric type constants."""
     STANDARD = "standard"
     MCP = "mcp"
+    EMAIL_CATEGORIZATION = "email_categorization"
 
 
 class MetricDocument(BaseModel):

@@ -98,8 +98,8 @@
               </v-chip>
             </template>
             <template v-slot:item.rationale="{ item }">
-              <div style="max-width: 400px; word-wrap: break-word;" class="text-body-2">
-                {{ item.rationale }}
+              <div style="max-width: 400px; word-wrap: break-word;">
+                {{ item.rationale.substring(0, 100) }}{{ item.rationale.length > 100 ? '...' : '' }}
               </div>
             </template>
           </v-data-table>
@@ -146,56 +146,36 @@
               </div>
             </template>
             <template v-slot:expanded-row="{ item }">
-              <td :colspan="questionHeaders.length" class="pa-4">
-                <v-expansion-panels>
-                  <v-expansion-panel
-                    v-for="(evaluation, evalIndex) in item.evaluations"
-                    :key="evalIndex"
-                    :title="`${evaluation.metric_name} - Score: ${evaluation.score.toFixed(1)}`"
-                  >
-                    <v-expansion-panel-text>
-                      <!-- Combined Rationale -->
-                      <div class="mb-4">
-                        <div class="text-subtitle-2 mb-2">Overall Rationale:</div>
-                        <div class="text-body-2">{{ evaluation.rationale }}</div>
-                      </div>
-                      
-                      <!-- Individual Evaluator Responses -->
-                      <div v-if="evaluation.individual_responses && evaluation.individual_responses.length > 0">
-                        <div class="text-subtitle-2 mb-2">Evaluator Breakdown:</div>
-                        <v-table density="compact">
-                          <thead>
-                            <tr>
-                              <th class="text-left">Evaluator</th>
-                              <th class="text-left">Score</th>
-                              <th class="text-left">Rationale</th>
-                            </tr>
-                          </thead>
-                          <tbody>
-                            <tr v-for="(individual, idx) in evaluation.individual_responses" :key="idx">
-                              <td>{{ individual.model_name }}</td>
-                              <td>
-                                <v-chip
-                                  :color="getScoreColor(individual.score)"
-                                  size="small"
-                                  variant="flat"
-                                >
-                                  {{ individual.score.toFixed(1) }}
-                                </v-chip>
-                              </td>
-                              <td>
-                                <div class="text-body-2" style="max-width: 500px;">
-                                  {{ individual.rationale }}
-                                </div>
-                              </td>
-                            </tr>
-                          </tbody>
-                        </v-table>
-                      </div>
-                    </v-expansion-panel-text>
-                  </v-expansion-panel>
-                </v-expansion-panels>
-              </td>
+              <tr>
+                <td colspan="3">
+                  <div class="pa-4">
+                    <div class="mb-2"><strong>Full Prompt:</strong></div>
+                    <div class="mb-4" style="white-space: pre-wrap; background: #f5f5f5; padding: 12px; border-radius: 4px;">
+                      {{ item.prompt }}
+                    </div>
+                    <div class="mb-2"><strong>Response:</strong></div>
+                    <div class="mb-4" style="white-space: pre-wrap; background: #f5f5f5; padding: 12px; border-radius: 4px;">
+                      {{ item.response }}
+                    </div>
+                    <div v-for="(evaluation, idx) in item.evaluations" :key="idx" class="mb-3">
+                      <v-card variant="outlined">
+                        <v-card-title class="text-subtitle-1">
+                          {{ evaluation.metric_name }}
+                        </v-card-title>
+                        <v-card-text>
+                          <div class="mb-2">
+                            <strong>Score:</strong> 
+                            <v-chip :color="getScoreColor(evaluation.score)" size="small" variant="flat">
+                              {{ evaluation.score.toFixed(1) }}
+                            </v-chip>
+                          </div>
+                          <div><strong>Rationale:</strong> {{ evaluation.rationale }}</div>
+                        </v-card-text>
+                      </v-card>
+                    </div>
+                  </div>
+                </td>
+              </tr>
             </template>
           </v-data-table>
         </v-card-text>
@@ -206,15 +186,11 @@
 
 <script>
 import { Chart, registerables } from 'chart.js'
-import { Bar } from 'vue-chartjs'
 
 Chart.register(...registerables)
 
 export default {
-  name: 'BenchmarkVisualization',
-  components: {
-    Bar
-  },
+  name: 'StandardResults',
   props: {
     resultData: {
       type: Object,
@@ -267,7 +243,7 @@ export default {
           }
         })
       })
-        return metrics.size
+      return metrics.size
     },
     numEvaluators() {
       if (!this.resultData || !this.resultData.metadata) return 0
@@ -344,7 +320,7 @@ export default {
           response: pe.response,
           avgScore: scoreCount > 0 ? totalScore / scoreCount : 0,
           metricScores: avgMetricScores,
-          evaluations: pe.evaluations || [] // Include full evaluation data for expansion
+          evaluations: pe.evaluations || []
         }
       })
     },
@@ -373,31 +349,28 @@ export default {
         return metricAverages[metric] / metricCounts[metric]
       })
       
-      return {
-        labels,
-        datasets: [{
-          label: 'Average Score',
-          data,
-          backgroundColor: 'rgba(25, 118, 210, 0.6)',
-          borderColor: 'rgba(25, 118, 210, 1)',
-          borderWidth: 2
-        }]
-      }
+      return { labels, data }
     }
   },
   mounted() {
     this.renderChart()
   },
   watch: {
-    resultData() {
+    metricsChartData() {
       this.$nextTick(() => {
         this.renderChart()
       })
     }
   },
   methods: {
+    getScoreColor(score) {
+      if (score >= 8) return 'success'
+      if (score >= 6) return 'info'
+      if (score >= 4) return 'warning'
+      return 'error'
+    },
     renderChart() {
-      if (!this.metricsChartData || !this.$refs.metricsChart) return
+      if (!this.$refs.metricsChart || !this.metricsChartData) return
       
       if (this.metricsChart) {
         this.metricsChart.destroy()
@@ -406,7 +379,16 @@ export default {
       const ctx = this.$refs.metricsChart.getContext('2d')
       this.metricsChart = new Chart(ctx, {
         type: 'bar',
-        data: this.metricsChartData,
+        data: {
+          labels: this.metricsChartData.labels,
+          datasets: [{
+            label: 'Average Score',
+            data: this.metricsChartData.data,
+            backgroundColor: 'rgba(33, 150, 243, 0.6)',
+            borderColor: 'rgba(33, 150, 243, 1)',
+            borderWidth: 2
+          }]
+        },
         options: {
           responsive: true,
           maintainAspectRatio: false,
@@ -422,23 +404,10 @@ export default {
           plugins: {
             legend: {
               display: false
-            },
-            tooltip: {
-              callbacks: {
-                label: function(context) {
-                  return `Score: ${context.parsed.y.toFixed(2)}`
-                }
-              }
             }
           }
         }
       })
-    },
-    getScoreColor(score) {
-      if (score >= 8) return 'success'
-      if (score >= 6) return 'info'
-      if (score >= 4) return 'warning'
-      return 'error'
     }
   },
   beforeUnmount() {
@@ -449,8 +418,3 @@ export default {
 }
 </script>
 
-<style scoped>
-canvas {
-  max-height: 400px;
-}
-</style>

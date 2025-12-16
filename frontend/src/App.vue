@@ -225,7 +225,10 @@ export default {
           dataset_id: formData.dataset_id,
           metric_ids: formData.metric_ids,
           evaluator_models: evaluator_models,
-          mcp_tools: formData.metric_type === 'mcp' && mcp_tools.length > 0 ? mcp_tools : null
+          mcp_tools: formData.metric_type === 'mcp' && mcp_tools.length > 0 ? mcp_tools : null,
+          instructional_prompts: formData.metric_type === 'email_categorization' && formData.instructional_prompts.length > 0
+            ? formData.instructional_prompts.filter(p => p.trim())
+            : null
         }
         
         const response = await axios.post(`${API_BASE}/benchmarks`, payload)

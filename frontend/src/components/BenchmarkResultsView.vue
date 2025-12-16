@@ -71,9 +71,9 @@
         </v-card-text>
       </v-card>
 
-      <!-- Results Visualization -->
+      <!-- Results Visualization - Dynamic Component -->
       <v-card v-if="resultData">
-        <BenchmarkVisualization :result-data="resultData" />
+        <component :is="resultsComponent" :result-data="resultData" />
       </v-card>
       <v-card v-else-if="benchmarkData.status === 'completed'" class="pa-4">
         <v-alert type="warning">
@@ -90,14 +90,16 @@
 
 <script>
 import axios from 'axios'
-import BenchmarkVisualization from './BenchmarkVisualization.vue'
+import StandardResults from './StandardResults.vue'
+import EmailCategorizationResults from './EmailCategorizationResults.vue'
 
 const API_BASE = '/api'
 
 export default {
   name: 'BenchmarkResultsView',
   components: {
-    BenchmarkVisualization
+    StandardResults,
+    EmailCategorizationResults
   },
   props: {
     benchmarkId: {
@@ -115,6 +117,15 @@ export default {
   },
   mounted() {
     this.loadBenchmark()
+  },
+  computed: {
+    resultsComponent() {
+      // Determine which component to use based on metric_type
+      if (this.benchmarkData?.metric_type === 'email_categorization') {
+        return 'EmailCategorizationResults'
+      }
+      return 'StandardResults'
+    }
   },
   watch: {
     benchmarkId() {

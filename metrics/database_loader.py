@@ -29,8 +29,8 @@ def load_metric_from_db(metric_doc: MetricDocument) -> BaseMetric:
     """
     Load a metric instance from database document, using stored configuration.
     
-    Uses the generic GenericMetric class - no need for individual metric classes.
-    All configuration comes from the database.
+    Uses the generic GenericMetric class for standard metrics, or EmailCategorizationMetric
+    for email categorization metrics.
     
     Args:
         metric_doc: MetricDocument from database
@@ -42,7 +42,20 @@ def load_metric_from_db(metric_doc: MetricDocument) -> BaseMetric:
         ValueError: If metric cannot be loaded
     """
     try:
-        # Use the generic metric class - no need to import specific classes
+        # Check if this is an email categorization metric
+        if metric_doc.type == "email_categorization":
+            from .email_categorization_metric import EmailCategorizationMetric
+            
+            # Extract categories from metadata if available
+            categories = metric_doc.metadata.get("categories", [])
+            
+            return EmailCategorizationMetric(
+                name=metric_doc.name,
+                description=metric_doc.description,
+                categories=categories if categories else None
+            )
+        
+        # Use the generic metric class for other metric types
         GenericMetric = get_generic_metric_class()
         
         # Create metric with configuration from database
