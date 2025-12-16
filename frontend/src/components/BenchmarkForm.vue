@@ -104,32 +104,36 @@
           </template>
         </v-select>
 
-        <v-select
-          v-model="form.metric_ids"
-          :items="filteredMetrics"
-          item-title="name"
-          item-value="id"
-          :label="form.metric_type === 'email_categorization' ? 'Metrics (optional - auto-created if empty)' : 'Metrics'"
-          prepend-inner-icon="mdi-chart-bar"
-          variant="outlined"
-          density="compact"
-          multiple
-          chips
-          closable-chips
-          :required="form.metric_type !== 'email_categorization'"
-          class="mb-2"
-        >
-          <template v-slot:item="{ props, item }">
-            <v-list-item v-bind="props">
-              <template v-slot:title>
-                {{ item.raw?.name || 'Unknown' }}
-              </template>
-              <template v-slot:subtitle>
-                {{ item.raw?.description || '' }}
-              </template>
-            </v-list-item>
-          </template>
-        </v-select>
+        <!-- Metrics (hidden for email categorization) -->
+        <v-expand-transition>
+          <v-select
+            v-if="form.metric_type !== 'email_categorization'"
+            v-model="form.metric_ids"
+            :items="filteredMetrics"
+            item-title="name"
+            item-value="id"
+            label="Metrics"
+            prepend-inner-icon="mdi-chart-bar"
+            variant="outlined"
+            density="compact"
+            multiple
+            chips
+            closable-chips
+            required
+            class="mb-2"
+          >
+            <template v-slot:item="{ props, item }">
+              <v-list-item v-bind="props">
+                <template v-slot:title>
+                  {{ item.raw?.name || 'Unknown' }}
+                </template>
+                <template v-slot:subtitle>
+                  {{ item.raw?.description || '' }}
+                </template>
+              </v-list-item>
+            </template>
+          </v-select>
+        </v-expand-transition>
 
         <!-- MCP Tools Configuration -->
         <v-expand-transition>
