@@ -242,6 +242,8 @@
                       v-else-if="filterType === 'prompt'"
                       v-model="promptFilter"
                       :items="promptOptions"
+                      item-title="title"
+                      item-value="value"
                       label="Instructional Prompt"
                       clearable
                       variant="outlined"
@@ -251,13 +253,16 @@
                       class="flex-grow-1"
                     >
                       <template v-slot:item="{ props, item }">
-                        <v-list-item v-bind="props">
-                          <template v-slot:title>
-                            <div class="text-truncate" style="max-width: 400px;">
-                              {{ item.raw }}
-                            </div>
+                        <v-tooltip location="right" max-width="500">
+                          <template v-slot:activator="{ props: tooltipProps }">
+                            <v-list-item v-bind="props" v-on="tooltipProps">
+                              <template v-slot:title>
+                                {{ item.raw.title }}
+                              </template>
+                            </v-list-item>
                           </template>
-                        </v-list-item>
+                          <pre class="prompt-full-text" style="max-height: 200px; overflow-y: auto;">{{ item.raw.value }}</pre>
+                        </v-tooltip>
                       </template>
                     </v-select>
                     <v-select
@@ -319,20 +324,50 @@
               ></v-icon>
             </template>
             <template v-slot:item.instructional_prompt="{ item }">
-              <div style="max-width: 300px;">
-                <v-expansion-panels variant="accordion">
-                  <v-expansion-panel>
-                    <v-expansion-panel-title>
-                      <div class="text-truncate" style="max-width: 250px;">
-                        {{ item.instructional_prompt.substring(0, 50) }}{{ item.instructional_prompt.length > 50 ? '...' : '' }}
-                      </div>
-                    </v-expansion-panel-title>
-                    <v-expansion-panel-text>
-                      <pre class="prompt-full-text">{{ item.instructional_prompt }}</pre>
-                    </v-expansion-panel-text>
-                  </v-expansion-panel>
-                </v-expansion-panels>
-              </div>
+              <v-tooltip location="right" max-width="500">
+                <template v-slot:activator="{ props }">
+                  <div v-bind="props" style="max-width: 300px;">
+                    <v-chip
+                      size="small"
+                      color="primary"
+                      variant="outlined"
+                    >
+                      {{ getPromptNumber(item.instructional_prompt) ? `Prompt ${getPromptNumber(item.instructional_prompt)}` : 'N/A' }}
+                    </v-chip>
+                  </div>
+                </template>
+                <v-card v-if="item.instructional_prompt && item.instructional_prompt !== 'N/A'">
+                  <v-card-title class="text-subtitle-1 pa-2">
+                    <v-icon icon="mdi-text" class="mr-2"></v-icon>
+                    Instructional Prompt
+                  </v-card-title>
+                  <v-card-text class="pa-2">
+                    <pre class="prompt-full-text" style="max-height: 300px; overflow-y: auto;">{{ item.instructional_prompt }}</pre>
+                  </v-card-text>
+                </v-card>
+              </v-tooltip>
+            </template>
+            <template v-slot:item.details="{ item }">
+              <v-tooltip location="left" max-width="600">
+                <template v-slot:activator="{ props }">
+                  <v-btn
+                    v-bind="props"
+                    icon="mdi-information-outline"
+                    size="small"
+                    variant="text"
+                    color="primary"
+                  ></v-btn>
+                </template>
+                <v-card>
+                  <v-card-title class="text-subtitle-1 pa-3">
+                    <v-icon icon="mdi-email" class="mr-2"></v-icon>
+                    Complete Email
+                  </v-card-title>
+                  <v-card-text>
+                    <pre class="email-full-content">{{ item.full_email_content }}</pre>
+                  </v-card-text>
+                </v-card>
+              </v-tooltip>
             </template>
           </v-data-table>
         </v-card-text>
@@ -369,7 +404,8 @@ export default {
         { title: 'Expected Category', key: 'expected_category', sortable: true },
         { title: 'Predicted Category', key: 'predicted_category', sortable: true },
         { title: 'Correct', key: 'is_correct', sortable: true },
-        { title: 'Instructional Prompt', key: 'instructional_prompt', sortable: true }
+        { title: 'Instructional Prompt', key: 'instructional_prompt', sortable: true },
+        { title: 'Details', key: 'details', sortable: false, width: '80px' }
       ],
       promptCategoryHeaders: [
         { title: 'Instructional Prompt', key: 'instructional_prompt', sortable: true },
@@ -604,21 +640,57 @@ export default {
         const evaluation = pe.evaluations?.[0]
         const metadata = evaluation?.metadata || {}
         
-        // Extract email subject from prompt (it's after the instructional prompt)
+        // Extract email content from prompt (it's after the instructional prompt)
         const promptLines = pe.prompt?.split('\n') || []
         let emailSubject = 'N/A'
+        let fullEmailContent = ''
         
         // Find the Subject line (it comes after the instructional prompt)
+        let subjectIndex = -1
         for (let i = 0; i < promptLines.length; i++) {
           if (promptLines[i].startsWith('Subject:')) {
             emailSubject = promptLines[i].replace('Subject:', '').trim()
+            subjectIndex = i
             break
           }
         }
         
+        // Extract full email content (everything after the instructional prompt)
+        // The email starts after the instructional prompt, which we need to identify
+        const fullPrompt = pe.prompt || ''
+        const allPrompts = this.resultData.metadata?.all_prompt_results || {}
+        
+        // Find where the email content starts (after the instructional prompt)
+        let emailStartIndex = 0
+        for (const [prompt, _] of Object.entries(allPrompts)) {
+          const trimmedPrompt = prompt.trim()
+          if (fullPrompt.startsWith(trimmedPrompt) || 
+              fullPrompt.startsWith(trimmedPrompt + '\n') ||
+              fullPrompt.startsWith(trimmedPrompt + '\n\n')) {
+            emailStartIndex = trimmedPrompt.length
+            // Skip newlines after the prompt
+            while (emailStartIndex < fullPrompt.length && 
+                   (fullPrompt[emailStartIndex] === '\n' || fullPrompt[emailStartIndex] === ' ')) {
+              emailStartIndex++
+            }
+            break
+          }
+        }
+        
+        // If we found the start, extract the email content
+        if (emailStartIndex > 0 && emailStartIndex < fullPrompt.length) {
+          fullEmailContent = fullPrompt.substring(emailStartIndex).trim()
+        } else if (subjectIndex > 0) {
+          // Fallback: extract from subject line onwards
+          fullEmailContent = promptLines.slice(subjectIndex).join('\n')
+        } else {
+          // Last resort: use the full prompt (though this shouldn't happen)
+          fullEmailContent = fullPrompt
+        }
+        
         // Get instructional prompt - prioritize metadata, then normalize against all_prompt_results
         // This ensures we use the exact prompt text from all_prompt_results for consistent filtering
-        const allPrompts = this.resultData.metadata?.all_prompt_results || {}
+        // Reuse allPrompts declared above
         let instructionalPrompt = null
         
         // Priority 1: Use instructional_prompt from evaluation metadata
@@ -711,7 +783,8 @@ export default {
           expected_category: metadata.expected_category || 'N/A',
           predicted_category: metadata.predicted_category || 'N/A',
           is_correct: metadata.is_correct || false,
-          instructional_prompt: instructionalPrompt || 'N/A'
+          instructional_prompt: instructionalPrompt || 'N/A',
+          full_email_content: fullEmailContent || pe.prompt || 'N/A'
         }
       })
       
@@ -740,7 +813,27 @@ export default {
       
       // Combine and deduplicate
       const allPromptsSet = new Set([...promptsFromDetails, ...promptsFromMetadata])
-      return Array.from(allPromptsSet).sort()
+      const sortedPrompts = Array.from(allPromptsSet).sort()
+      
+      // Return as items with title (Prompt N) and value (actual prompt)
+      return sortedPrompts.map((prompt, index) => ({
+        title: `Prompt ${index + 1}`,
+        value: prompt
+      }))
+    },
+    promptNumberMap() {
+      // Create a map from prompt text to prompt number
+      const allPrompts = this.resultData?.metadata?.all_prompt_results || {}
+      const promptsFromMetadata = Object.keys(allPrompts).filter(p => p && p !== 'N/A')
+      const sortedPrompts = promptsFromMetadata.sort()
+      
+      const map = {}
+      sortedPrompts.forEach((prompt, index) => {
+        if (prompt && typeof prompt === 'string') {
+          map[prompt] = index + 1
+        }
+      })
+      return map
     },
     correctnessOptions() {
       return [
@@ -839,6 +932,12 @@ export default {
     }
   },
   methods: {
+    getPromptNumber(prompt) {
+      if (!prompt || typeof prompt !== 'string') {
+        return null
+      }
+      return this.promptNumberMap[prompt] || null
+    },
     addFilter(filterType) {
       if (!this.activeFilters.includes(filterType)) {
         this.activeFilters.push(filterType)
@@ -1033,6 +1132,17 @@ export default {
   font-family: monospace;
   font-size: 0.9em;
   max-height: 300px;
+  overflow-y: auto;
+}
+
+.email-full-content {
+  white-space: pre-wrap;
+  word-wrap: break-word;
+  font-family: monospace;
+  font-size: 0.85em;
+  line-height: 1.5;
+  margin: 0;
+  max-height: 400px;
   overflow-y: auto;
 }
 </style>
