@@ -1,0 +1,448 @@
+{
+  "name": "Email Response Quality Benchmark",
+  "description": "A comprehensive dataset for evaluating LLM performance in generating professional email responses across various business scenarios",
+  "version": "1.0",
+  "created_by": "LLM Benchmark Framework",
+  "questions": [
+    {
+      "id": "email_001",
+      "text": "Dear John, I noticed that the quarterly report deadline was moved from Friday to Wednesday. This is quite concerning as our team has been working towards the Friday deadline. Could you please clarify the reasoning behind this change and if there are any accommodations that can be made?",
+      "context": "You are responding as a project manager to a concerned team member about a deadline change.",
+      "instructions": "Write a professional, empathetic response that acknowledges the concern, provides clarification, and offers solutions.",
+      "expected_answer": "A professional response that acknowledges the concern, explains the reason for the change, apologizes for the inconvenience, and offers practical solutions or accommodations.",
+      "reference_answers": [
+        "Response should acknowledge the concern, provide reasoning, and offer solutions",
+        "Should be empathetic and professional while addressing the issue constructively"
+      ],
+      "answer_key_points": ["acknowledgment of concern", "explanation of change", "apology for inconvenience", "practical solutions", "professional tone"],
+      "source": "business_communication",
+      "metadata": {
+        "domain": "email_communication",
+        "type": "concern_response",
+        "language": "en",
+        "difficulty": "medium",
+        "category": "professional_response",
+        "email_type": "internal",
+        "scenario": "deadline_change"
+      }
+    },
+    {
+      "id": "email_002",
+      "text": "Hi there, I'm interested in your product but I have some questions about pricing and implementation. Can someone get back to me ASAP? Thanks!",
+      "context": "You are responding as a sales representative to a potential customer inquiry.",
+      "instructions": "Write a professional response that addresses their interest, asks qualifying questions, and sets up next steps.",
+      "expected_answer": "A professional sales response that thanks them for interest, addresses their questions, asks qualifying questions, and provides clear next steps.",
+      "reference_answers": [
+        "Should thank for interest, offer to answer questions, and schedule a conversation",
+        "Professional sales tone with appropriate urgency and follow-up plan"
+      ],
+      "answer_key_points": ["thank for interest", "address questions willingly", "ask qualifying questions", "propose next steps", "professional sales tone"],
+      "source": "sales_communication",
+      "metadata": {
+        "domain": "email_communication",
+        "type": "sales_inquiry",
+        "language": "en",
+        "difficulty": "easy",
+        "category": "professional_response",
+        "email_type": "external",
+        "scenario": "product_inquiry"
+      }
+    },
+    {
+      "id": "email_003",
+      "text": "I am writing to inform you that there has been a data breach affecting customer information in our system. We discovered this issue yesterday and have already taken steps to secure the system. However, we need to notify all customers immediately.",
+      "context": "You are responding as a customer service manager to draft a customer notification about a data breach.",
+      "instructions": "Write a clear, transparent, and reassuring email that informs customers about the breach while maintaining trust.",
+      "expected_answer": "A transparent communication that clearly explains what happened, what data was affected, what actions were taken, and what customers should do.",
+      "reference_answers": [
+        "Should be transparent, apologetic, and provide clear action items for customers",
+        "Must include what happened, what data was affected, remediation steps, and customer actions"
+      ],
+      "answer_key_points": ["clear explanation", "affected data details", "remediation steps", "customer actions", "contact information", "transparent tone"],
+      "source": "crisis_communication",
+      "metadata": {
+        "domain": "email_communication",
+        "type": "crisis_communication",
+        "language": "en",
+        "difficulty": "hard",
+        "category": "professional_response",
+        "email_type": "external",
+        "scenario": "data_breach"
+      }
+    },
+    {
+      "id": "email_004",
+      "text": "Thank you for your presentation yesterday. While we appreciate the effort, we've decided to go with another vendor. We wish you the best in your future endeavors.",
+      "context": "You are responding as a business development representative who just received a rejection after a sales presentation.",
+      "instructions": "Write a gracious response that maintains the relationship and leaves the door open for future opportunities.",
+      "expected_answer": "A gracious response that thanks them, respects their decision, asks for feedback, and maintains relationship for future opportunities.",
+      "reference_answers": [
+        "Should be gracious, professional, ask for feedback, and maintain relationship",
+        "Thank them for consideration and express willingness to help in future"
+      ],
+      "answer_key_points": ["gracious acceptance", "thank for consideration", "ask for feedback", "maintain relationship", "future opportunities"],
+      "source": "sales_communication",
+      "metadata": {
+        "domain": "email_communication",
+        "type": "rejection_response",
+        "language": "en",
+        "difficulty": "medium",
+        "category": "professional_response",
+        "email_type": "external",
+        "scenario": "sales_rejection"
+      }
+    },
+    {
+      "id": "email_005",
+      "text": "I need to request time off from December 20th through January 3rd for holiday vacation. I know this is our busy season, but this trip has been planned for months and is non-refundable.",
+      "context": "You are responding as a manager to an employee's vacation request during a busy period.",
+      "instructions": "Write a response that balances business needs with employee rights and finds a workable solution.",
+      "expected_answer": "A balanced response that acknowledges the request, discusses business impact, and works toward a mutually acceptable solution.",
+      "reference_answers": [
+        "Should acknowledge the request, discuss business implications, and work toward solution",
+        "Balance employee needs with business requirements professionally"
+      ],
+      "answer_key_points": ["acknowledge request", "discuss business impact", "seek compromise", "show understanding", "professional tone"],
+      "source": "hr_communication",
+      "metadata": {
+        "domain": "email_communication",
+        "type": "time_off_request",
+        "language": "en",
+        "difficulty": "medium",
+        "category": "professional_response",
+        "email_type": "internal",
+        "scenario": "vacation_request"
+      }
+    },
+    {
+      "id": "email_006",
+      "text": "We've been experiencing ongoing issues with the software you provided. It crashes frequently, the user interface is confusing, and our team is frustrated. We're considering switching to a competitor unless these issues are resolved immediately.",
+      "context": "You are responding as a customer success manager to an angry customer complaint.",
+      "instructions": "Write an empathetic response that addresses each concern and provides a clear action plan for resolution.",
+      "expected_answer": "An empathetic response that acknowledges each issue, takes responsibility, provides specific solutions, and includes timeline for resolution.",
+      "reference_answers": [
+        "Should acknowledge all concerns, take responsibility, provide specific solutions with timeline",
+        "Empathetic tone with concrete action plan and escalation if needed"
+      ],
+      "answer_key_points": ["acknowledge all issues", "take responsibility", "specific solutions", "timeline for resolution", "escalation path"],
+      "source": "customer_service",
+      "metadata": {
+        "domain": "email_communication",
+        "type": "complaint_response",
+        "language": "en",
+        "difficulty": "hard",
+        "category": "professional_response",
+        "email_type": "external",
+        "scenario": "product_complaint"
+      }
+    },
+    {
+      "id": "email_007",
+      "text": "Congratulations! Your proposal has been accepted and we're excited to move forward with the project. Please send us the contract and timeline for the next steps.",
+      "context": "You are responding as a project manager who just won a new client project.",
+      "instructions": "Write an enthusiastic yet professional response that confirms next steps and sets expectations.",
+      "expected_answer": "An enthusiastic response that expresses gratitude, confirms understanding, outlines next steps, and sets clear expectations for timeline and process.",
+      "reference_answers": [
+        "Should express gratitude, confirm next steps, and set clear expectations",
+        "Professional enthusiasm with specific action items and timeline"
+      ],
+      "answer_key_points": ["express gratitude", "confirm understanding", "outline next steps", "set expectations", "professional enthusiasm"],
+      "source": "project_management",
+      "metadata": {
+        "domain": "email_communication",
+        "type": "project_acceptance",
+        "language": "en",
+        "difficulty": "easy",
+        "category": "professional_response",
+        "email_type": "external",
+        "scenario": "project_win"
+      }
+    },
+    {
+      "id": "email_008",
+      "text": "I'm writing to follow up on my application for the Senior Developer position. It's been two weeks since my interview, and I haven't heard back. Could you please provide an update on the status?",
+      "context": "You are responding as an HR representative to a candidate following up on their job application.",
+      "instructions": "Write a professional response that provides an appropriate update while managing expectations.",
+      "expected_answer": "A professional response that acknowledges the follow-up, provides a status update, explains any delays, and gives a timeline for next steps.",
+      "reference_answers": [
+        "Should acknowledge follow-up, provide status update, and give timeline",
+        "Professional and transparent about process while managing expectations"
+      ],
+      "answer_key_points": ["acknowledge follow-up", "status update", "explain process", "timeline for decision", "professional tone"],
+      "source": "recruitment",
+      "metadata": {
+        "domain": "email_communication",
+        "type": "application_follow_up",
+        "language": "en",
+        "difficulty": "medium",
+        "category": "professional_response",
+        "email_type": "external",
+        "scenario": "job_application"
+      }
+    },
+    {
+      "id": "email_009",
+      "text": "Due to unexpected budget cuts, we need to postpone the upcoming conference that was scheduled for next month. All registrations will be refunded, and we're exploring virtual alternatives.",
+      "context": "You are responding as an event coordinator to inform attendees about a conference cancellation.",
+      "instructions": "Write a clear, apologetic message that explains the situation and provides information about refunds and alternatives.",
+      "expected_answer": "A clear communication that explains the situation, provides refund information, discusses alternatives, and maintains professional relationships.",
+      "reference_answers": [
+        "Should explain situation clearly, provide refund details, discuss alternatives",
+        "Apologetic but professional tone with concrete information about next steps"
+      ],
+      "answer_key_points": ["clear explanation", "refund information", "alternative options", "apology", "contact information"],
+      "source": "event_management",
+      "metadata": {
+        "domain": "email_communication",
+        "type": "event_cancellation",
+        "language": "en",
+        "difficulty": "medium",
+        "category": "professional_response",
+        "email_type": "external",
+        "scenario": "conference_cancellation"
+      }
+    },
+    {
+      "id": "email_010",
+      "text": "I wanted to bring to your attention that one of your team members, Sarah, went above and beyond during our project last week. Her attention to detail and proactive communication made a significant difference.",
+      "context": "You are responding as a manager who received positive feedback about one of your team members.",
+      "instructions": "Write a response that thanks the sender and indicates you'll share the feedback with your team member.",
+      "expected_answer": "A grateful response that thanks the sender for the feedback, expresses pride in the team member, and confirms the feedback will be shared appropriately.",
+      "reference_answers": [
+        "Should thank for feedback, express pride in team member, confirm feedback will be shared",
+        "Professional and warm tone that builds positive relationships"
+      ],
+      "answer_key_points": ["thank for feedback", "express pride", "confirm sharing feedback", "build relationship", "positive tone"],
+      "source": "team_management",
+      "metadata": {
+        "domain": "email_communication",
+        "type": "positive_feedback",
+        "language": "en",
+        "difficulty": "easy",
+        "category": "professional_response",
+        "email_type": "external",
+        "scenario": "team_recognition"
+      }
+    },
+    {
+      "id": "email_011",
+      "text": "Our company is implementing a new policy that requires all employees to work from the office at least 3 days per week, starting next month. I understand this may affect your current work arrangements.",
+      "context": "You are responding as an employee who has been working remotely and is concerned about the new policy.",
+      "instructions": "Write a professional response expressing your concerns and requesting discussion about accommodation options.",
+      "expected_answer": "A professional response that acknowledges the policy, expresses concerns respectfully, and requests a discussion about potential accommodations.",
+      "reference_answers": [
+        "Should acknowledge policy, express concerns professionally, request discussion",
+        "Respectful tone while advocating for personal work arrangements"
+      ],
+      "answer_key_points": ["acknowledge policy", "express concerns", "request discussion", "professional tone", "suggest accommodations"],
+      "source": "policy_communication",
+      "metadata": {
+        "domain": "email_communication",
+        "type": "policy_response",
+        "language": "en",
+        "difficulty": "medium",
+        "category": "professional_response",
+        "email_type": "internal",
+        "scenario": "policy_change"
+      }
+    },
+    {
+      "id": "email_012",
+      "text": "We need to discuss the budget overrun on the current project. The costs have exceeded our initial estimate by 30%, and we need to address this immediately to avoid further issues.",
+      "context": "You are responding as a project manager to a client concerned about budget overruns.",
+      "instructions": "Write a transparent response that addresses the overrun, explains the causes, and provides solutions moving forward.",
+      "expected_answer": "A transparent response that acknowledges the overrun, explains contributing factors, takes responsibility, and provides clear solutions and prevention measures.",
+      "reference_answers": [
+        "Should acknowledge overrun, explain causes, take responsibility, provide solutions",
+        "Transparent and solution-focused while maintaining client trust"
+      ],
+      "answer_key_points": ["acknowledge overrun", "explain causes", "take responsibility", "provide solutions", "prevention measures"],
+      "source": "project_management",
+      "metadata": {
+        "domain": "email_communication",
+        "type": "budget_issue",
+        "language": "en",
+        "difficulty": "hard",
+        "category": "professional_response",
+        "email_type": "external",
+        "scenario": "budget_overrun"
+      }
+    },
+    {
+      "id": "email_013",
+      "text": "I hope this email finds you well. I wanted to reach out to introduce myself as your new account manager. I'm excited to work with you and ensure your continued success with our services.",
+      "context": "You are responding as a client to a new account manager introduction email.",
+      "instructions": "Write a welcoming response that expresses appreciation for the introduction and sets expectations for the working relationship.",
+      "expected_answer": "A welcoming response that appreciates the introduction, expresses confidence in the relationship, and outlines expectations or current priorities.",
+      "reference_answers": [
+        "Should welcome new account manager, express confidence, outline current priorities",
+        "Professional and warm tone that establishes positive working relationship"
+      ],
+      "answer_key_points": ["welcome introduction", "express confidence", "outline priorities", "set expectations", "positive tone"],
+      "source": "account_management",
+      "metadata": {
+        "domain": "email_communication",
+        "type": "introduction_response",
+        "language": "en",
+        "difficulty": "easy",
+        "category": "professional_response",
+        "email_type": "external",
+        "scenario": "account_manager_introduction"
+      }
+    },
+    {
+      "id": "email_014",
+      "text": "We've received reports that our latest product release has a critical security vulnerability. We need to coordinate an immediate response across all departments to address this issue.",
+      "context": "You are responding as a security team lead to coordinate the response to a critical security vulnerability.",
+      "instructions": "Write a clear, urgent communication that outlines immediate actions, assigns responsibilities, and ensures coordinated response.",
+      "expected_answer": "A clear, urgent communication that acknowledges the severity, outlines immediate actions, assigns clear responsibilities, and provides coordination mechanism.",
+      "reference_answers": [
+        "Should acknowledge severity, outline immediate actions, assign responsibilities",
+        "Urgent but calm tone with clear action plan and coordination structure"
+      ],
+      "answer_key_points": ["acknowledge severity", "immediate actions", "assign responsibilities", "coordination plan", "urgent communication"],
+      "source": "security_management",
+      "metadata": {
+        "domain": "email_communication",
+        "type": "security_incident",
+        "language": "en",
+        "difficulty": "hard",
+        "category": "professional_response",
+        "email_type": "internal",
+        "scenario": "security_vulnerability"
+      }
+    },
+    {
+      "id": "email_015",
+      "text": "Thank you for the training session yesterday. It was very informative, and I learned a lot about the new software features. I do have a few questions about implementation that I'd like to discuss.",
+      "context": "You are responding as a trainer to a participant's follow-up after a training session.",
+      "instructions": "Write a supportive response that encourages questions and provides clear next steps for continued learning support.",
+      "expected_answer": "A supportive response that appreciates the feedback, encourages questions, and provides clear ways to get continued support and answers.",
+      "reference_answers": [
+        "Should appreciate feedback, encourage questions, provide support options",
+        "Supportive and educational tone that promotes continued learning"
+      ],
+      "answer_key_points": ["appreciate feedback", "encourage questions", "provide support options", "continued learning", "accessible tone"],
+      "source": "training_support",
+      "metadata": {
+        "domain": "email_communication",
+        "type": "training_follow_up",
+        "language": "en",
+        "difficulty": "easy",
+        "category": "professional_response",
+        "email_type": "internal",
+        "scenario": "post_training_support"
+      }
+    },
+    {
+      "id": "email_016",
+      "text": "I'm concerned about the recent changes to our team structure. The new reporting lines seem unclear, and several team members have expressed confusion about their responsibilities.",
+      "context": "You are responding as a senior manager to address concerns about organizational changes.",
+      "instructions": "Write a reassuring response that addresses the concerns, provides clarity, and offers support during the transition.",
+      "expected_answer": "A reassuring response that acknowledges concerns, provides clarity on changes, explains the rationale, and offers support resources for the transition.",
+      "reference_answers": [
+        "Should acknowledge concerns, provide clarity, explain rationale, offer support",
+        "Reassuring leadership tone that addresses uncertainty with concrete information"
+      ],
+      "answer_key_points": ["acknowledge concerns", "provide clarity", "explain rationale", "offer support", "reassuring tone"],
+      "source": "organizational_change",
+      "metadata": {
+        "domain": "email_communication",
+        "type": "organizational_change",
+        "language": "en",
+        "difficulty": "medium",
+        "category": "professional_response",
+        "email_type": "internal",
+        "scenario": "team_restructure"
+      }
+    },
+    {
+      "id": "email_017",
+      "text": "We would like to invite you to be a keynote speaker at our upcoming industry conference. The event will focus on digital transformation, and we believe your expertise would be valuable to our audience.",
+      "context": "You are responding to an invitation to speak at a professional conference.",
+      "instructions": "Write a response that expresses interest, asks relevant questions about the engagement, and discusses next steps.",
+      "expected_answer": "A professional response that expresses interest and gratitude, asks relevant questions about the event details, and discusses logistics and next steps.",
+      "reference_answers": [
+        "Should express interest, ask relevant questions, discuss logistics",
+        "Professional and honored tone while gathering necessary information"
+      ],
+      "answer_key_points": ["express interest", "ask event details", "discuss logistics", "professional tone", "next steps"],
+      "source": "speaking_engagements",
+      "metadata": {
+        "domain": "email_communication",
+        "type": "speaking_invitation",
+        "language": "en",
+        "difficulty": "medium",
+        "category": "professional_response",
+        "email_type": "external",
+        "scenario": "conference_speaking"
+      }
+    },
+    {
+      "id": "email_018",
+      "text": "I wanted to update you on the progress of our partnership discussions. We've reviewed your proposal and are interested in moving forward, but we have some concerns about the pricing structure.",
+      "context": "You are responding as a business development manager to a potential partner's feedback on a partnership proposal.",
+      "instructions": "Write a response that acknowledges their interest, addresses pricing concerns, and moves the discussion forward constructively.",
+      "expected_answer": "A response that acknowledges interest, shows flexibility on pricing concerns, asks clarifying questions, and proposes next steps for negotiation.",
+      "reference_answers": [
+        "Should acknowledge interest, address pricing concerns, propose solutions",
+        "Business-focused tone that shows flexibility while protecting interests"
+      ],
+      "answer_key_points": ["acknowledge interest", "address concerns", "show flexibility", "clarifying questions", "next steps"],
+      "source": "partnership_development",
+      "metadata": {
+        "domain": "email_communication",
+        "type": "partnership_negotiation",
+        "language": "en",
+        "difficulty": "medium",
+        "category": "professional_response",
+        "email_type": "external",
+        "scenario": "partnership_pricing"
+      }
+    },
+    {
+      "id": "email_019",
+      "text": "Due to supply chain disruptions, we will not be able to deliver your order by the original date. We estimate a delay of approximately two weeks and sincerely apologize for any inconvenience this may cause.",
+      "context": "You are responding as a customer to a vendor's notification about a delivery delay.",
+      "instructions": "Write a response that acknowledges the delay, expresses understanding of the situation, and discusses impact and alternatives.",
+      "expected_answer": "A professional response that acknowledges the delay, expresses understanding of external factors, discusses business impact, and explores alternatives or accommodations.",
+      "reference_answers": [
+        "Should acknowledge delay, express understanding, discuss impact, explore alternatives",
+        "Professional tone that balances understanding with business needs"
+      ],
+      "answer_key_points": ["acknowledge delay", "express understanding", "discuss impact", "explore alternatives", "professional tone"],
+      "source": "vendor_management",
+      "metadata": {
+        "domain": "email_communication",
+        "type": "delivery_delay_response",
+        "language": "en",
+        "difficulty": "medium",
+        "category": "professional_response",
+        "email_type": "external",
+        "scenario": "supply_chain_delay"
+      }
+    },
+    {
+      "id": "email_020",
+      "text": "I'm excited to share that our team has successfully completed the project ahead of schedule and under budget. The client is extremely satisfied with the results, and we've received excellent feedback.",
+      "context": "You are responding as a senior executive to a project manager's success report.",
+      "instructions": "Write a congratulatory response that recognizes the achievement, acknowledges the team's effort, and discusses lessons learned or future opportunities.",
+      "expected_answer": "A congratulatory response that celebrates the success, recognizes team effort, discusses what made it successful, and explores how to replicate success in future projects.",
+      "reference_answers": [
+        "Should congratulate team, recognize effort, discuss success factors, future applications",
+        "Celebratory and appreciative tone that reinforces positive outcomes"
+      ],
+      "answer_key_points": ["congratulate success", "recognize team effort", "discuss success factors", "future opportunities", "appreciative tone"],
+      "source": "executive_communication",
+      "metadata": {
+        "domain": "email_communication",
+        "type": "success_recognition",
+        "language": "en",
+        "difficulty": "easy",
+        "category": "professional_response",
+        "email_type": "internal",
+        "scenario": "project_success"
+      }
+    }
+  ]
+} 

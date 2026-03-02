@@ -1,0 +1,1812 @@
+{
+  "metadata": {
+    "version": "2.0",
+    "created": "2025-12-07",
+    "description": "Test dataset for email categorization validation - 100 realistic German university internship office emails with edge cases and variations",
+    "total_emails": 100,
+    "categories": {
+      "contract_submission": 30,
+      "international_office_question": 21,
+      "internship_postponement": 12,
+      "uncategorized": 37
+    },
+    "updated": "2025-12-09"
+  },
+  "emails": [
+    {
+      "id": "email_001",
+      "subject": "Praktikumsvertrag zur Unterschrift eingereicht",
+      "body": "Sehr geehrtes Praktikantenamt,\n\nich habe meinen Praktikumsvertrag mit der Firma XYZ GmbH abgeschlossen und reiche diesen hiermit zur Genehmigung ein. Der Vertrag ist von beiden Parteien unterzeichnet und alle erforderlichen Dokumente sind beigefügt. Mein Praktikum beginnt am 01. März 2024 und dauert 12 Wochen. Bitte teilen Sie mir mit, wenn noch weitere Unterlagen benötigt werden.\n\nFreundliche Grüße,\nMax Müller",
+      "sender": "max.mueller@htwg-konstanz.de",
+      "has_attachment": true,
+      "expected_category": "contract_submission",
+      "metadata": {
+        "difficulty": "easy",
+        "keywords": [
+          "Praktikumsvertrag",
+          "eingereicht",
+          "Genehmigung",
+          "unterzeichnet",
+          "Dokumente"
+        ]
+      }
+    },
+    {
+      "id": "email_002",
+      "subject": "Praktikumsvertrag - Konsultation Maschinenbau",
+      "body": "Hallo,\n\nichmöchte meinen Praktikumsvertrag für ein Praktikum in der Abteilung Konstruktion bei der Technik AG einreichen. Der Betrieb hat bereits alle Dokumente unterzeichnet. Anbei finden Sie den vollständig ausgefüllten Vertrag, eine Bescheinigung des Praktikumsortes sowie meine Versicherungsbestätigung. Ich hoffe, alles ist in Ordnung und ich kann wie geplant am 15. April beginnen.\n\nBeste Grüße,\nSarah Schmidt",
+      "sender": "sarah.schmidt@htwg-konstanz.de",
+      "has_attachment": true,
+      "expected_category": "contract_submission",
+      "metadata": {
+        "difficulty": "easy",
+        "keywords": [
+          "Praktikumsvertrag",
+          "einreichen",
+          "Betrieb",
+          "unterzeichnet",
+          "Praktikumsortes"
+        ]
+      }
+    },
+    {
+      "id": "email_003",
+      "subject": "Frage zu Praktikum in Spanien - Anerkennung?",
+      "body": "Guten Tag,\n\nical bin derzeit bei der Planung eines Praktikums in Barcelona bei einem deutschen Unternehmen. Ich möchte gerne wissen, welche speziellen Anforderungen das Praktikantenamt für Auslandspraktika hat. Muss ich besondere Versicherungen abschließen und werden ausländische Praktikumszertifikate anerkannt? Zudem interessiert mich, ob ich mich vor Antritt des Praktikums anmelden muss oder ob eine nachträgliche Registrierung möglich ist.\n\nVielen Dank für Ihre Hilfe!\nJohn Fischer",
+      "sender": "john.fischer@htwg-konstanz.de",
+      "has_attachment": false,
+      "expected_category": "international_office_question",
+      "metadata": {
+        "difficulty": "medium",
+        "keywords": [
+          "Auslandspraktikum",
+          "international",
+          "Anerkennung",
+          "Versicherung",
+          "Barcelona"
+        ]
+      }
+    },
+    {
+      "id": "email_004",
+      "subject": "Verschiebung Praktikum - dringende Anfrage",
+      "body": "Sehr geehrtes Praktikantenamt,\n\naufgrund unerwarteter persönlicher Umstände muss ich mein geplantes Praktikum verschieben. Ursprünglich sollte ich am 01. Mai 2024 bei der Softwareentwicklung AG beginnen, möchte dies aber gerne auf September 2024 verschieben. Der Praktikumsbetrieb hat diesem Termin bereits zugestimmt. Kann ich den bestehenden Vertrag einfach aktualisieren oder muss ich einen neuen einreichen? Bitte teilen Sie mir die nächsten Schritte mit.\n\nMit freundlichen Grüßen,\nAnna Weber",
+      "sender": "anna.weber@htwg-konstanz.de",
+      "has_attachment": false,
+      "expected_category": "internship_postponement",
+      "metadata": {
+        "difficulty": "medium",
+        "keywords": [
+          "Verschiebung",
+          "Praktikum",
+          "Termin",
+          "September",
+          "Betrieb"
+        ]
+      }
+    },
+    {
+      "id": "email_005",
+      "subject": "Einreichung Praktikumsvertrag Büro-Management",
+      "body": "Lieber Praktikantenamt,\n\nanbei sende ich meinen unterzeichneten Praktikumsvertrag für ein fünfwöchiges Praktikum im Marketing-Bereich der Premium Solutions GmbH. Der Vertrag wurde von der Praktikumsstelle bereits genehmigt und unterzeichnet. Zusätzlich füge ich eine aktuelle Krankenversicherungsbescheinigung sowie einen Nachweis der Haftpflichtversicherung bei. Mein Praktikum läuft vom 12. Juni bis 21. Juli 2024. Bitte bestätigen Sie den Erhalt.\n\nViele Grüße,\nMiriam Hoffmann",
+      "sender": "miriam.hoffmann@htwg-konstanz.de",
+      "has_attachment": true,
+      "expected_category": "contract_submission",
+      "metadata": {
+        "difficulty": "easy",
+        "keywords": [
+          "Praktikumsvertrag",
+          "unterzeichnet",
+          "Genehmigung",
+          "Versicherung",
+          "Praktikumsstelle"
+        ]
+      }
+    },
+    {
+      "id": "email_006",
+      "subject": "Praktikum in den USA - Visum und Anerkennung",
+      "body": "Sehr geehrtes Praktikantenamt,\n\nFolgendermaßen plane ich ein mehrmonatiges Praktikum in den USA bei einem Technologieunternehmen. Könnten Sie mir bitte Informationen geben, welche Visumsart für ein Praktikum in den USA erforderlich ist? Zusätzlich interessiert mich, ob das Praktikum automatisch anerkannt wird oder ob ich vorher eine Genehmigung einholen muss. Benötige ich auch eine zusätzliche Auslandskrankenversicherung oder reicht meine reguläre Versicherung aus?\n\nVielen Dank im Voraus,\nThomas Jung",
+      "sender": "thomas.jung@htwg-konstanz.de",
+      "has_attachment": false,
+      "expected_category": "international_office_question",
+      "metadata": {
+        "difficulty": "medium",
+        "keywords": [
+          "USA",
+          "Visum",
+          "international",
+          "Anerkennung",
+          "Auslandskrankenversicherung"
+        ]
+      }
+    },
+    {
+      "id": "email_007",
+      "subject": "Praktikum muss auf 2025 verschoben werden",
+      "body": "Guten Tag,\n\nleider muss ich mein geplantes Praktikum vom Januar 2024 auf März 2025 verschieben. Der Grund dafür ist, dass ich noch wichtige Kurse in diesem Semester abschließen muss, bevor ich das Praktikum antreten kann. Das Unternehmen hat bereits der Verschiebung zugestimmt und würde mir den Platz für März 2025 reservieren. Welche Schritte muss ich als nächstes unternehmen und gibt es Formulare, die ich ausfüllen muss?\n\nBeste Grüße,\nLena Hartmann",
+      "sender": "lena.hartmann@htwg-konstanz.de",
+      "has_attachment": false,
+      "expected_category": "internship_postponement",
+      "metadata": {
+        "difficulty": "easy",
+        "keywords": [
+          "verschieben",
+          "Praktikum",
+          "2025",
+          "Kurse",
+          "Unternehmen"
+        ]
+      }
+    },
+    {
+      "id": "email_008",
+      "subject": "Semester-Gebühren und Rückerstattung",
+      "body": "Hallo,\n\nich habe eine Frage zu meiner Semesterrechnung. In meinem Gebührenbescheid für das Wintersemester wurde mir ein Betrag von 350 EUR berechnet, obwohl ich nur für ein halbes Semester eingeschrieben bin. Kann ich eine teilweise Rückerstattung beantragen? An wen muss ich mich dafür wenden und welche Unterlagen sind erforderlich?\n\nViele Grüße,\nChristoph Bauer",
+      "sender": "christoph.bauer@htwg-konstanz.de",
+      "has_attachment": false,
+      "expected_category": "uncategorized",
+      "metadata": {
+        "difficulty": "easy",
+        "keywords": [
+          "Gebühren",
+          "Rechnung",
+          "Rückerstattung",
+          "Semester"
+        ],
+        "note": "Completely unrelated to internship office - about semester fees"
+      }
+    },
+    {
+      "id": "email_009",
+      "subject": "Praktikumsvertrag Digital Marketing-Agentur - zur Genehmigung",
+      "body": "Sehr geehrtes Praktikantenamt,\n\nanbei übermittle ich meinen Praktikumsvertrag mit der Digital Marketing Agentur Hamburg für ein dreimonatiges Praktikum. Alle erforderlichen Dokumente wie der unterschriebene Vertrag, eine Bestätigung des Betriebs sowie meine Versicherungsunterlagen sind beigefügt. Das Praktikum beginnt am 01. Oktober 2024 und endet am 31. Dezember 2024. Ich freue mich auf Ihre Rückmeldung und stehe bei Rückfragen gerne zur Verfügung.\n\nMit freundlichen Grüßen,\nJulia Bergmann",
+      "sender": "julia.bergmann@htwg-konstanz.de",
+      "has_attachment": true,
+      "expected_category": "contract_submission",
+      "metadata": {
+        "difficulty": "easy",
+        "keywords": [
+          "Praktikumsvertrag",
+          "Digital Marketing",
+          "unterschrieben",
+          "Betrieb",
+          "Versicherung"
+        ]
+      }
+    },
+    {
+      "id": "email_010",
+      "subject": "Praktikum in Frankreich - Erasmus+ und Anrechnung",
+      "body": "Guten Tag,\n\nein komplexes Anliegen: Ich habe ein Praktikumsangebot in Frankreich über das Erasmus+ Programm erhalten. Erstens: Werden solche Praktika automatisch vom Praktikantenamt anerkannt oder muss ich vorher eine Genehmigung einholen? Zweitens: Wie funktioniert die Anrechnung ausländischer Praktikumszertifikate, wenn diese in französischer Sprache ausgestellt sind - muss ich diese übersetzen lassen? Drittens: Wie lange dauert es in der Regel, bis die Dokumente bearbeitet sind? Ich muss innerhalb der nächsten zwei Wochen eine Rückmeldung an das französische Unternehmen geben.\n\nVielen Dank,\nDavid Richter",
+      "sender": "david.richter@htwg-konstanz.de",
+      "has_attachment": false,
+      "expected_category": "international_office_question",
+      "metadata": {
+        "difficulty": "hard",
+        "keywords": [
+          "Frankreich",
+          "Erasmus+",
+          "international",
+          "Anerkennung",
+          "Zertifikat",
+          "Übersetzung"
+        ],
+        "note": "Complex multi-part international question"
+      }
+    },
+    {
+      "id": "email_011",
+      "subject": "Verschiebung meines Praktikums - Persönliche Gründe",
+      "body": "Guten Tag,\n\nich schreibe Ihnen, da ich mein geplantes Praktikum vom 15. Januar bis 15. März 2025 leider um vier Wochen verschieben muss. Aufgrund einer notwendigen Operation muss ich meinen Starttermin auf den 12. Februar 2025 verschieben. Ich habe bereits mit meinem Praktikumsbetrieb kommuniziert, und dieser hat der Verschiebung zugestimmt. Können Sie mich bitte bezüglich der Anmeldung und der erforderlichen Formalitäten beraten?",
+      "sender": "maya.mueller@htwg-konstanz.de",
+      "has_attachment": false,
+      "expected_category": "internship_postponement",
+      "metadata": {
+        "difficulty": "easy",
+        "keywords": [
+          "Verschiebung",
+          "Praktikum",
+          "Termin",
+          "verschieben",
+          "später"
+        ]
+      }
+    },
+    {
+      "id": "email_012",
+      "subject": "Frage zur Berechnung der Praktikumsstunden",
+      "body": "Liebe Damen und Herren,\n\neine Frage zu den Richtlinien: Zählen Pausen von 30 Minuten zu den wöchentlichen Arbeitsstunden meines Praktikums? In meinem Betrieb gibt es eine tägliche Mittagspause, und ich bin unsicher, wie diese in die Gesamtstundenzahl einzurechnen ist. Laut meinem Praktikumsvertrag soll ich 40 Stunden pro Woche arbeiten. Können Sie mich über die genaue Berechnungsmethode aufklären?",
+      "sender": "tim.weber@htwg-konstanz.de",
+      "has_attachment": false,
+      "expected_category": "uncategorized",
+      "metadata": {
+        "difficulty": "medium",
+        "keywords": [
+          "Stunden",
+          "Berechnung",
+          "Pausen",
+          "Anfrage",
+          "administrativ"
+        ],
+        "note": "Administrative question about hours calculation - doesn't fit main categories"
+      }
+    },
+    {
+      "id": "email_013",
+      "subject": "Submission of Internship Contract and Certificates",
+      "body": "Dear Internship Office,\n\nI am writing to submit my completed internship contract and the required certificates for my 12-week internship at TechCorp GmbH, which started on November 1st, 2024. All documents have been signed by my supervisor and are attached to this email in PDF format. Additionally, I have included a confirmation letter from the company stating the internship requirements and my responsibilities. Please confirm receipt of these documents and let me know if anything else is required.\n\nBest regards",
+      "sender": "julia.schmidt@htwg-konstanz.de",
+      "has_attachment": true,
+      "expected_category": "contract_submission",
+      "metadata": {
+        "difficulty": "easy",
+        "keywords": [
+          "contract",
+          "submission",
+          "documents",
+          "attachment",
+          "certificates"
+        ],
+        "note": "Email in English - tests language robustness"
+      }
+    },
+    {
+      "id": "email_014",
+      "subject": "Anerkennung von Praktikumserfahrung aus dem Ausland",
+      "body": "Guten Tag,\n\nfalls Sie nicht die richtige Stelle sind, leiten Sie mich bitte weiter: Ich habe ein dreimonatiges Praktikum in Barcelona absolviert, das von meiner Erasmus+ Förderung unterstützt wurde. Ich bin mir nicht sicher, ob das Praktikantenamt oder das International Office für die Anerkennung dieser Erfahrung zuständig ist. Die Praktikumsbescheinigung ist auf Spanisch ausgestellt. Wer kann mir bei der Eintragung in meinen Studienplan helfen, und werden Sprachkurse, die ich dort belegte, anerkannt?",
+      "sender": "sophie.hoffmann@htwg-konstanz.de",
+      "has_attachment": true,
+      "expected_category": "international_office_question",
+      "metadata": {
+        "difficulty": "hard",
+        "keywords": [
+          "Ausland",
+          "international",
+          "Erasmus",
+          "Barcelona",
+          "Anerkennung",
+          "Sprachkurs"
+        ]
+      }
+    },
+    {
+      "id": "email_015",
+      "subject": "Praktikumsbescheinigung und Frage zur Anrechnung",
+      "body": "Hallo,\n\nerstens möchte ich meine unterzeichnete Praktikumsbescheinigung einreichen, aber gleichzeitig bin ich unsicher, ob mein fünfwöchiges Praktikum überhaupt als vollwertiges Praktikum anerkannt wird, da es kürzlich gekürzt werden musste. Zweitens: Kann ich parallel dazu noch ein freiwilliges Zusatzpraktikum absolvieren, um die Anforderungen zu erfüllen? Und drittens: Falls die fünf Wochen nicht ausreichen, könnte ich noch im Sommersemester ein kürzeres Praktikum machen. Bitte beraten Sie mich, was die beste Option ist.",
+      "sender": "david.klein@htwg-konstanz.de",
+      "has_attachment": true,
+      "expected_category": "uncategorized",
+      "metadata": {
+        "difficulty": "hard",
+        "keywords": [
+          "Bescheinigung",
+          "Anrechnung",
+          "Anforderungen",
+          "gekürzt",
+          "mehrdeutig",
+          "mehrere Fragen"
+        ],
+        "note": "Ambiguous multi-intent email with multiple questions - difficult to categorize"
+      }
+    },
+    {
+      "id": "email_016",
+      "subject": "Praktikumsvertrag - Korrektur eingereicht",
+      "body": "Sehr geehrtes Praktikantenamt,\n\nin meiner vorherigen Einreichung gab es einen Fehler im Startdatum. Ich reiche hiermit den korrigierten Praktikumsvertrag mit der Firma DataTech Solutions erneut ein. Das Praktikum beginnt nun am 15. März 2024 statt wie ursprünglich angegeben am 10. März. Der Betrieb und ich haben beide Versionen unterzeichnet. Bitte verwerfen Sie die alte Version und berücksichtigen Sie nur diese korrigierte Fassung.\n\nMit freundlichen Grüßen,\nDavid Richter",
+      "sender": "david.richter@htwg-konstanz.de",
+      "has_attachment": true,
+      "expected_category": "contract_submission",
+      "metadata": {
+        "difficulty": "medium",
+        "keywords": [
+          "Korrektur",
+          "Praktikumsvertrag",
+          "erneut eingereicht",
+          "Fehler",
+          "korrigierte Fassung"
+        ],
+        "note": "Resubmission of contract with correction"
+      }
+    },
+    {
+      "id": "email_017",
+      "subject": "Frage zu Auslandspraktikum in den Niederlanden",
+      "body": "Guten Tag,\n\nplanes planen ein Praktikum bei einem niederländischen Unternehmen in Amsterdam und hätte gerne Informationen zu den spezifischen Anforderungen. Benötige ich eine Genehmigung des Praktikantamts vor Antritt des Praktikums oder kann ich mich erst nachher registrieren? Zudem würde ich gerne wissen, welche Versicherungen für Auslandspraktika notwendig sind und ob das Zeugnis der ausländischen Betriebsstätte anerkannt wird. Können Sie mich auch an die zuständige Stelle für internationale Praktika weiterleiten?\n\nVielen Dank für Ihre Unterstützung!\nLena Zimmermann",
+      "sender": "lena.zimmermann@htwg-konstanz.de",
+      "has_attachment": false,
+      "expected_category": "international_office_question",
+      "metadata": {
+        "difficulty": "easy",
+        "keywords": [
+          "Auslandspraktikum",
+          "Niederlande",
+          "international",
+          "Genehmigung",
+          "Versicherung",
+          "Zeugnis"
+        ]
+      }
+    },
+    {
+      "id": "email_018",
+      "subject": "Praktikum verschieben - neue Genehmigung benötigt",
+      "body": "Sehr geehrtes Praktikantenamt,\n\nleider muss ich aufgrund von gesundheitlichen Gründen mein geplantes Praktikum verschieben. Das Praktikum bei der EngineerWorks AG sollte ursprünglich am 01. April 2024 für acht Wochen beginnen. Ich möchte diesen Termin auf September 2024 verschieben. Der Betrieb hat der Verschiebung schriftlich zugestimmt und stellt mir gerne einen neuen Praktikumsplatz zur Verfügung. Wie müssen wir in diesem Fall vorgehen und welche Formulare benötigen Sie von uns?\n\nMit freundlichen Grüßen,\nFelicia Köster",
+      "sender": "felicia.koester@htwg-konstanz.de",
+      "has_attachment": false,
+      "expected_category": "internship_postponement",
+      "metadata": {
+        "difficulty": "medium",
+        "keywords": [
+          "verschieben",
+          "Praktikum",
+          "Termin",
+          "September",
+          "Betrieb",
+          "Genehmigung"
+        ]
+      }
+    },
+    {
+      "id": "email_019",
+      "subject": "Test",
+      "body": "Test",
+      "sender": "spam@example.com",
+      "has_attachment": false,
+      "expected_category": "uncategorized",
+      "metadata": {
+        "difficulty": "hard",
+        "keywords": [
+          "minimal",
+          "edge case",
+          "test"
+        ],
+        "note": "Extreme edge case: very short, minimal content. No clear intent, not from student email"
+      }
+    },
+    {
+      "id": "email_020",
+      "subject": "Praktikumsvertrag Multimedia GmbH + Frage zur Genehmigung",
+      "body": "Hallo Praktikantenamt,\n\nanbei reiche ich meinen Praktikumsvertrag für das Praktikum bei der Multimedia GmbH ein. Das Praktikum beginnt am 20. Mai 2024 und dauert 10 Wochen. Alle erforderlichen Unterlagen sind beigefügt und vom Betrieb unterzeichnet. Zusätzlich hätte ich gerne eine kurze Frage: Kann ich nach dem Praktikum direkt ein Anschluss-Praktikum machen, ohne zwischen den beiden ein vollständiges Genehmigungsverfahren durchlaufen zu müssen? Dies würde mir sehr bei meiner Planung helfen.\n\nBesten Dank und viele Grüße,\nThomas Voigt",
+      "sender": "thomas.voigt@htwg-konstanz.de",
+      "has_attachment": true,
+      "expected_category": "contract_submission",
+      "metadata": {
+        "difficulty": "hard",
+        "keywords": [
+          "Praktikumsvertrag",
+          "eingereicht",
+          "Frage",
+          "Genehmigung",
+          "Anschluss-Praktikum",
+          "multi-intent"
+        ],
+        "note": "Multi-intent email: submitting contract (primary) + asking a question (secondary). Primary category is contract_submission."
+      }
+    },
+    {
+      "id": "email_021",
+      "subject": "Kurze Rückfrage wegen nächster Woche",
+      "body": "Hallo,\n\nmein Chef meinte ich soll mich bei Ihnen melden. Wir haben da eine Situation mit dem Termin nächste Woche - das klappt bei mir leider nicht mehr so wie besprochen. Privat ist gerade einiges los und ich bräuchte etwa zwei bis drei Wochen später. Geht das überhaupt noch oder ist das jetzt zu kurzfristig? Der Betrieb wäre flexibel.\n\nLG\nPaul",
+      "sender": "p.schneider@htwg-konstanz.de",
+      "has_attachment": false,
+      "expected_category": "internship_postponement",
+      "metadata": {
+        "difficulty": "hard",
+        "keywords": [
+          "Termin",
+          "später",
+          "flexibel",
+          "nicht mehr",
+          "privat"
+        ],
+        "note": "Very informal, vague language. No explicit mention of 'Praktikum' or 'verschieben'. Tests ability to infer context."
+      }
+    },
+    {
+      "id": "email_022",
+      "subject": "Unterlagen für Genehmigungsprozess",
+      "body": "Sehr geehrte Damen und Herren,\n\nich bin mir nicht ganz sicher, ob ich hier richtig bin. Ich würde gerne wissen, welche Dokumente ich zusammenstellen muss, bevor ich meinen Vertrag einreichen kann. Die Firma hat mir bereits alles unterschrieben zurückgeschickt, aber ich möchte sichergehen, dass nichts fehlt. Brauche ich eine Versicherungsbestätigung? Und muss die Firma noch weitere Formulare ausfüllen? Könnten Sie mir vielleicht eine Checkliste schicken?\n\nDanke vorab,\nStefanie Krüger",
+      "sender": "stefanie.krueger@htwg-konstanz.de",
+      "has_attachment": false,
+      "expected_category": "contract_submission",
+      "metadata": {
+        "difficulty": "hard",
+        "keywords": [
+          "Vertrag",
+          "einreichen",
+          "Dokumente",
+          "Firma",
+          "unterschrieben"
+        ],
+        "note": "Asks about submission process but hasn't submitted yet. Mentions signed contract but main intent is asking questions. Should still be contract_submission as it's about preparing the submission."
+      }
+    },
+    {
+      "id": "email_023",
+      "subject": "Betreff: Internationale Firma in Hamburg",
+      "body": "Guten Tag,\n\nich habe eine Zusage von einem amerikanischen Tech-Konzern bekommen, allerdings ist die Stelle hier in Hamburg am deutschen Standort. Jetzt bin ich unsicher: Gilt das als Auslandspraktikum, weil die Firma aus den USA kommt? Oder ist das ein normales inländisches Praktikum? Die HR-Abteilung sitzt in San Francisco und mein Vertrag läuft auch über die US-Zentrale, aber ich arbeite physisch in Hamburg.\n\nWürde mich über Klarstellung freuen,\nJan Becker",
+      "sender": "jan.becker@htwg-konstanz.de",
+      "has_attachment": false,
+      "expected_category": "uncategorized",
+      "metadata": {
+        "difficulty": "hard",
+        "keywords": [
+          "internationale Firma",
+          "Hamburg",
+          "USA",
+          "Standort",
+          "HR"
+        ],
+        "note": "Tricky edge case: mentions USA and international aspects, but it's actually a domestic internship question. Should be uncategorized as it's neither a clear international question nor fits other categories."
+      }
+    },
+    {
+      "id": "email_024",
+      "subject": "Formular lässt sich nicht öffnen",
+      "body": "Hallo,\n\nich versuche seit gestern, das Praktikumsformular von Ihrer Webseite herunterzuladen, aber die PDF-Datei lässt sich nicht öffnen. Ich habe es mit verschiedenen Browsern probiert (Chrome, Firefox, Edge) und auch auf einem anderen Computer. Die Datei scheint beschädigt zu sein. Könnten Sie mir bitte eine funktionierende Version per E-Mail zusenden oder das Problem auf der Webseite beheben?\n\nVielen Dank,\nLisa Vogel",
+      "sender": "lisa.vogel@htwg-konstanz.de",
+      "has_attachment": false,
+      "expected_category": "uncategorized",
+      "metadata": {
+        "difficulty": "medium",
+        "keywords": [
+          "Formular",
+          "PDF",
+          "Webseite",
+          "technisches Problem",
+          "Browser"
+        ],
+        "note": "Technical support request, not related to any of the three main categories"
+      }
+    },
+    {
+      "id": "email_025",
+      "subject": "Unterlagen komplett - jetzt absenden?",
+      "body": "Liebes Team,\n\nich habe jetzt alle Unterschriften beisammen und auch die Bestätigungen von meinem Betrieb. Insgesamt sind es vier PDFs geworden: der Hauptvertrag, die Tätigkeitsbeschreibung, die Betriebsbestätigung und meine Versicherungspolice. Soll ich die jetzt alle in einer Mail schicken oder gibt es ein Upload-Portal? Und brauchen Sie die Originale auch noch per Post?\n\nViele Grüße,\nMarkus Wagner",
+      "sender": "markus.wagner@htwg-konstanz.de",
+      "has_attachment": false,
+      "expected_category": "contract_submission",
+      "metadata": {
+        "difficulty": "medium",
+        "keywords": [
+          "Unterlagen",
+          "Unterschriften",
+          "Betrieb",
+          "Vertrag",
+          "absenden"
+        ],
+        "note": "Subtle: mentions having everything ready but asks about HOW to submit rather than actually submitting. Still contract_submission intent."
+      }
+    },
+    {
+      "id": "email_026",
+      "subject": "Re: Re: Fwd: Praktikum eventuell im Ausland?",
+      "body": "Hallo,\n\nentschuldigung für die Nachfrage, aber ich überlege noch, ob ich vielleicht doch im Ausland machen sollte oder nicht. Also es ist noch nichts fix, ich wollte nur mal grundsätzlich wissen: Falls ich mich für ein Praktikum außerhalb von Deutschland entscheide, was müsste ich dann beachten? Ich meine jetzt nicht konkret ein Land, sondern einfach generell. Oder ist es besser, ich melde mich nochmal, wenn ich mich entschieden habe?\n\nDanke,\nNina",
+      "sender": "nina.mayer@htwg-konstanz.de",
+      "has_attachment": false,
+      "expected_category": "international_office_question",
+      "metadata": {
+        "difficulty": "hard",
+        "keywords": [
+          "Ausland",
+          "außerhalb Deutschland",
+          "überlege",
+          "eventuell",
+          "generell"
+        ],
+        "note": "Very vague and hypothetical. Multiple uncertainties ('eventuell', 'vielleicht', 'überlege noch'). Still international question despite vagueness."
+      }
+    },
+    {
+      "id": "email_027",
+      "subject": "Dankeschön!",
+      "body": "Sehr geehrte Frau Friedrich,\n\nvielen herzlichen Dank für Ihre schnelle und unkomplizierte Hilfe letzte Woche! Dank Ihrer Unterstützung konnte ich alle Unterlagen rechtzeitig zusammenstellen und mein Praktikum kann wie geplant starten. Ich wollte mich einfach nochmal bedanken für Ihre Geduld und die ausführlichen Erklärungen am Telefon.\n\nMit freundlichen Grüßen,\nSarah Lehmann",
+      "sender": "sarah.lehmann@htwg-konstanz.de",
+      "has_attachment": false,
+      "expected_category": "uncategorized",
+      "metadata": {
+        "difficulty": "easy",
+        "keywords": [
+          "Danke",
+          "Dankeschön",
+          "Hilfe",
+          "Unterstützung"
+        ],
+        "note": "Pure thank-you email with no action item or question. Uncategorized."
+      }
+    },
+    {
+      "id": "email_028",
+      "subject": "Verlängerung meines laufenden Praktikums",
+      "body": "Guten Tag,\n\nmein Praktikum bei der AutoTech GmbH läuft noch bis Ende Februar. Jetzt hat mir die Firma angeboten, das Praktikum um weitere vier Wochen zu verlängern, weil mein Projekt noch nicht ganz abgeschlossen ist. Muss ich dafür einen neuen Antrag stellen oder reicht eine Ergänzung zum bestehenden Vertrag? Der Betrieb würde mir gerne ein aktualisiertes Vertragsangebot schicken.\n\nBeste Grüße,\nFelix Hoffmann",
+      "sender": "felix.hoffmann@htwg-konstanz.de",
+      "has_attachment": false,
+      "expected_category": "uncategorized",
+      "metadata": {
+        "difficulty": "hard",
+        "keywords": [
+          "Verlängerung",
+          "laufend",
+          "verlängern",
+          "Vertrag",
+          "Praktikum"
+        ],
+        "note": "Tricky: mentions 'Verlängerung' which sounds like postponement, but it's actually about extending an ongoing internship, not postponing a start date. Doesn't fit postponement category."
+      }
+    },
+    {
+      "id": "email_029",
+      "subject": "Anfrage Praktikumsamt - Weitervermittlung",
+      "body": "Sehr geehrtes Praktikumsamt,\n\nich bin Student der Sozialen Arbeit an der HAW und suche momentan nach Praktikumsplätzen im Bereich Jugendarbeit. Auf Ihrer Webseite habe ich gesehen, dass Sie verschiedene Betriebe listen. Könnten Sie mir vielleicht Kontakte zu geeigneten Einrichtungen vermitteln oder haben Sie eine Liste mit freien Praktikumsplätzen? Ich bin zeitlich flexibel und könnte ab sofort beginnen.\n\nMit freundlichen Grüßen,\nMichael Stein",
+      "sender": "michael.stein@htwg-konstanz.de",
+      "has_attachment": false,
+      "expected_category": "uncategorized",
+      "metadata": {
+        "difficulty": "medium",
+        "keywords": [
+          "Praktikumsplatz",
+          "suchen",
+          "Vermittlung",
+          "Kontakte",
+          "freie Plätze"
+        ],
+        "note": "Misunderstanding of office purpose. Asking for internship placement help, not about contract submission, international questions, or postponement."
+      }
+    },
+    {
+      "id": "email_030",
+      "subject": "Wegen dem Auslandsthema neulich",
+      "body": "Hi,\n\nSie hatten mir letztens am Telefon gesagt, ich soll nochmal schreiben wegen den Details. Also: Das Praktikum in Kopenhagen würde bei dieser dänischen Designagentur stattfinden, drei Monate ab Juli. Ich bräuchte von Ihnen eine Bestätigung für die Firma, dass das von der Hochschule aus anerkannt wird. Und dann noch die Info, ob ich da extra Versicherungen brauche für Dänemark oder ob meine normale reicht. Die Agentur will auch wissen, ob es irgendwelche speziellen Formvorschriften gibt.\n\nGruß,\nTim",
+      "sender": "t.fischer@htwg-konstanz.de",
+      "has_attachment": false,
+      "expected_category": "international_office_question",
+      "metadata": {
+        "difficulty": "medium",
+        "keywords": [
+          "Kopenhagen",
+          "dänisch",
+          "Ausland",
+          "Versicherung",
+          "Anerkennung",
+          "Dänemark"
+        ],
+        "note": "Very informal, references previous phone conversation. Clear international internship question despite casual tone."
+      }
+    },
+    {
+      "id": "email_031",
+      "subject": "Praktikumsvertrag Siemens AG - Einreichung",
+      "body": "Sehr geehrte Damen und Herren,\n\nim Anhang sende ich Ihnen meinen unterschriebenen Praktikumsvertrag mit der Siemens AG für das Pflichtpraktikum im Sommersemester 2025.\n\nPraktikumszeitraum: 01.03.2025 - 31.08.2025\nUnternehmen: Siemens AG, München\nAbteilung: Forschung & Entwicklung\n\nBitte bestätigen Sie mir den Eingang des Vertrags.\n\nMit freundlichen Grüßen\nStefan Weber",
+      "sender": "stefan.weber@htwg-konstanz.de",
+      "has_attachment": true,
+      "expected_category": "contract_submission",
+      "metadata": {
+        "difficulty": "easy",
+        "keywords": [
+          "Praktikumsvertrag",
+          "Einreichung",
+          "unterschrieben",
+          "Anhang"
+        ],
+        "note": "Clear contract submission with all necessary information"
+      }
+    },
+    {
+      "id": "email_032",
+      "subject": "Frage zu Auslandspraktikum in Kanada",
+      "body": "Hallo,\n\nich plane ein Praktikum in Vancouver, Kanada für 6 Monate ab September 2025. Ich habe einige Fragen:\n\n1. Brauche ich ein spezielles Visum oder reicht eine eTA?\n2. Wird das Praktikum automatisch anerkannt oder muss ich vorher etwas beantragen?\n3. Gibt es finanzielle Unterstützung für Kanada-Praktika?\n\nDanke schon mal!\n\nViele Grüße\nLisa Hoffmann",
+      "sender": "lisa.hoffmann@htwg-konstanz.de",
+      "has_attachment": false,
+      "expected_category": "international_office_question",
+      "metadata": {
+        "difficulty": "medium",
+        "keywords": [
+          "Auslandspraktikum",
+          "Kanada",
+          "Visum",
+          "Anerkennung",
+          "finanzielle Unterstützung"
+        ],
+        "note": "Multiple questions about international internship"
+      }
+    },
+    {
+      "id": "email_033",
+      "subject": "Verschiebung Praktikumsbeginn",
+      "body": "Sehr geehrtes Praktikantenamt-Team,\n\naufgrund unvorhergesehener Umstände muss ich meinen Praktikumsbeginn bei der Deutsche Bahn AG verschieben.\n\nUrsprünglicher Termin: 15.02.2025\nNeuer Wunschtermin: 01.04.2025\n\nDas Unternehmen hat der Verschiebung bereits zugestimmt. Wie gehe ich nun vor? Muss ich einen neuen Vertrag einreichen?\n\nMit freundlichen Grüßen\nMichael Krause",
+      "sender": "michael.krause@htwg-konstanz.de",
+      "has_attachment": false,
+      "expected_category": "internship_postponement",
+      "metadata": {
+        "difficulty": "easy",
+        "keywords": [
+          "Verschiebung",
+          "Praktikumsbeginn",
+          "verschieben",
+          "neuer Termin"
+        ],
+        "note": "Clear postponement request with dates"
+      }
+    },
+    {
+      "id": "email_034",
+      "subject": "vertrag nochmal schicken???",
+      "body": "hey,\n\nich hab vor 2 wochen meinen vertrag geschickt aber noch keine rückmeldung bekommen. soll ich den nochmal schicken oder habt ihr den?\n\nwar von der firma TechStart GmbH in hamburg.\n\nlg\njan",
+      "sender": "jan.mueller@htwg-konstanz.de",
+      "has_attachment": false,
+      "expected_category": "contract_submission",
+      "metadata": {
+        "difficulty": "medium",
+        "keywords": [
+          "Vertrag",
+          "schicken",
+          "Rückmeldung",
+          "nochmal"
+        ],
+        "note": "Very informal style, unclear if asking about submission or status check"
+      }
+    },
+    {
+      "id": "email_035",
+      "subject": "Thank you for your help!",
+      "body": "Dear Internship Office Team,\n\nI just wanted to say thank you for processing my internship contract so quickly. Everything went smoothly and I'm ready to start my internship next month.\n\nI really appreciate your support!\n\nBest regards,\nEmily Schmidt",
+      "sender": "emily.schmidt@htwg-konstanz.de",
+      "has_attachment": false,
+      "expected_category": "uncategorized",
+      "metadata": {
+        "difficulty": "easy",
+        "keywords": [
+          "thank you",
+          "appreciation"
+        ],
+        "note": "Thank you email in English - edge case"
+      }
+    },
+    {
+      "id": "email_036",
+      "subject": "Praktikumsvertrag Korrektur - Falsche Daten",
+      "body": "Guten Tag,\n\nmir ist aufgefallen, dass in meinem eingereichten Praktikumsvertrag (BMW Group, München) das Enddatum falsch eingetragen wurde.\n\nFalsch: 30.06.2025\nRichtig: 31.07.2025\n\nDer Vertrag wurde bereits vom Unternehmen unterschrieben. Soll ich einen korrigierten Vertrag nachreichen oder können Sie die Änderung direkt vornehmen?\n\nIm Anhang finden Sie den korrigierten Vertrag.\n\nBeste Grüße\nSabrina Klein",
+      "sender": "sabrina.klein@htwg-konstanz.de",
+      "has_attachment": true,
+      "expected_category": "contract_submission",
+      "metadata": {
+        "difficulty": "medium",
+        "keywords": [
+          "Korrektur",
+          "Praktikumsvertrag",
+          "falsche Daten",
+          "nachreichen"
+        ],
+        "note": "Correction to already submitted contract"
+      }
+    },
+    {
+      "id": "email_037",
+      "subject": "Erasmus+ Förderung für Spanien-Praktikum",
+      "body": "Sehr geehrte Damen und Herren,\n\nich habe ein Praktikumsangebot von einem Unternehmen in Barcelona, Spanien (Zeitraum: April - September 2025).\n\nKann ich dafür Erasmus+ Förderung beantragen? Wenn ja, wie ist der Ablauf und welche Fristen muss ich beachten?\n\nIch würde mich über eine baldige Rückmeldung freuen, da ich dem Unternehmen zeitnah zusagen möchte.\n\nVielen Dank im Voraus!\nThomas Berg",
+      "sender": "thomas.berg@htwg-konstanz.de",
+      "has_attachment": false,
+      "expected_category": "international_office_question",
+      "metadata": {
+        "difficulty": "medium",
+        "keywords": [
+          "Erasmus+",
+          "Spanien",
+          "Förderung",
+          "Ausland"
+        ],
+        "note": "Specific question about Erasmus+ funding for Spain"
+      }
+    },
+    {
+      "id": "email_038",
+      "subject": "Wo finde ich die Formulare???",
+      "body": "Hallo liebes Team,\n\nich bin gerade total verwirrt. Ich soll doch irgendwelche Formulare ausfüllen für mein Praktikum, aber ich finde die nirgendwo auf der Website.\n\nKönnt ihr mir sagen, wo genau die sind? Oder könnt ihr mir die direkt schicken?\n\nIch muss das ganz dringend haben, mein Praktikum fängt schon in 2 Wochen an!!!\n\nDanke!!!\nNina",
+      "sender": "nina.fischer@htwg-konstanz.de",
+      "has_attachment": false,
+      "expected_category": "uncategorized",
+      "metadata": {
+        "difficulty": "hard",
+        "keywords": [
+          "Formulare",
+          "Website",
+          "verwirrt"
+        ],
+        "note": "General help request, not specific enough for categorization, technical/navigation issue"
+      }
+    },
+    {
+      "id": "email_039",
+      "subject": "Praktikumsplatz gesucht - Kann das Amt helfen?",
+      "body": "Sehr geehrtes Praktikantenamt,\n\nich bin Student im 5. Semester Informatik und suche noch einen Praktikumsplatz für das Sommersemester 2025.\n\nKönnen Sie mir bei der Suche helfen oder haben Sie Kontakte zu Unternehmen, die noch Praktikanten suchen?\n\nMeine Schwerpunkte sind: Web-Entwicklung, Cloud Computing, Datenbanken\n\nIch würde mich über Unterstützung sehr freuen.\n\nMit freundlichen Grüßen\nDavid Richter",
+      "sender": "david.richter@htwg-konstanz.de",
+      "has_attachment": false,
+      "expected_category": "uncategorized",
+      "metadata": {
+        "difficulty": "easy",
+        "keywords": [
+          "Praktikumsplatz",
+          "gesucht",
+          "Suche",
+          "helfen"
+        ],
+        "note": "Placement request - not a primary function of categorization system"
+      }
+    },
+    {
+      "id": "email_040",
+      "subject": "Vertrag + Ausland + Verschiebung - HILFE!",
+      "body": "Hallo!\n\nIch hab da ein bisschen ein kompliziertes Problem...\n\nIch hab einen Praktikumsvertrag für die Schweiz (Zürich) und wollte im März anfangen. Aber jetzt hat die Firma gesagt, dass es erst im Mai geht. Gleichzeitig hab ich noch gar nicht meinen Vertrag bei euch eingereicht, weil ich nicht wusste, ob ich für die Schweiz was besonderes brauche???\n\nAlso:\n1. Muss ich für Schweiz-Praktikum was beachten?\n2. Kann ich den Vertrag mit dem neuen Datum (Mai statt März) direkt einreichen?\n3. Oder muss ich erst die Verschiebung beantragen?\n\nIch bin echt verwirrt, bitte helft mir!\n\nLG\nJulia Braun",
+      "sender": "julia.braun@htwg-konstanz.de",
+      "has_attachment": false,
+      "expected_category": "uncategorized",
+      "metadata": {
+        "difficulty": "hard",
+        "keywords": [
+          "Schweiz",
+          "Vertrag",
+          "Verschiebung",
+          "Ausland",
+          "kompliziert"
+        ],
+        "note": "Multiple overlapping topics - international + postponement + submission. Too ambiguous for single category, edge case for testing."
+      }
+    },
+    {
+      "id": "email_041",
+      "subject": "Praktikumsvertrag - Rückfrage zur Unterschrift",
+      "body": "Guten Tag,\n\nich habe meinen Praktikumsvertrag mit der Firma MediaTech Solutions GmbH bereits letzte Woche eingereicht. Allerdings habe ich bemerkt, dass die Unterschrift meines Betreuers noch fehlt. Kann ich den korrigierten Vertrag nachreichen, oder muss ich einen komplett neuen Vertrag einreichen?\n\nVielen Dank im Voraus!\n\nMit freundlichen Grüßen\nLisa Hoffmann",
+      "sender": "lisa.hoffmann@htwg-konstanz.de",
+      "has_attachment": false,
+      "expected_category": "contract_submission",
+      "metadata": {
+        "difficulty": "easy",
+        "keywords": [
+          "Praktikumsvertrag",
+          "Unterschrift",
+          "nachreichen",
+          "korrigiert"
+        ],
+        "note": "Clear contract submission correction request"
+      }
+    },
+    {
+      "id": "email_042",
+      "subject": "Frage zu Auslandspraktikum in Japan",
+      "body": "Sehr geehrte Damen und Herren,\n\nich plane, mein Pflichtpraktikum im Sommersemester 2026 in Tokyo, Japan, bei der Firma Nakamura Robotics zu absolvieren. Ich habe einige Fragen:\n\n1. Wird das Praktikum in Japan anerkannt?\n2. Benötige ich eine spezielle Versicherung?\n3. Gibt es Förderungsmöglichkeiten wie Erasmus+ für Japan?\n\nIch würde mich über eine Rückmeldung sehr freuen.\n\nMit freundlichen Grüßen\nTobias Werner",
+      "sender": "tobias.werner@htwg-konstanz.de",
+      "has_attachment": false,
+      "expected_category": "international_office_question",
+      "metadata": {
+        "difficulty": "medium",
+        "keywords": [
+          "Auslandspraktikum",
+          "Japan",
+          "Anerkennung",
+          "Erasmus+",
+          "Förderung"
+        ],
+        "note": "Multiple questions about international internship"
+      }
+    },
+    {
+      "id": "email_043",
+      "subject": "Praktikumsbeginn verschieben",
+      "body": "Hallo,\n\nich sollte mein Praktikum bei der Firma WindEnergy Nord am 15. Februar 2026 beginnen. Leider muss ich aus gesundheitlichen Gründen den Start um 4 Wochen verschieben. Ist das möglich? Der neue Starttermin wäre dann der 15. März 2026.\n\nDie Firma hat bereits zugestimmt.\n\nViele Grüße\nMarc Schulte",
+      "sender": "marc.schulte@htwg-konstanz.de",
+      "has_attachment": false,
+      "expected_category": "internship_postponement",
+      "metadata": {
+        "difficulty": "easy",
+        "keywords": [
+          "verschieben",
+          "Praktikumsbeginn",
+          "gesundheitliche Gründe",
+          "Starttermin"
+        ],
+        "note": "Clear postponement request with reason"
+      }
+    },
+    {
+      "id": "email_044",
+      "subject": "Contract Submission - EcoSystems Ltd",
+      "body": "Dear Sir or Madam,\n\nI am an international exchange student and I would like to submit my internship contract with EcoSystems Ltd in Hamburg. The internship will start on April 1st, 2026 and last for 6 months.\n\nPlease find the signed contract attached.\n\nBest regards,\nSarah Mitchell",
+      "sender": "sarah.mitchell@htwg-konstanz.de",
+      "has_attachment": true,
+      "expected_category": "contract_submission",
+      "metadata": {
+        "difficulty": "medium",
+        "keywords": [
+          "contract",
+          "submission",
+          "internship",
+          "attached"
+        ],
+        "note": "Email in English from international student"
+      }
+    },
+    {
+      "id": "email_045",
+      "subject": "Danke für die schnelle Hilfe!",
+      "body": "Hallo liebes Team,\n\nich wollte mich einfach mal bedanken für die super schnelle Bearbeitung meines Antrags letzte Woche. Ihr seid echt spitze!\n\nSchöne Grüße\nJulia",
+      "sender": "julia.peters@htwg-konstanz.de",
+      "has_attachment": false,
+      "expected_category": "uncategorized",
+      "metadata": {
+        "difficulty": "easy",
+        "keywords": [
+          "Danke",
+          "Bearbeitung",
+          "Antrag"
+        ],
+        "note": "Thank-you email without specific request"
+      }
+    },
+    {
+      "id": "email_046",
+      "subject": "Praktikum in Australien - Visum und Anerkennung",
+      "body": "Sehr geehrtes Praktikantenamt-Team,\n\nich habe die Möglichkeit, bei DigitalWave Studios in Melbourne, Australien, ein sechsmonatiges Praktikum zu machen. Da Australien nicht in der EU liegt, bin ich unsicher bezüglich:\n\n- Visumsanforderungen für ein Praktikum\n- Wird das Praktikum vollständig als Pflichtpraktikum anerkannt?\n- Gibt es Erfahrungsberichte von anderen Studenten?\n\nIch freue mich auf Ihre Rückmeldung.\n\nHerzliche Grüße\nDennis Krause",
+      "sender": "dennis.krause@htwg-konstanz.de",
+      "has_attachment": false,
+      "expected_category": "international_office_question",
+      "metadata": {
+        "difficulty": "medium",
+        "keywords": [
+          "Australien",
+          "Visum",
+          "Anerkennung",
+          "Ausland",
+          "Pflichtpraktikum"
+        ],
+        "note": "International internship with visa questions"
+      }
+    },
+    {
+      "id": "email_047",
+      "subject": "praktikumsvertrg einreichen???",
+      "body": "hey,\n\nkann ich mein praktikumsvertrag auch per email schicken oder muss das ausgedruckt werden? hab grad keinen drucker und das praktikum bei CloudNine Systems fängt schon in 2 wochen an...\n\nach ja, und gibts da ne frist oder so?\n\ndanke!\nmax",
+      "sender": "max.bauer@htwg-konstanz.de",
+      "has_attachment": false,
+      "expected_category": "contract_submission",
+      "metadata": {
+        "difficulty": "medium",
+        "keywords": [
+          "Praktikumsvertrag",
+          "einreichen",
+          "Email",
+          "Frist"
+        ],
+        "note": "Very informal, typos in subject, multiple questions about submission process"
+      }
+    },
+    {
+      "id": "email_048",
+      "subject": "Fehler beim Upload - Portal funktioniert nicht",
+      "body": "Sehr geehrte Damen und Herren,\n\nich versuche seit gestern, meinen Praktikumsvertrag über das Online-Portal hochzuladen, aber ich erhalte immer die Fehlermeldung 'Upload fehlgeschlagen - Error 403'. Ich habe es mit verschiedenen Browsern versucht (Chrome, Firefox, Edge), aber nichts funktioniert.\n\nKönnen Sie mir bitte helfen oder soll ich den Vertrag alternativ per E-Mail senden?\n\nMit freundlichen Grüßen\nSandra Zimmermann",
+      "sender": "sandra.zimmermann@htwg-konstanz.de",
+      "has_attachment": false,
+      "expected_category": "uncategorized",
+      "metadata": {
+        "difficulty": "hard",
+        "keywords": [
+          "Upload",
+          "Portal",
+          "Fehler",
+          "technisches Problem"
+        ],
+        "note": "Technical issue - not about content but system problem"
+      }
+    },
+    {
+      "id": "email_049",
+      "subject": "Kann ich mein Praktikum verlängern?",
+      "body": "Guten Tag,\n\nich bin aktuell im 4. Monat meines Praktikums bei der Firma FinancePro AG. Mein Betreuer hat mir angeboten, das Praktikum um weitere 2 Monate zu verlängern, da ein spannendes Projekt ansteht.\n\nMuss ich dafür einen neuen Vertrag einreichen oder reicht eine Vertragsänderung? Gibt es dabei etwas zu beachten?\n\nVielen Dank und beste Grüße\nAnna Richter",
+      "sender": "anna.richter@htwg-konstanz.de",
+      "has_attachment": false,
+      "expected_category": "uncategorized",
+      "metadata": {
+        "difficulty": "hard",
+        "keywords": [
+          "verlängern",
+          "Praktikum",
+          "Vertrag",
+          "Vertragsänderung"
+        ],
+        "note": "Extension of ongoing internship - not postponement of start date"
+      }
+    },
+    {
+      "id": "email_050",
+      "subject": "Praktikumsplatz gesucht - Können Sie helfen?",
+      "body": "Hallo zusammen,\n\nich bin jetzt schon seit 3 Monaten auf der Suche nach einem Praktikumsplatz im Bereich Maschinenbau und finde einfach nichts Passendes. Alle Firmen, die ich angeschrieben habe, haben abgesagt oder sich gar nicht gemeldet.\n\nHaben Sie vielleicht eine Liste mit Firmen, die regelmäßig Praktikanten nehmen? Oder können Sie mir einen Praktikumsplatz vermitteln?\n\nIch wäre für jede Hilfe dankbar!\n\nFreundliche Grüße\nMichael Brandt",
+      "sender": "michael.brandt@htwg-konstanz.de",
+      "has_attachment": false,
+      "expected_category": "uncategorized",
+      "metadata": {
+        "difficulty": "medium",
+        "keywords": [
+          "Praktikumsplatz",
+          "Suche",
+          "Vermittlung",
+          "Firmen"
+        ],
+        "note": "Request for internship placement assistance - administrative topic but not a main category"
+      }
+    },
+    {
+      "id": "email_051",
+      "subject": "Praktikumsvertrag Amazon Web Services",
+      "body": "Sehr geehrte Damen und Herren,\n\nanbei sende ich Ihnen meinen unterschriebenen Praktikumsvertrag mit Amazon Web Services Deutschland GmbH für das Praxissemester im Sommersemester 2025.\n\nDas Praktikum beginnt am 01.03.2025 und endet am 31.08.2025.\n\nBitte bestätigen Sie mir den Erhalt.\n\nMit freundlichen Grüßen\nLisa Hoffmann",
+      "sender": "lisa.hoffmann@htwg-konstanz.de",
+      "has_attachment": true,
+      "expected_category": "contract_submission",
+      "metadata": {
+        "difficulty": "easy",
+        "keywords": [
+          "Praktikumsvertrag",
+          "unterschrieben",
+          "anbei"
+        ],
+        "note": "Straightforward contract submission with all necessary information"
+      }
+    },
+    {
+      "id": "email_052",
+      "subject": "Frage zu Auslandspraktikum in Frankreich",
+      "body": "Hallo,\n\nich plane mein Praktikum bei Airbus in Toulouse zu machen. Muss ich mich für die Anerkennung zusätzlich beim International Office melden oder reicht die normale Anmeldung?\n\nGibt es spezielle Formulare für Frankreich?\n\nDanke!\nMax",
+      "sender": "max.weber@htwg-konstanz.de",
+      "has_attachment": false,
+      "expected_category": "international_office_question",
+      "metadata": {
+        "difficulty": "easy",
+        "keywords": [
+          "Auslandspraktikum",
+          "Frankreich",
+          "International Office",
+          "Anerkennung"
+        ],
+        "note": "Clear international office question about France"
+      }
+    },
+    {
+      "id": "email_053",
+      "subject": "Verschiebung Praktikumsbeginn wegen Krankheit",
+      "body": "Sehr geehrtes Team des Praktikantenamts,\n\naufgrund einer längeren Krankheit (Krankschreibung liegt vor) kann ich mein geplantes Praktikum bei Bosch nicht wie vorgesehen am 15.02.2025 beginnen.\n\nMein Arbeitgeber hat zugestimmt, den Start auf den 01.04.2025 zu verschieben. Wie gehe ich vor, um die Verschiebung offiziell zu melden?\n\nViele Grüße\nSarah Müller",
+      "sender": "sarah.mueller@htwg-konstanz.de",
+      "has_attachment": false,
+      "expected_category": "internship_postponement",
+      "metadata": {
+        "difficulty": "medium",
+        "keywords": [
+          "Verschiebung",
+          "Krankheit",
+          "Praktikumsbeginn"
+        ],
+        "note": "Postponement due to illness with employer agreement"
+      }
+    },
+    {
+      "id": "email_054",
+      "subject": "Re: Re: Re: Vertrag",
+      "body": "Hi,\n\nwie besprochen schicke ich nochmal den Vertrag. Diesmal hoffentlich richtig ausgefüllt haha :D\n\nSorry für die Umstände!\n\nLG\nTim",
+      "sender": "tim.schneider@htwg-konstanz.de",
+      "has_attachment": true,
+      "expected_category": "contract_submission",
+      "metadata": {
+        "difficulty": "medium",
+        "keywords": [
+          "Vertrag",
+          "nochmal",
+          "ausgefüllt"
+        ],
+        "note": "Very informal contract resubmission, part of email thread"
+      }
+    },
+    {
+      "id": "email_055",
+      "subject": "Vielen Dank für die schnelle Hilfe!",
+      "body": "Guten Tag,\n\nich wollte mich ganz herzlich bei Ihnen bedanken für die schnelle Bearbeitung meines Vertrags und die Klärung meiner Fragen letzte Woche.\n\nJetzt kann es endlich losgehen!\n\nSchöne Grüße\nJulia Becker",
+      "sender": "julia.becker@htwg-konstanz.de",
+      "has_attachment": false,
+      "expected_category": "uncategorized",
+      "metadata": {
+        "difficulty": "easy",
+        "keywords": [
+          "Dank",
+          "Danke",
+          "bedanken"
+        ],
+        "note": "Thank-you email, no action required"
+      }
+    },
+    {
+      "id": "email_056",
+      "subject": "Praktikum in den USA - Visum und Learning Agreement",
+      "body": "Sehr geehrte Damen und Herren,\n\nich habe eine Praktikumszusage von Microsoft in Seattle für September 2025. Da ich ein J-1 Visum beantragen muss, benötige ich verschiedene Unterlagen von der Hochschule.\n\nKönnen Sie mir mitteilen, ob das Learning Agreement vom International Office oder vom Praktikantenamt ausgestellt wird? Und gibt es ein spezielles Formular für USA-Praktika?\n\nFreundliche Grüße\nDavid Chen",
+      "sender": "david.chen@htwg-konstanz.de",
+      "has_attachment": false,
+      "expected_category": "international_office_question",
+      "metadata": {
+        "difficulty": "medium",
+        "keywords": [
+          "USA",
+          "Visum",
+          "Learning Agreement",
+          "International Office"
+        ],
+        "note": "Complex international question about US visa and documentation"
+      }
+    },
+    {
+      "id": "email_057",
+      "subject": "Wo Gebühren bezahlen????",
+      "body": "Hallo,\n\nich hab jetzt schon überall gesucht aber finde nicht wo ich die Praktikumsgebühren bezahlen soll. Gibts da einen Link oder muss ich zum Studierendensekretariat?\n\nBitte um info weil muss das diese woche noch machen!!!\n\nDanke\nMarco",
+      "sender": "marco.richter@htwg-konstanz.de",
+      "has_attachment": false,
+      "expected_category": "uncategorized",
+      "metadata": {
+        "difficulty": "easy",
+        "keywords": [
+          "Gebühren",
+          "bezahlen",
+          "wo"
+        ],
+        "note": "Administrative question about fees, not categorization-relevant"
+      }
+    },
+    {
+      "id": "email_058",
+      "subject": "Praktikumsvertag - Korrektur Zeitraum",
+      "body": "Guten Morgen,\n\nmir ist aufgefallen, dass im bereits eingereichten Vertrag mit Volkswagen AG das Enddatum falsch eingetragen wurde (31.07.2025 statt 31.08.2025).\n\nSoll ich einen komplett neuen Vertrag einreichen oder reicht eine Korrektur? Das Unternehmen hat bereits die korrigierte Version unterschrieben.\n\nBeste Grüße\nAnna Schmidt",
+      "sender": "anna.schmidt@htwg-konstanz.de",
+      "has_attachment": true,
+      "expected_category": "contract_submission",
+      "metadata": {
+        "difficulty": "hard",
+        "keywords": [
+          "Korrektur",
+          "Vertrag",
+          "falsch",
+          "Enddatum"
+        ],
+        "note": "Contract correction request with typo in subject line, requires understanding context"
+      }
+    },
+    {
+      "id": "email_059",
+      "subject": "PDF lässt sich nicht hochladen",
+      "body": "Liebes Praktikantenamt-Team,\n\nseit gestern versuche ich meinen Vertrag im Portal hochzuladen, aber es kommt immer eine Fehlermeldung \"Datei zu groß\". Die PDF hat 8 MB.\n\nWas kann ich tun? Gibt es eine andere Möglichkeit den Vertrag einzureichen?\n\nViele Grüße\nLena Krause",
+      "sender": "lena.krause@htwg-konstanz.de",
+      "has_attachment": false,
+      "expected_category": "uncategorized",
+      "metadata": {
+        "difficulty": "medium",
+        "keywords": [
+          "Portal",
+          "hochladen",
+          "Fehlermeldung",
+          "technisch"
+        ],
+        "note": "Technical issue with portal, not a categorization case"
+      }
+    },
+    {
+      "id": "email_060",
+      "subject": "Verlängerung Praktikum",
+      "body": "Hallo zusammen,\n\nmein Praktikum bei SAP läuft noch bis Ende des Monats. Jetzt hat mir die Firma angeboten, das Praktikum um 2 Monate zu verlängern.\n\nWie sieht das aus mit der Anerkennung? Muss ich da was beachten oder neu anmelden?\n\nGruß\nFelix",
+      "sender": "felix.wagner@htwg-konstanz.de",
+      "has_attachment": false,
+      "expected_category": "uncategorized",
+      "metadata": {
+        "difficulty": "hard",
+        "keywords": [
+          "Verlängerung",
+          "Praktikum",
+          "Anerkennung"
+        ],
+        "note": "Extension of ongoing internship - tricky case that might be confused with postponement but is actually uncategorized"
+      }
+    },
+    {
+      "id": "email_061",
+      "subject": "Praktikumsvertrag - REWE Digital GmbH",
+      "body": "Sehr geehrte Damen und Herren,\n\nim Anhang sende ich Ihnen meinen unterschriebenen Praktikumsvertrag mit der REWE Digital GmbH in Köln. Das Praktikum beginnt am 01.04.2025 und endet am 30.06.2025.\n\nBitte bestätigen Sie mir den Eingang.\n\nMit freundlichen Grüßen\nLena Hoffmann",
+      "sender": "lena.hoffmann@htwg-konstanz.de",
+      "has_attachment": true,
+      "expected_category": "contract_submission",
+      "metadata": {
+        "difficulty": "easy",
+        "keywords": [
+          "Praktikumsvertrag",
+          "unterschrieben",
+          "Anhang"
+        ],
+        "note": "Standard contract submission with all required information"
+      }
+    },
+    {
+      "id": "email_062",
+      "subject": "Frage: Praktikum in Dänemark - Anerkennung?",
+      "body": "Hallo,\n\nich habe ein Praktikumsangebot von Novo Nordisk in Kopenhagen bekommen. Das wäre für 6 Monate ab August 2025.\n\nKann ich das als Pflichtpraktikum anrechnen lassen? Brauche ich irgendwelche speziellen Formulare für Dänemark? Und wie läuft das mit der Krankenversicherung?\n\nDanke schonmal!\nTobias",
+      "sender": "tobias.mueller@htwg-konstanz.de",
+      "has_attachment": false,
+      "expected_category": "international_office_question",
+      "metadata": {
+        "difficulty": "easy",
+        "keywords": [
+          "Dänemark",
+          "Kopenhagen",
+          "Anerkennung",
+          "Ausland"
+        ],
+        "note": "Clear international question with multiple sub-questions"
+      }
+    },
+    {
+      "id": "email_063",
+      "subject": "Vertrag nachreichen - fehlende Unterschrift",
+      "body": "Guten Tag,\n\nmir ist aufgefallen, dass bei meinem eingereichten Vertrag (ThyssenKrupp AG) die Unterschrift des Betreuers fehlt. Ich habe jetzt die vollständige Version und würde diese gerne nachreichen.\n\nSoll ich den Vertrag komplett neu einreichen oder reicht eine Ergänzung?\n\nMeine Matrikelnummer: 2087654\n\nViele Grüße\nSophie Wagner",
+      "sender": "sophie.wagner@htwg-konstanz.de",
+      "has_attachment": true,
+      "expected_category": "contract_submission",
+      "metadata": {
+        "difficulty": "medium",
+        "keywords": [
+          "Vertrag",
+          "nachreichen",
+          "Unterschrift",
+          "fehlt"
+        ],
+        "note": "Contract correction scenario"
+      }
+    },
+    {
+      "id": "email_064",
+      "subject": "Re: Re: Re: Praktikum verschieben",
+      "body": "Hi,\n\nalso mein Chef hat jetzt gesagt dass wir doch erst im Oktober anfangen können statt im September wegen nem großen Projekt. Geht das noch? Wäre bei der Firma Zalando SE in Berlin.\n\nVertrag hab ich noch nicht eingereicht weil ich erst die Bestätigung haben wollte dass das geht.\n\nlg\nMax",
+      "sender": "max.becker@htwg-konstanz.de",
+      "has_attachment": false,
+      "expected_category": "internship_postponement",
+      "metadata": {
+        "difficulty": "medium",
+        "keywords": [
+          "verschieben",
+          "Oktober",
+          "September",
+          "später"
+        ],
+        "note": "Very informal postponement request before contract submission"
+      }
+    },
+    {
+      "id": "email_065",
+      "subject": "Praktikumsplatz gesucht - können Sie helfen?",
+      "body": "Sehr geehrte Damen und Herren,\n\nich bin jetzt schon seit 3 Monaten auf der Suche nach einem Praktikumsplatz im Bereich Maschinenbau und habe bisher nur Absagen bekommen.\n\nKönnen Sie mir vielleicht Kontakte zu Unternehmen vermitteln oder haben Sie eine Liste von Firmen, die regelmäßig Praktikanten nehmen?\n\nIch müsste das Praktikum eigentlich nächstes Semester machen.\n\nMit freundlichen Grüßen\nJonas Richter\nMatr.-Nr.: 2098432",
+      "sender": "jonas.richter@htwg-konstanz.de",
+      "has_attachment": false,
+      "expected_category": "uncategorized",
+      "metadata": {
+        "difficulty": "easy",
+        "keywords": [
+          "Praktikumsplatz",
+          "gesucht",
+          "Vermittlung",
+          "Hilfe"
+        ],
+        "note": "Request for internship placement - not within office's scope"
+      }
+    },
+    {
+      "id": "email_066",
+      "subject": "Erasmus+ Förderung für Praktikum in Niederlande",
+      "body": "Guten Tag,\n\nein Kommilitone hat mir erzählt dass man für Auslandspraktika Erasmus+ Förderung bekommen kann. Ich habe ein Angebot von Philips in Eindhoven (Niederlande) für ein 5-monatiges Praktikum ab März 2025.\n\nWie beantrage ich diese Förderung? Gibt es Fristen die ich beachten muss? Und kann ich die Förderung auch bekommen wenn ich schon mal ein Erasmus-Semester gemacht habe?\n\nFreundliche Grüße\nEmma Schneider",
+      "sender": "emma.schneider@htwg-konstanz.de",
+      "has_attachment": false,
+      "expected_category": "international_office_question",
+      "metadata": {
+        "difficulty": "medium",
+        "keywords": [
+          "Erasmus+",
+          "Niederlande",
+          "Förderung",
+          "Auslandspraktikum"
+        ],
+        "note": "International funding question"
+      }
+    },
+    {
+      "id": "email_067",
+      "subject": "Danke für die schnelle Bearbeitung!",
+      "body": "Hallo Frau Meier,\n\nvielen Dank dass Sie meinen Vertrag so schnell bearbeitet haben! Ich habe heute schon die Bestätigung bekommen.\n\nSuper Service! 😊\n\nSchöne Grüße\nLisa",
+      "sender": "lisa.weber@htwg-konstanz.de",
+      "has_attachment": false,
+      "expected_category": "uncategorized",
+      "metadata": {
+        "difficulty": "easy",
+        "keywords": [
+          "Danke",
+          "Bestätigung",
+          "schnell"
+        ],
+        "note": "Thank you email - no action needed"
+      }
+    },
+    {
+      "id": "email_068",
+      "subject": "Praktikumsvertrag Porsche AG - Prüfung + Frage Gebühren",
+      "body": "Sehr geehrtes Praktikantenamt-Team,\n\nanbei finden Sie meinen Praktikumsvertrag mit der Porsche AG in Stuttgart. Zeitraum ist 01.07.2025 bis 31.12.2025.\n\nZusätzlich habe ich eine Frage: Muss ich für die Praktikumsanmeldung irgendwelche Gebühren bezahlen? Ein Freund meinte dass es in manchen Fachbereichen eine Bearbeitungsgebühr gibt.\n\nBeste Grüße\nDavid Koch",
+      "sender": "david.koch@htwg-konstanz.de",
+      "has_attachment": true,
+      "expected_category": "contract_submission",
+      "metadata": {
+        "difficulty": "hard",
+        "keywords": [
+          "Praktikumsvertrag",
+          "Gebühren",
+          "Bearbeitungsgebühr"
+        ],
+        "note": "Mixed request - contract submission with unrelated fee question"
+      }
+    },
+    {
+      "id": "email_069",
+      "subject": "DRINGEND - Anhang kann nicht hochgeladen werden",
+      "body": "Hallo,\n\nich versuche seit gestern meinen Praktikumsvertrag über das Online-Portal hochzuladen aber es kommt immer eine Fehlermeldung \"Dateityp nicht unterstützt\".\n\nDie Datei ist ein ganz normales PDF, 2MB groß. Ich habs auch schon mit verschiedenen Browsern versucht (Chrome, Firefox, Edge).\n\nKann ich Ihnen den Vertrag einfach per Email schicken? Mein Praktikum bei der Otto Group soll in 2 Wochen starten und ich brauche dringend die Bestätigung!\n\nVG\nNina",
+      "sender": "nina.fischer@htwg-konstanz.de",
+      "has_attachment": false,
+      "expected_category": "uncategorized",
+      "metadata": {
+        "difficulty": "medium",
+        "keywords": [
+          "Portal",
+          "Fehlermeldung",
+          "Upload",
+          "technisches Problem"
+        ],
+        "note": "Technical issue with upload system"
+      }
+    },
+    {
+      "id": "email_070",
+      "subject": "Verlängerung laufendes Praktikum möglich?",
+      "body": "Guten Tag,\n\nich mache gerade mein Praktikum bei Hapag-Lloyd AG (seit 01.12.2024, geplantes Ende 28.02.2025). Mein Betreuer hat mir jetzt angeboten das Praktikum um weitere 3 Monate zu verlängern bis Ende Mai 2025.\n\nMuss ich dafür einen neuen Vertrag einreichen oder reicht ein Nachtrag zum bestehenden Vertrag? Und zählen dann insgesamt 6 Monate oder werden das zwei separate Praktika?\n\nWäre super wenn Sie mir da weiterhelfen könnten.\n\nMfG\nLukas Braun\nMatr.-Nr. 2076543",
+      "sender": "lukas.braun@htwg-konstanz.de",
+      "has_attachment": false,
+      "expected_category": "uncategorized",
+      "metadata": {
+        "difficulty": "hard",
+        "keywords": [
+          "Verlängerung",
+          "laufendes Praktikum",
+          "extend",
+          "ongoing"
+        ],
+        "note": "Extension of ongoing internship - different from postponement of start date"
+      }
+    },
+    {
+      "id": "email_071",
+      "subject": "Praktikumsvertrag Adidas AG",
+      "body": "Sehr geehrte Damen und Herren,\n\nim Anhang sende ich Ihnen meinen unterschriebenen Praktikumsvertrag mit der Adidas AG in Herzogenaurach. Das Praktikum beginnt am 01.04.2025 und dauert 20 Wochen.\n\nBitte bestätigen Sie mir den Erhalt.\n\nMit freundlichen Grüßen\nJulia Schneider",
+      "sender": "julia.schneider@htwg-konstanz.de",
+      "has_attachment": true,
+      "expected_category": "contract_submission",
+      "metadata": {
+        "difficulty": "easy",
+        "keywords": [
+          "Praktikumsvertrag",
+          "Anhang",
+          "unterschrieben"
+        ],
+        "note": "Straightforward contract submission with all required information"
+      }
+    },
+    {
+      "id": "email_072",
+      "subject": "Frage zu Auslandspraktikum Schweden",
+      "body": "Hallo,\n\nich hab ne Frage: Ich will mein Praktikum bei Spotify in Stockholm machen. Brauche ich da irgendwelche speziellen Formulare oder reicht der normale Vertrag? Und gibts da Zuschüsse oder so?\n\nDanke!\nMax",
+      "sender": "max.mueller@htwg-konstanz.de",
+      "has_attachment": false,
+      "expected_category": "international_office_question",
+      "metadata": {
+        "difficulty": "easy",
+        "keywords": [
+          "Auslandspraktikum",
+          "Schweden",
+          "Formulare",
+          "Zuschüsse"
+        ],
+        "note": "Very informal tone, international office related"
+      }
+    },
+    {
+      "id": "email_073",
+      "subject": "Vertrag nachreichen - fehlende Unterschrift",
+      "body": "Guten Tag,\n\nich habe letzte Woche meinen Praktikumsvertrag mit Henkel eingereicht, aber leider bemerkt, dass die Unterschrift des Betreuers noch fehlt. Ich habe die vollständige Version jetzt erhalten.\n\nKann ich den korrigierten Vertrag einfach nochmal per Mail schicken oder soll ich vorbeikommen?\n\nViele Grüße\nSarah Hoffmann",
+      "sender": "sarah.hoffmann@htwg-konstanz.de",
+      "has_attachment": false,
+      "expected_category": "contract_submission",
+      "metadata": {
+        "difficulty": "medium",
+        "keywords": [
+          "Vertrag nachreichen",
+          "Unterschrift",
+          "korrigiert"
+        ],
+        "note": "Correction to previously submitted contract"
+      }
+    },
+    {
+      "id": "email_074",
+      "subject": "Praktikum verschieben wegen Krankheit",
+      "body": "Sehr geehrte Frau Müller,\n\nich sollte mein Pflichtpraktikum bei der Telekom am 15.01.2025 beginnen. Leider hatte ich eine Operation und bin aktuell noch krankgeschrieben. Mein Arzt meint, ich sollte bis Ende Februar keine körperlich anstrengenden Tätigkeiten ausüben.\n\nMein Arbeitgeber wäre einverstanden, den Start auf den 01.03.2025 zu verschieben. Ist das möglich?\n\nMit freundlichen Grüßen\nTobias Weber",
+      "sender": "tobias.weber@htwg-konstanz.de",
+      "has_attachment": false,
+      "expected_category": "internship_postponement",
+      "metadata": {
+        "difficulty": "easy",
+        "keywords": [
+          "verschieben",
+          "Krankheit",
+          "Start"
+        ],
+        "note": "Clear postponement request due to medical reasons"
+      }
+    },
+    {
+      "id": "email_075",
+      "subject": "Danke für die Unterstützung!",
+      "body": "Hallo liebes Praktikantenamt-Team,\n\nich wollte mich nochmal ganz herzlich bedanken für die schnelle Hilfe bei meinem Problem mit dem Vertrag. Jetzt ist alles geklärt und ich kann beruhigt ins Praktikum starten!\n\nSie machen einen tollen Job!\n\nLiebe Grüße\nAnna Becker",
+      "sender": "anna.becker@htwg-konstanz.de",
+      "has_attachment": false,
+      "expected_category": "uncategorized",
+      "metadata": {
+        "difficulty": "easy",
+        "keywords": [
+          "Danke",
+          "Unterstützung"
+        ],
+        "note": "Thank-you email, no action needed"
+      }
+    },
+    {
+      "id": "email_076",
+      "subject": "Praktikumsvertrag BASF - Frage zur Dauer",
+      "body": "Guten Morgen,\n\nich bin gerade dabei, meinen Praktikumsvertrag mit BASF in Ludwigshafen auszufüllen. Im Vertrag steht eine Dauer von 22 Wochen, aber in der Prüfungsordnung steht mindestens 20 Wochen.\n\nMuss ich jetzt den Vertrag ändern lassen oder ist das ok so? Ich reich den Vertrag dann direkt ein, sobald ich Bescheid weiß.\n\nDanke und Grüße\nLukas Fischer",
+      "sender": "lukas.fischer@htwg-konstanz.de",
+      "has_attachment": false,
+      "expected_category": "contract_submission",
+      "metadata": {
+        "difficulty": "medium",
+        "keywords": [
+          "Vertrag",
+          "Dauer",
+          "einreichen"
+        ],
+        "note": "Question about contract before submission, still relates to submission process"
+      }
+    },
+    {
+      "id": "email_077",
+      "subject": "Praktikum in Singapur - Anerkennung?",
+      "body": "Sehr geehrte Damen und Herren,\n\nich habe ein Praktikumsangebot von DHL in Singapur erhalten. Das Praktikum würde 24 Wochen dauern und alle Anforderungen der Prüfungsordnung erfüllen.\n\nWird ein Praktikum in Singapur als Pflichtpraktikum anerkannt? Gibt es besondere Formulare für außereuropäische Länder? Und kann ich mich für ein Stipendium bewerben?\n\nVielen Dank für Ihre Hilfe!\nLena Zimmermann",
+      "sender": "lena.zimmermann@htwg-konstanz.de",
+      "has_attachment": false,
+      "expected_category": "international_office_question",
+      "metadata": {
+        "difficulty": "medium",
+        "keywords": [
+          "Singapur",
+          "Anerkennung",
+          "außereuropäisch",
+          "Stipendium"
+        ],
+        "note": "International office question for non-EU country"
+      }
+    },
+    {
+      "id": "email_078",
+      "subject": "Kann ich mein Praktikum verlängern?",
+      "body": "Hi,\n\nich mache grade mein Praktikum bei Aldi Süd und bin jetzt in der 18. Woche. Die Firma hat mir angeboten, das Praktikum um 6 Wochen zu verlängern, weil ich an einem coolen Projekt mitarbeiten kann.\n\nKann ich das einfach machen oder muss ich was beantragen?\n\nGrüße\nFelix",
+      "sender": "felix.schulz@htwg-konstanz.de",
+      "has_attachment": false,
+      "expected_category": "uncategorized",
+      "metadata": {
+        "difficulty": "medium",
+        "keywords": [
+          "verlängern",
+          "Praktikum"
+        ],
+        "note": "Extension of ongoing internship, not postponement of start date"
+      }
+    },
+    {
+      "id": "email_079",
+      "subject": "RE: RE: RE: Praktikumsplatz gesucht",
+      "body": "hallo nochmal,\n\nich hatte ja schonmal geschrieben wegen praktikumsplatz finden. können sie mir vielleicht firmen empfehlen die noch plätze haben?? ich find einfach nix und muss das praktikum nächstes semester machen sonst verzöger ich mich...\n\nwäre echt dankbar für tipps\n\nmfg\nMarco",
+      "sender": "marco.klein@htwg-konstanz.de",
+      "has_attachment": false,
+      "expected_category": "uncategorized",
+      "metadata": {
+        "difficulty": "easy",
+        "keywords": [
+          "Praktikumsplatz",
+          "gesucht",
+          "Firma empfehlen"
+        ],
+        "note": "Request for help finding internship placement - not a categorizable administrative task"
+      }
+    },
+    {
+      "id": "email_080",
+      "subject": "Vertrag hochladen funktioniert nicht",
+      "body": "Sehr geehrtes Team,\n\nich versuche seit gestern, meinen Praktikumsvertrag mit Deloitte über das Online-Portal hochzuladen, aber ich bekomme immer eine Fehlermeldung: \"Upload fehlgeschlagen - Datei zu groß\".\n\nDie PDF-Datei ist 8 MB groß. Kann ich den Vertrag alternativ per E-Mail schicken? Oder gibt es eine Möglichkeit, die Datei zu komprimieren?\n\nDer Abgabetermin ist übermorgen, daher wäre ich für eine schnelle Antwort dankbar.\n\nFreundliche Grüße\nNina Richter",
+      "sender": "nina.richter@htwg-konstanz.de",
+      "has_attachment": false,
+      "expected_category": "uncategorized",
+      "metadata": {
+        "difficulty": "hard",
+        "keywords": [
+          "Upload",
+          "Portal",
+          "Fehlermeldung",
+          "technisch"
+        ],
+        "note": "Technical issue with portal - mentions contract but is about IT problem, not submission process itself"
+      }
+    },
+    {
+      "id": "email_081",
+      "subject": "Praktikumsvertrag InnovateLabs GmbH",
+      "body": "Sehr geehrte Damen und Herren,\n\nim Anhang finde ich meinen unterschriebenen Praktikumsvertrag mit der InnovateLabs GmbH in Hamburg. Das Praktikum beginnt am 15. März 2025 und dauert 20 Wochen.\n\nBitte bestätigen Sie den Erhalt.\n\nMit freundlichen Grüßen\nLisa Schneider",
+      "sender": "lisa.schneider@htwg-konstanz.de",
+      "has_attachment": true,
+      "expected_category": "contract_submission",
+      "metadata": {
+        "difficulty": "easy",
+        "keywords": [
+          "Praktikumsvertrag",
+          "unterschrieben",
+          "Anhang"
+        ],
+        "note": "Straightforward contract submission with all required information"
+      }
+    },
+    {
+      "id": "email_082",
+      "subject": "Frage wegen Praktikum in Österreich",
+      "body": "Hallo,\n\nich würde gerne mein Pflichtpraktikum bei einem Startup in Wien machen. Muss ich da irgendwas besonderes beachten oder kann ich den Vertrag einfach so einreichen wie bei einem deutschen Unternehmen?\n\nGibt es spezielle Formulare für Österreich?\n\nDanke!\nMarkus",
+      "sender": "markus.weber@htwg-konstanz.de",
+      "has_attachment": false,
+      "expected_category": "international_office_question",
+      "metadata": {
+        "difficulty": "easy",
+        "keywords": [
+          "Österreich",
+          "Ausland",
+          "Formulare"
+        ],
+        "note": "International question with informal tone"
+      }
+    },
+    {
+      "id": "email_083",
+      "subject": "Verschiebung Praktikumsbeginn",
+      "body": "Sehr geehrte Frau Müller,\n\naufgrund von gesundheitlichen Problemen muss ich meinen Praktikumsbeginn bei der CodeFactory AG von 1. Februar auf 1. April 2025 verschieben. Mein Arzt hat mir eine entsprechende Bescheinigung ausgestellt.\n\nIst das möglich? Muss ich einen neuen Vertrag einreichen oder reicht eine Änderungsmitteilung?\n\nVielen Dank für Ihre Unterstützung.\n\nFreundliche Grüße\nSofia Zimmermann",
+      "sender": "sofia.zimmermann@htwg-konstanz.de",
+      "has_attachment": false,
+      "expected_category": "internship_postponement",
+      "metadata": {
+        "difficulty": "medium",
+        "keywords": [
+          "Verschiebung",
+          "gesundheitliche Probleme",
+          "neuer Vertrag"
+        ],
+        "note": "Postponement request with valid reason and procedural question"
+      }
+    },
+    {
+      "id": "email_084",
+      "subject": "Vertrag nochmal schicken???",
+      "body": "hey,\n\nich hab vor 2 wochen meinen vertrag von der DigitalWorks geschickt aber keine antwort bekommen. soll ich den nochmal schicken oder habt ihr den schon bekommen??\n\nwar auch keine fehlermeldung oder so...\n\nlg\ntim",
+      "sender": "tim.hoffmann@htwg-konstanz.de",
+      "has_attachment": false,
+      "expected_category": "contract_submission",
+      "metadata": {
+        "difficulty": "medium",
+        "keywords": [
+          "Vertrag",
+          "nochmal schicken",
+          "keine Antwort"
+        ],
+        "note": "Very informal follow-up on contract submission, lowercase, typos"
+      }
+    },
+    {
+      "id": "email_085",
+      "subject": "Praktikum in Belgien - Erasmus+ Förderung",
+      "body": "Guten Tag,\n\nich habe die Möglichkeit, mein Praktikum bei einem Forschungsinstitut in Brüssel zu absolvieren. Kann ich dafür eine Erasmus+ Förderung beantragen und wie läuft das Anerkennungsverfahren für internationale Praktika?\n\nGibt es Fristen, die ich beachten muss?\n\nBeste Grüße\nJulia Becker",
+      "sender": "julia.becker@htwg-konstanz.de",
+      "has_attachment": false,
+      "expected_category": "international_office_question",
+      "metadata": {
+        "difficulty": "medium",
+        "keywords": [
+          "Belgien",
+          "Erasmus+",
+          "Förderung",
+          "Anerkennung"
+        ],
+        "note": "International question combining funding and recognition aspects"
+      }
+    },
+    {
+      "id": "email_086",
+      "subject": "Danke für die schnelle Bearbeitung!",
+      "body": "Hallo Frau Schmidt,\n\nvielen Dank, dass Sie meinen Vertrag so schnell bearbeitet haben! Ich habe die Bestätigung heute erhalten und kann jetzt beruhigt mit der Planung weitermachen.\n\nSuper Service!\n\nLiebe Grüße\nAnna Richter",
+      "sender": "anna.richter@htwg-konstanz.de",
+      "has_attachment": false,
+      "expected_category": "uncategorized",
+      "metadata": {
+        "difficulty": "easy",
+        "keywords": [
+          "Danke",
+          "Bestätigung",
+          "Service"
+        ],
+        "note": "Thank-you email, no action required"
+      }
+    },
+    {
+      "id": "email_087",
+      "subject": "Korrektur Vertrag - falsche Dauer eingetragen",
+      "body": "Sehr geehrtes Praktikantenamt-Team,\n\nmir ist aufgefallen, dass in meinem bereits eingereichten Vertrag mit der MediaFlow GmbH die falsche Praktikumsdauer eingetragen ist. Es steht 18 Wochen, aber es müssen 20 Wochen sein.\n\nDas Unternehmen hat mir einen korrigierten Vertrag geschickt (im Anhang). Können Sie den alten Vertrag durch diesen ersetzen?\n\nEntschuldigung für die Umstände.\n\nMit freundlichen Grüßen\nLeon Krause",
+      "sender": "leon.krause@htwg-konstanz.de",
+      "has_attachment": true,
+      "expected_category": "contract_submission",
+      "metadata": {
+        "difficulty": "medium",
+        "keywords": [
+          "Korrektur",
+          "falsche Dauer",
+          "ersetzen"
+        ],
+        "note": "Contract correction request with new version"
+      }
+    },
+    {
+      "id": "email_088",
+      "subject": "DRINGEND - Portal funktioniert nicht!",
+      "body": "Hallo!!!\n\nIch versuche seit gestern meinen Praktikumsvertrag im Online-Portal hochzuladen aber es kommt immer eine Fehlermeldung \"Upload failed - file too large\". Die Datei ist aber nur 2 MB groß???\n\nMein Praktikum fängt nächste Woche an und ich brauch dringend die Bestätigung!!! Was soll ich machen? Kann ich den Vertrag per Email schicken?\n\nBITTE HELFT MIR!\n\nMax",
+      "sender": "max.mueller@htwg-konstanz.de",
+      "has_attachment": false,
+      "expected_category": "uncategorized",
+      "metadata": {
+        "difficulty": "easy",
+        "keywords": [
+          "Portal",
+          "Fehlermeldung",
+          "Upload",
+          "technisches Problem"
+        ],
+        "note": "Technical issue with portal, urgent tone, multiple exclamation marks"
+      }
+    },
+    {
+      "id": "email_089",
+      "subject": "Praktikumsplatz gesucht - können Sie helfen?",
+      "body": "Sehr geehrte Damen und Herren,\n\nich bin auf der Suche nach einem Praktikumsplatz im Bereich Maschinenbau für das Sommersemester 2025. Haben Sie eine Liste mit Unternehmen, die regelmäßig Praktikanten aufnehmen?\n\nKönnen Sie mir vielleicht auch bei der Bewerbung helfen oder Kontakte vermitteln?\n\nIch würde mich sehr über Ihre Unterstützung freuen.\n\nMit freundlichen Grüßen\nEmma Wagner",
+      "sender": "emma.wagner@htwg-konstanz.de",
+      "has_attachment": false,
+      "expected_category": "uncategorized",
+      "metadata": {
+        "difficulty": "easy",
+        "keywords": [
+          "Praktikumsplatz",
+          "Suche",
+          "Bewerbung",
+          "Vermittlung"
+        ],
+        "note": "Request for internship placement assistance, not within office's scope"
+      }
+    },
+    {
+      "id": "email_090",
+      "subject": "Verlängerung laufendes Praktikum?",
+      "body": "Guten Tag,\n\nmein Praktikum bei der GreenTech Solutions läuft aktuell seit 8 Wochen und sollte eigentlich nach 20 Wochen enden (also noch 12 Wochen). Jetzt hat mir das Unternehmen angeboten, das Praktikum um weitere 6 Wochen zu verlängern, also insgesamt 26 Wochen.\n\nIst das möglich oder muss ich mich an die ursprünglich genehmigten 20 Wochen halten? Brauche ich einen neuen Vertrag?\n\nDanke und viele Grüße\nNiklas Fischer",
+      "sender": "niklas.fischer@htwg-konstanz.de",
+      "has_attachment": false,
+      "expected_category": "uncategorized",
+      "metadata": {
+        "difficulty": "hard",
+        "keywords": [
+          "Verlängerung",
+          "laufendes Praktikum",
+          "ursprünglich genehmigt"
+        ],
+        "note": "Extension of ongoing internship (not postponement before start) - tricky edge case that could be confused with postponement"
+      }
+    },
+    {
+      "id": "email_091",
+      "subject": "Praktikumsvertrag Einreichung - TechVision GmbH",
+      "body": "Sehr geehrte Damen und Herren,\n\nim Anhang sende ich Ihnen meinen unterschriebenen Praktikumsvertrag mit der TechVision GmbH in München. Das Praktikum ist für den Zeitraum vom 01.03.2025 bis 31.08.2025 geplant.\n\nAlle erforderlichen Unterschriften sind vorhanden.\n\nMit freundlichen Grüßen\nLena Schneider",
+      "sender": "lena.schneider@htwg-konstanz.de",
+      "has_attachment": true,
+      "expected_category": "contract_submission",
+      "metadata": {
+        "difficulty": "easy",
+        "keywords": [
+          "Praktikumsvertrag",
+          "Einreichung",
+          "unterschrieben",
+          "Anhang"
+        ],
+        "note": "Straightforward contract submission"
+      }
+    },
+    {
+      "id": "email_092",
+      "subject": "Frage zum Auslandspraktikum in Schweden",
+      "body": "Hallo,\n\nich würde gerne mein Praxissemester in Göteborg, Schweden absolvieren. Muss ich mich dafür beim International Office anmelden oder reicht die normale Praktikumsanmeldung?\n\nGibt es spezielle Formulare für Schweden?\n\nDanke im Voraus!\nTobias",
+      "sender": "tobias.weber@htwg-konstanz.de",
+      "has_attachment": false,
+      "expected_category": "international_office_question",
+      "metadata": {
+        "difficulty": "easy",
+        "keywords": [
+          "Auslandspraktikum",
+          "Schweden",
+          "International Office",
+          "Anmeldung"
+        ],
+        "note": "Question about international internship procedures"
+      }
+    },
+    {
+      "id": "email_093",
+      "subject": "Verschiebung Praktikumsbeginn",
+      "body": "Sehr geehrte Frau Müller,\n\naufgrund von gesundheitlichen Problemen muss ich meinen Praktikumsbeginn leider verschieben. Ursprünglich sollte das Praktikum am 15.02.2025 starten, aber ich würde gerne auf den 01.04.2025 verlegen.\n\nDas Unternehmen (DataFlow Solutions) hat bereits zugestimmt. Welche Schritte muss ich jetzt unternehmen?\n\nVielen Dank für Ihre Unterstützung.\nSandra König",
+      "sender": "sandra.koenig@htwg-konstanz.de",
+      "has_attachment": false,
+      "expected_category": "internship_postponement",
+      "metadata": {
+        "difficulty": "medium",
+        "keywords": [
+          "Verschiebung",
+          "Praktikumsbeginn",
+          "gesundheitliche Probleme",
+          "verlegen"
+        ],
+        "note": "Postponement request with health reasons"
+      }
+    },
+    {
+      "id": "email_094",
+      "subject": "Vertrag nochmal einreichen?",
+      "body": "Hey,\n\nich hab letzten monat meinen vertrag geschickt aber hab keine rückmeldung bekommen... soll ich den nochmal schicken? war bei der firma DigitalWorks in hamburg.\n\nKann auch sein dass ich vergessen hab den richtig zu unterschreiben oder so?\n\nlg\nMarco",
+      "sender": "marco.fischer@htwg-konstanz.de",
+      "has_attachment": false,
+      "expected_category": "contract_submission",
+      "metadata": {
+        "difficulty": "hard",
+        "keywords": [
+          "Vertrag",
+          "einreichen",
+          "Rückmeldung",
+          "unterschreiben"
+        ],
+        "note": "Very informal, typos, unclear about submission status"
+      }
+    },
+    {
+      "id": "email_095",
+      "subject": "Vielen Dank für die schnelle Bearbeitung",
+      "body": "Sehr geehrtes Team des Praktikantenamts,\n\nich möchte mich herzlich für die schnelle Bearbeitung meiner Unterlagen bedanken. Alles hat reibungslos funktioniert und ich kann nun beruhigt mein Praktikum beginnen.\n\nIhre Unterstützung war wirklich großartig!\n\nMit freundlichen Grüßen\nJulia Hoffmann",
+      "sender": "julia.hoffmann@htwg-konstanz.de",
+      "has_attachment": false,
+      "expected_category": "uncategorized",
+      "metadata": {
+        "difficulty": "easy",
+        "keywords": [
+          "Danke",
+          "Bearbeitung",
+          "Unterstützung"
+        ],
+        "note": "Thank you message - uncategorized"
+      }
+    },
+    {
+      "id": "email_096",
+      "subject": "Praktikum in Kanada - Versicherungsfragen",
+      "body": "Guten Tag,\n\nich plane ein Praktikum bei einem Tech-Startup in Toronto, Kanada für 6 Monate ab September 2025. Welche Versicherungen benötige ich dafür und gibt es eine Kooperation mit bestimmten Versicherungsanbietern?\n\nAußerdem: Wird das Praktikum in Kanada ohne Weiteres anerkannt oder gibt es spezielle Voraussetzungen?\n\nBeste Grüße\nPhilip Hartmann",
+      "sender": "philip.hartmann@htwg-konstanz.de",
+      "has_attachment": false,
+      "expected_category": "international_office_question",
+      "metadata": {
+        "difficulty": "medium",
+        "keywords": [
+          "Kanada",
+          "Versicherung",
+          "Auslandspraktikum",
+          "Anerkennung"
+        ],
+        "note": "International internship with insurance questions"
+      }
+    },
+    {
+      "id": "email_097",
+      "subject": "Korrektur meines eingereichten Vertrags",
+      "body": "Sehr geehrte Damen und Herren,\n\nich habe gestern meinen Praktikumsvertrag eingereicht und mir ist aufgefallen, dass ich bei der Stundenanzahl einen Fehler gemacht habe. Es sollten 40 Stunden pro Woche sein, nicht 30.\n\nKönnte ich bitte einen korrigierten Vertrag nachreichen? Das Praktikum ist bei InnovateLabs AG in Berlin.\n\nVielen Dank!\nNina Bergmann",
+      "sender": "nina.bergmann@htwg-konstanz.de",
+      "has_attachment": false,
+      "expected_category": "contract_submission",
+      "metadata": {
+        "difficulty": "medium",
+        "keywords": [
+          "Korrektur",
+          "Vertrag",
+          "eingereicht",
+          "Fehler",
+          "nachreichen"
+        ],
+        "note": "Contract correction request after submission"
+      }
+    },
+    {
+      "id": "email_098",
+      "subject": "Portal zeigt Fehler bei Upload",
+      "body": "Hallo,\n\nich versuche seit 2 Tagen meinen Praktikumsvertrag hochzuladen aber das Portal zeigt immer einen Fehler: \"File upload failed - Error 503\"\n\nHab verschiedene Browser probiert (Chrome, Firefox) und auch die PDF-Größe reduziert aber nichts funktioniert. Was kann ich tun?\n\nVG\nDennis Krause",
+      "sender": "dennis.krause@htwg-konstanz.de",
+      "has_attachment": false,
+      "expected_category": "uncategorized",
+      "metadata": {
+        "difficulty": "medium",
+        "keywords": [
+          "Portal",
+          "Fehler",
+          "Upload",
+          "technisches Problem"
+        ],
+        "note": "Technical issue - uncategorized"
+      }
+    },
+    {
+      "id": "email_099",
+      "subject": "Brauche dringend Praktikumsplatz!!!",
+      "body": "Hallo Praktikantenamt,\n\nich finde einfach keinen Praktikumsplatz und die Deadline rückt immer näher! Können Sie mir vielleicht eine Liste von Firmen schicken die noch Praktikanten suchen? Am besten im Bereich Maschinenbau in Hamburg oder Umgebung.\n\nIch bin echt verzweifelt...\n\nMFG\nKevin Schulz",
+      "sender": "kevin.schulz@htwg-konstanz.de",
+      "has_attachment": false,
+      "expected_category": "uncategorized",
+      "metadata": {
+        "difficulty": "hard",
+        "keywords": [
+          "Praktikumsplatz",
+          "Firmenliste",
+          "suchen",
+          "Hilfe"
+        ],
+        "note": "Internship placement request - not the office's responsibility, uncategorized"
+      }
+    },
+    {
+      "id": "email_100",
+      "subject": "Verlängerung des laufenden Praktikums",
+      "body": "Sehr geehrtes Team,\n\nmein Praktikum bei der CloudSystem GmbH läuft aktuell noch bis zum 28.02.2025. Mein Arbeitgeber hat mir angeboten, das Praktikum um weitere 3 Monate zu verlängern bis Ende Mai 2025.\n\nWie gehe ich hier vor? Brauche ich einen neuen Vertrag oder reicht ein Nachtrag zum bestehenden Vertrag?\n\nFreundliche Grüße\nSarah Zimmermann",
+      "sender": "sarah.zimmermann@htwg-konstanz.de",
+      "has_attachment": false,
+      "expected_category": "uncategorized",
+      "metadata": {
+        "difficulty": "hard",
+        "keywords": [
+          "Verlängerung",
+          "laufendes Praktikum",
+          "neuer Vertrag"
+        ],
+        "note": "Extension of ongoing internship - different from postponement (which is before start), uncategorized"
+      }
+    }
+  ]
+}

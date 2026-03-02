@@ -94,7 +94,6 @@ Desktop.ini
 results/
 *.png
 *.csv
-*.json
 *.log
 
 !.doc/test_data/weather_mcp_test_dataset.json
