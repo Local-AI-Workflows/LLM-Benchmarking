@@ -70,18 +70,62 @@ class EvaluatorModelConfig(BaseModel):
     base_url: Optional[str] = None
 
 
+# Default RAG prompt - optimized for good performance
+DEFAULT_RAG_PROMPT = """Du bist ein Assistent des Praktikantenamts der HTWG Konstanz.
+
+Dein oberstes Ziel ist rechtlich und organisatorisch korrekte Auskunft.
+
+## INHALTLICHE REGELN (verpflichtend):
+- Durchsuche ALLE bereitgestellten Kontext-Abschnitte sorgfältig nach relevanten Informationen
+- Der Kontext enthält mehrere Abschnitte, getrennt durch "---" - prüfe jeden einzelnen
+- Übernimm Zahlen, Fristen, Zeiträume und Bedingungen wortgleich aus dem Kontext
+- Verändere keine Modalverben (z.B. "kann", "muss", "sollte")
+- Füge keine Interpretationen oder Schlussfolgerungen hinzu
+- Nur wenn KEIN Abschnitt relevante Information enthält: "Dazu liegen in der Wissensdatenbank keine Informationen vor."
+
+## KONTEXT-NUTZUNG:
+- Suche nach Informationen zu Fristen, Formularen, Anträgen, Verfahren
+- Zitiere konkrete Details (z.B. "Der Antrag ist an den Vorsitzenden des Prüfungsausschusses zu richten")
+- Verweise auf genannte Ressourcen (z.B. "Download-Bereich", "Webseite des Praktischen Studiensemesters")
+- Bei Vertragseinreichungen: PSS-Terminplan, persönliche Abgabe im Sekretariat
+- Bei Verschiebungsanfragen: Antrag auf Verschiebung, gute Gründe angeben, Prüfungsausschuss
+- Bei Auslandspraktika: gleiche Regeln wie Inland, frühzeitig (zwei Semester vorher) bewerben
+
+## STRUKTUR:
+- Genau ein kurzer, klarer Hauptsatz pro gestellter Frage
+- Jede Antwort in einer eigenen Zeile
+- Keine Leerzeilen zwischen den Antworten
+
+## FORM:
+- Durchgehend formelle Sie-Form
+- Keine Anrede (kein "Sehr geehrte/r...")
+- Keine Grußformel (kein "Mit freundlichen Grüßen")
+- Keine Signatur
+- Nur der reine Antworttext
+
+## Kontext aus der Wissensdatenbank (mehrere Abschnitte, durch --- getrennt):
+{context}
+
+## E-Mail-Anfrage:
+{query}
+
+## Antwort:"""
+
+
 class BenchmarkCreateRequest(BaseModel):
     """Request model for creating a new benchmark."""
     model_name: str = "llama3.2:latest"
     model_base_url: Optional[str] = None  # Base URL for test model
     dataset_id: Optional[str] = None  # Use dataset from database
-    metric_type: str = "standard"  # "standard", "mcp", or "email_categorization"
+    metric_type: str = "standard"  # "standard", "mcp", "email_categorization", or "rag"
     metric_ids: List[str] = []  # Metric IDs from database
     evaluator_models: Optional[List[EvaluatorModelConfig]] = None  # Evaluator models with base URLs
     # MCP-specific
     mcp_tools: Optional[List[MCPServerConfigRequest]] = None
     # Email categorization specific
     instructional_prompts: Optional[List[str]] = None  # Instructional prompts for email categorization
+    # RAG-specific
+    rag_prompt: Optional[str] = None  # Single instructional prompt for RAG (uses default if not provided)
 
 
 class BenchmarkResponse(BaseModel):
@@ -408,6 +452,26 @@ async def run_benchmark_task(benchmark_id: str, request: BenchmarkCreateRequest)
             }
             benchmark_result.metadata["all_prompt_results"] = prompt_accuracies
             benchmark_result.metadata["best_prompt"] = best_prompt
+        elif request.metric_type == MetricType.RAG:
+            # RAG benchmark runner
+            from benchmark.rag_benchmark_runner import RAGBenchmarkRunner
+            from metrics.rag_metrics import get_all_rag_metrics
+            
+            # If no specific metrics were loaded, use all RAG metrics
+            if not metrics:
+                metrics = get_all_rag_metrics()
+                metric_names = [m.name for m in metrics]
+                metric_ids = ["rag-auto"] * len(metrics)
+                logger.info(f"Auto-loaded RAG metrics: {metric_names}")
+            
+            # Get RAG prompt (use default if not provided)
+            rag_prompt = request.rag_prompt if request.rag_prompt else DEFAULT_RAG_PROMPT
+            logger.info(f"Using RAG prompt: {rag_prompt[:100]}...")
+            
+            rag_runner = RAGBenchmarkRunner(evaluator, metrics, rag_prompt=rag_prompt)
+            benchmark_result = await rag_runner.run_benchmark(test_model, dataset)
+            benchmark_result.metadata["benchmark_type"] = "rag"
+            benchmark_result.metadata["rag_prompt"] = rag_prompt
         else:
             # Standard benchmark runner
             runner = BenchmarkRunner(evaluator, metrics)
@@ -442,8 +506,8 @@ async def create_benchmark(
 ):
     """Create and start a new benchmark."""
     # Validate metric type
-    if request.metric_type not in [MetricType.STANDARD, MetricType.MCP, MetricType.EMAIL_CATEGORIZATION]:
-        raise HTTPException(status_code=400, detail="metric_type must be 'standard', 'mcp', or 'email_categorization'")
+    if request.metric_type not in [MetricType.STANDARD, MetricType.MCP, MetricType.EMAIL_CATEGORIZATION, MetricType.RAG]:
+        raise HTTPException(status_code=400, detail="metric_type must be 'standard', 'mcp', 'email_categorization', or 'rag'")
     
     # Validate dataset exists if provided
     if request.dataset_id:
@@ -689,8 +753,8 @@ def get_class_path_for_metric(name: str, metric_type: str) -> Optional[str]:
 @app.post("/api/metrics", response_model=MetricResponse, status_code=201)
 async def create_metric(request: MetricCreateRequest):
     """Create a new metric."""
-    if request.type not in [MetricType.STANDARD, MetricType.MCP, MetricType.EMAIL_CATEGORIZATION]:
-        raise HTTPException(status_code=400, detail="Type must be 'standard', 'mcp', or 'email_categorization'")
+    if request.type not in [MetricType.STANDARD, MetricType.MCP, MetricType.EMAIL_CATEGORIZATION, MetricType.RAG]:
+        raise HTTPException(status_code=400, detail="Type must be 'standard', 'mcp', 'email_categorization', or 'rag'")
     
     # Check if name already exists
     existing = await metric_repository.get_by_name(request.name)
@@ -851,6 +915,9 @@ async def import_dataset(request: DatasetImportRequest):
             try:
                 from dataset.email_loader import EmailDatasetLoader
                 dataset = EmailDatasetLoader.from_json_file(temp_path)
+                # Check if email loader actually found emails
+                if len(dataset.questions) == 0:
+                    raise ValueError("No emails found, falling back to standard format")
             except (ValueError, KeyError):
                 # Not an email format, try standard format
                 dataset = DatasetLoader.from_json_file(temp_path)

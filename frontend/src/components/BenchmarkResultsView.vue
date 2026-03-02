@@ -92,6 +92,7 @@
 import axios from 'axios'
 import StandardResults from './StandardResults.vue'
 import EmailCategorizationResults from './EmailCategorizationResults.vue'
+import RAGResults from './RAGResults.vue'
 
 const API_BASE = '/api'
 
@@ -99,7 +100,8 @@ export default {
   name: 'BenchmarkResultsView',
   components: {
     StandardResults,
-    EmailCategorizationResults
+    EmailCategorizationResults,
+    RAGResults
   },
   props: {
     benchmarkId: {
@@ -123,6 +125,9 @@ export default {
       // Determine which component to use based on metric_type
       if (this.benchmarkData?.metric_type === 'email_categorization') {
         return 'EmailCategorizationResults'
+      }
+      if (this.benchmarkData?.metric_type === 'rag') {
+        return 'RAGResults'
       }
       return 'StandardResults'
     }

@@ -29,8 +29,8 @@ def load_metric_from_db(metric_doc: MetricDocument) -> BaseMetric:
     """
     Load a metric instance from database document, using stored configuration.
     
-    Uses the generic GenericMetric class for standard metrics, or EmailCategorizationMetric
-    for email categorization metrics.
+    Uses the generic GenericMetric class for standard metrics, EmailCategorizationMetric
+    for email categorization metrics, or RAG metrics for RAG type.
     
     Args:
         metric_doc: MetricDocument from database
@@ -53,6 +53,24 @@ def load_metric_from_db(metric_doc: MetricDocument) -> BaseMetric:
                 name=metric_doc.name,
                 description=metric_doc.description,
                 categories=categories if categories else None
+            )
+        
+        # Check if this is a RAG metric
+        if metric_doc.type == "rag":
+            from .rag_metrics import get_rag_metric_by_name, RAGMetricBase
+            
+            # Try to get predefined RAG metric
+            rag_metric = get_rag_metric_by_name(metric_doc.name)
+            if rag_metric:
+                return rag_metric
+            
+            # Create custom RAG metric from database configuration
+            return RAGMetricBase(
+                name=metric_doc.name,
+                description=metric_doc.description,
+                evaluation_instructions=metric_doc.evaluation_instructions or "",
+                scale_min=metric_doc.scale_min,
+                scale_max=metric_doc.scale_max
             )
         
         # Use the generic metric class for other metric types

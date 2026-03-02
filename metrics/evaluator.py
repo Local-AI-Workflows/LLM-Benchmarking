@@ -96,6 +96,17 @@ class BaseEvaluator(ABC):
     
     def _extract_score(self, text: str) -> Optional[float]:
         """Extract the score from the evaluator's response with improved error handling."""
+        # First, check if the response looks like an actual answer instead of an evaluation
+        # This happens when the evaluator LLM ignores instructions and answers the query
+        evaluation_indicators = ['Score:', 'score:', 'Rating:', '/10', 'out of 10', '/5', 'out of 5']
+        has_evaluation = any(indicator in text for indicator in evaluation_indicators)
+        
+        if not has_evaluation:
+            # Response doesn't look like an evaluation - might be an actual answer
+            logger.warning(f"Response doesn't appear to be an evaluation (no score indicators found)")
+            # Return None to indicate evaluation failed
+            return None
+        
         # Define score extraction patterns in order of preference
         patterns = [
             r'Score:\s*(\d+(?:\.\d+)?)',  # Score: 8.5

@@ -75,8 +75,30 @@ __all__ = [
     # Database loading utilities (preferred for runtime)
     'load_metric_from_db',
     'load_metrics_from_db',
-    'list_available_metrics_from_db'
+    'list_available_metrics_from_db',
+    # RAG metrics
+    'FaithfulnessMetric',
+    'RAGRelevanceMetric',
+    'LanguageQualityMetric',
+    'GrammaticalCorrectnessMetric',
+    'OverallRAGScoreMetric',
+    'get_all_rag_metrics',
+    'get_rag_metric_by_name'
 ]
+
+# Import RAG metrics
+try:
+    from .rag_metrics import (
+        FaithfulnessMetric, RelevanceMetric as RAGRelevanceMetric,
+        LanguageQualityMetric, GrammaticalCorrectnessMetric,
+        OverallRAGScoreMetric, get_all_rag_metrics, get_rag_metric_by_name,
+        RAG_METRICS
+    )
+except ImportError:
+    FaithfulnessMetric = RAGRelevanceMetric = LanguageQualityMetric = None
+    GrammaticalCorrectnessMetric = OverallRAGScoreMetric = None
+    get_all_rag_metrics = get_rag_metric_by_name = None
+    RAG_METRICS = {}
 
 # Metric registry - DEPRECATED
 # NOTE: This registry is DEPRECATED. Individual metric classes are no longer needed.
@@ -107,6 +129,16 @@ if ToolUsageAccuracyMetric:
         'tool_selection_efficiency': ToolSelectionEfficiencyMetric,
     })
 
+# Add RAG metrics to registry
+if FaithfulnessMetric:
+    _METRIC_REGISTRY.update({
+        'faithfulness': FaithfulnessMetric,
+        'rag_relevance': RAGRelevanceMetric,
+        'language_quality': LanguageQualityMetric,
+        'grammatical_correctness': GrammaticalCorrectnessMetric,
+        'overall_rag_score': OverallRAGScoreMetric,
+    })
+
 def get_all_metrics():
     """Get all available metrics.
     
@@ -116,7 +148,8 @@ def get_all_metrics():
     return [
         'relevance', 'hallucinations', 'fairness', 'robustness', 'bias', 'toxicity',
         'email_professionalism', 'email_responsiveness', 'email_clarity', 'email_empathy',
-        'tool_usage_accuracy', 'information_retrieval_quality', 'contextual_awareness', 'tool_selection_efficiency'
+        'tool_usage_accuracy', 'information_retrieval_quality', 'contextual_awareness', 'tool_selection_efficiency',
+        'faithfulness', 'rag_relevance', 'language_quality', 'grammatical_correctness', 'overall_rag_score'
     ]
 
 def get_metric_by_name(name: str):
@@ -131,5 +164,6 @@ def get_metrics_by_category():
     return {
         'general': ['relevance', 'hallucinations', 'fairness', 'robustness', 'bias', 'toxicity'],
         'email': ['email_professionalism', 'email_responsiveness', 'email_clarity', 'email_empathy'],
-        'mcp': ['tool_usage_accuracy', 'information_retrieval_quality', 'contextual_awareness', 'tool_selection_efficiency']
+        'mcp': ['tool_usage_accuracy', 'information_retrieval_quality', 'contextual_awareness', 'tool_selection_efficiency'],
+        'rag': ['faithfulness', 'rag_relevance', 'language_quality', 'grammatical_correctness', 'overall_rag_score']
     }

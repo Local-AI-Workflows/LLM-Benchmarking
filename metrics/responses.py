@@ -67,6 +67,7 @@ class PromptEvaluation:
     prompt: str
     response: str
     evaluations: List[EvaluatorResponse]
+    metadata: Dict[str, Any] = None  # Optional metadata (e.g., original_query for RAG)
     
     def __post_init__(self):
         """Validate prompt evaluation after initialization."""
@@ -76,6 +77,8 @@ class PromptEvaluation:
             raise ValueError("Response cannot be empty")
         if not self.evaluations:
             raise ValueError("At least one evaluation is required")
+        if self.metadata is None:
+            self.metadata = {}
 
 
 @dataclass
@@ -123,6 +126,8 @@ class BenchmarkResult:
         for prompt_eval in results[0].prompt_evaluations:
             # Get all evaluations for this prompt from all metrics
             all_evaluations = []
+            combined_pe_metadata = dict(prompt_eval.metadata) if prompt_eval.metadata else {}
+            
             for result in results:
                 matching_eval = next(
                     (e for e in result.prompt_evaluations if e.prompt == prompt_eval.prompt),
@@ -130,6 +135,9 @@ class BenchmarkResult:
                 )
                 if matching_eval:
                     all_evaluations.extend(matching_eval.evaluations)
+                    # Merge metadata from matching evaluations
+                    if matching_eval.metadata:
+                        combined_pe_metadata.update(matching_eval.metadata)
                 else:
                     logger.warning(f"No matching evaluation found for prompt: {prompt_eval.prompt[:50]}...")
             
@@ -137,7 +145,8 @@ class BenchmarkResult:
                 combined_evaluations.append(PromptEvaluation(
                     prompt=prompt_eval.prompt,
                     response=prompt_eval.response,
-                    evaluations=all_evaluations
+                    evaluations=all_evaluations,
+                    metadata=combined_pe_metadata
                 ))
         
         # Combine metadata

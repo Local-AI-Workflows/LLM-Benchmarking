@@ -58,3 +58,4 @@ class GenericMetric(StandardMetric):
 GeneralMetric = GenericMetric
 EmailMetric = GenericMetric
 MCPMetric = GenericMetric
+

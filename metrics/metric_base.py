@@ -67,11 +67,18 @@ class BaseMetric(ABC):
                 response = responses[prompt]
                 response_obj = response_objects.get(prompt) if response_objects else None
                 evaluation = await self.evaluate(prompt, response, evaluator, response_obj=response_obj)
+                
+                # Extract metadata from response object for PromptEvaluation
+                pe_metadata = {}
+                if response_obj and hasattr(response_obj, 'metadata') and response_obj.metadata:
+                    # Copy relevant fields (like original_query for RAG)
+                    pe_metadata = dict(response_obj.metadata)
 
                 prompt_evaluations.append(PromptEvaluation(
                     prompt=prompt,
                     response=response,
-                    evaluations=[evaluation]
+                    evaluations=[evaluation],
+                    metadata=pe_metadata
                 ))
                 
                 logger.debug(f"Completed evaluation {i+1}/{len(prompts)} for {self.name}")
@@ -91,10 +98,17 @@ class BaseMetric(ABC):
                     )],
                     metadata={"error": str(e)}
                 )
+                # Extract metadata from response object for failed case too
+                fail_metadata = {}
+                if response_objects:
+                    response_obj = response_objects.get(prompt)
+                    if response_obj and hasattr(response_obj, 'metadata') and response_obj.metadata:
+                        fail_metadata = dict(response_obj.metadata)
                 prompt_evaluations.append(PromptEvaluation(
                     prompt=prompt,
                     response=responses.get(prompt, ""),
-                    evaluations=[failed_response]
+                    evaluations=[failed_response],
+                    metadata=fail_metadata
                 ))
         
         # Get evaluator model names

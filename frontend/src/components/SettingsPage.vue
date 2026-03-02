@@ -11,7 +11,9 @@
           :items="[
             { label: 'All Types', value: '' },
             { label: 'Standard', value: 'standard' },
-            { label: 'MCP', value: 'mcp' }
+            { label: 'MCP', value: 'mcp' },
+            { label: 'RAG', value: 'rag' },
+            { label: 'Categorization', value: 'categorization' }
           ]"
           item-title="label"
           item-value="value"
@@ -40,7 +42,7 @@
         >
           <template v-slot:item.type="{ item }">
             <v-chip
-              :color="item.type === 'mcp' ? 'purple' : 'blue'"
+              :color="getTypeColor(item.type)"
               size="small"
               variant="flat"
             >
@@ -468,6 +470,15 @@ export default {
     this.loadDatasets()
   },
   methods: {
+    getTypeColor(type) {
+      const colors = {
+        'standard': 'blue',
+        'mcp': 'purple',
+        'rag': 'teal',
+        'categorization': 'orange'
+      }
+      return colors[type] || 'grey'
+    },
     async loadMetrics() {
       this.loadingMetrics = true
       try {

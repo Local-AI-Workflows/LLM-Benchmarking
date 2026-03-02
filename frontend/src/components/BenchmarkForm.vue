@@ -54,7 +54,7 @@
 
         <v-select
           v-model="form.metric_type"
-          :items="['standard', 'mcp', 'email_categorization']"
+          :items="['standard', 'mcp', 'email_categorization', 'rag']"
           label="Metric Type"
           prepend-inner-icon="mdi-ruler"
           variant="outlined"
@@ -62,6 +62,44 @@
           @update:model-value="$emit('metric-type-change')"
           class="mb-2"
         ></v-select>
+
+        <!-- RAG Configuration -->
+        <v-expand-transition>
+          <div v-if="form.metric_type === 'rag'">
+            <v-card variant="outlined" class="mb-2">
+              <v-card-title class="text-subtitle-2">
+                <v-icon icon="mdi-text-box-search" class="mr-2"></v-icon>
+                RAG Prompt Template
+              </v-card-title>
+              <v-card-text>
+                <v-alert type="info" variant="tonal" density="compact" class="mb-3">
+                  <strong>Metrics:</strong> Faithfulness, Relevance, Language Quality, Grammatical Correctness
+                  <br />Use <code>{context}</code> and <code>{query}</code> as placeholders.
+                </v-alert>
+                <v-textarea
+                  v-model="form.rag_prompt"
+                  label="RAG Instructional Prompt"
+                  variant="outlined"
+                  density="compact"
+                  rows="8"
+                  auto-grow
+                  hint="This prompt template is used to instruct the model. {context} will be replaced with the retrieved context, {query} with the user question."
+                  persistent-hint
+                ></v-textarea>
+                <v-btn
+                  @click="resetRagPromptToDefault"
+                  color="secondary"
+                  size="small"
+                  variant="text"
+                  class="mt-2"
+                >
+                  <v-icon start icon="mdi-restore"></v-icon>
+                  Reset to Default
+                </v-btn>
+              </v-card-text>
+            </v-card>
+          </div>
+        </v-expand-transition>
 
         <!-- Instructional Prompts for Email Categorization -->
         <v-expand-transition>
@@ -339,7 +377,49 @@ export default {
   },
   emits: ['submit', 'metric-type-change'],
   data() {
+    // Default RAG prompt - optimized for good performance
+    const defaultRagPrompt = `Du bist ein Assistent des Praktikantenamts der HTWG Konstanz.
+
+Dein oberstes Ziel ist rechtlich und organisatorisch korrekte Auskunft.
+
+## INHALTLICHE REGELN (verpflichtend):
+- Durchsuche ALLE bereitgestellten Kontext-Abschnitte sorgfältig nach relevanten Informationen
+- Der Kontext enthält mehrere Abschnitte, getrennt durch "---" - prüfe jeden einzelnen
+- Übernimm Zahlen, Fristen, Zeiträume und Bedingungen wortgleich aus dem Kontext
+- Verändere keine Modalverben (z.B. "kann", "muss", "sollte")
+- Füge keine Interpretationen oder Schlussfolgerungen hinzu
+- Nur wenn KEIN Abschnitt relevante Information enthält: "Dazu liegen in der Wissensdatenbank keine Informationen vor."
+
+## KONTEXT-NUTZUNG:
+- Suche nach Informationen zu Fristen, Formularen, Anträgen, Verfahren
+- Zitiere konkrete Details (z.B. "Der Antrag ist an den Vorsitzenden des Prüfungsausschusses zu richten")
+- Verweise auf genannte Ressourcen (z.B. "Download-Bereich", "Webseite des Praktischen Studiensemesters")
+- Bei Vertragseinreichungen: PSS-Terminplan, persönliche Abgabe im Sekretariat
+- Bei Verschiebungsanfragen: Antrag auf Verschiebung, gute Gründe angeben, Prüfungsausschuss
+- Bei Auslandspraktika: gleiche Regeln wie Inland, frühzeitig (zwei Semester vorher) bewerben
+
+## STRUKTUR:
+- Genau ein kurzer, klarer Hauptsatz pro gestellter Frage
+- Jede Antwort in einer eigenen Zeile
+- Keine Leerzeilen zwischen den Antworten
+
+## FORM:
+- Durchgehend formelle Sie-Form
+- Keine Anrede (kein "Sehr geehrte/r...")
+- Keine Grußformel (kein "Mit freundlichen Grüßen")
+- Keine Signatur
+- Nur der reine Antworttext
+
+## Kontext aus der Wissensdatenbank (mehrere Abschnitte, durch --- getrennt):
+{context}
+
+## E-Mail-Anfrage:
+{query}
+
+## Antwort:`
+
     return {
+      defaultRagPrompt,
       form: {
         model_name: '',
         model_base_url: '',
@@ -348,7 +428,8 @@ export default {
         metric_ids: [],
         evaluator_models: [],
         mcp_tools: [],
-        instructional_prompts: []
+        instructional_prompts: [],
+        rag_prompt: defaultRagPrompt
       },
       availableModels: [],
       loadingModels: false,
@@ -395,6 +476,23 @@ export default {
         return true
       }
 
+      // Validation for RAG
+      if (this.form.metric_type === 'rag') {
+        // RAG prompt must contain placeholders
+        if (!this.form.rag_prompt || !this.form.rag_prompt.includes('{context}') || !this.form.rag_prompt.includes('{query}')) {
+          return false
+        }
+        // Must have at least one evaluator model
+        if (!this.form.evaluator_models || this.form.evaluator_models.length === 0) {
+          return false
+        }
+        // All evaluator models must have a model_name selected
+        if (this.form.evaluator_models.some(evalModel => !evalModel.model_name || !evalModel.model_name.trim())) {
+          return false
+        }
+        return true
+      }
+
       // Validation for other metric types (standard, mcp)
       // Must have at least one metric selected
       if (!this.form.metric_ids || this.form.metric_ids.length === 0) {
@@ -419,6 +517,9 @@ export default {
     this.refreshModels()
   },
   methods: {
+    resetRagPromptToDefault() {
+      this.form.rag_prompt = this.defaultRagPrompt
+    },
     addMcpTool() {
       this.form.mcp_tools.push({
         name: '',
@@ -568,7 +669,8 @@ export default {
         metric_ids: [],
         evaluator_models: [],
         mcp_tools: [],
-        instructional_prompts: []
+        instructional_prompts: [],
+        rag_prompt: this.defaultRagPrompt
       }
       this.availableModels = []
       this.evaluatorAvailableModels = {}

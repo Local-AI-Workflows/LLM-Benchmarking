@@ -111,6 +111,7 @@ class MetricType:
     STANDARD = "standard"
     MCP = "mcp"
     EMAIL_CATEGORIZATION = "email_categorization"
+    RAG = "rag"
 
 
 class MetricDocument(BaseModel):
