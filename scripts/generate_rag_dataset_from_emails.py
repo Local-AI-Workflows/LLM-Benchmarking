@@ -3,7 +3,7 @@
 Generate RAG test dataset from dummy emails using Qdrant for context retrieval.
 
 This script:
-1. Reads dummy_emails.json
+1. Reads email_categorisation_dataset.json
 2. For each email, queries Qdrant to retrieve relevant context
 3. Generates a RAG test dataset with real context from the knowledge base
 """
@@ -248,7 +248,7 @@ def process_emails(emails: list, client: QdrantClient) -> list:
 def main():
     """Main function to generate RAG dataset."""
     # Load dummy emails
-    emails_path = Path(__file__).parent.parent / "dummy_emails.json"
+    emails_path = Path(__file__).parent.parent / "email_categorisation_dataset.json"
     print(f"Loading emails from {emails_path}...")
     
     with open(emails_path, 'r', encoding='utf-8') as f:
@@ -274,7 +274,7 @@ def main():
             "domain": "university_internship_office",
             "language": "de",
             "created_for": "rag_benchmark",
-            "source": "dummy_emails.json",
+            "source": "email_categorisation_dataset.json",
             "qdrant_collection": COLLECTION_NAME,
             "generated_at": datetime.now().isoformat(),
             "total_questions": len(questions),

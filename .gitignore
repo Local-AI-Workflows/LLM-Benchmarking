@@ -97,7 +97,7 @@ results/
 *.json
 *.log
 
-!weather_mcp_test_dataset.json
+!.doc/test_data/weather_mcp_test_dataset.json
 
 # Environment variables
 .env

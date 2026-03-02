@@ -173,7 +173,7 @@ async def main():
     logger.info(f"Results directory: {results_dir}")
     
     # Dataset path
-    dataset_path = "weather_mcp_test_dataset.json"
+    dataset_path = ".doc/test_data/weather_mcp_test_dataset.json"
 
     try:
         # Load dataset
