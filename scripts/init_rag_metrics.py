@@ -26,28 +26,6 @@ logger = logging.getLogger(__name__)
 # RAG Metric definitions
 RAG_METRICS = [
     {
-        "name": "faithfulness",
-        "type": MetricType.RAG,
-        "description": "Measures if the response stays true to the retrieved context without hallucination",
-        "evaluation_instructions": """
-Evaluate the FAITHFULNESS of the response. Faithfulness measures whether the response:
-- Only uses information from the provided context
-- Does NOT hallucinate or make up facts not present in the context
-- Correctly represents information from the context without distortion
-
-Scoring guide:
-- 5: Completely faithful - all claims are supported by the context
-- 4: Mostly faithful - minor unsupported claims that don't affect accuracy
-- 3: Partially faithful - some unsupported claims but core information is correct
-- 2: Mostly unfaithful - significant unsupported or contradicting claims
-- 1: Completely unfaithful - response contradicts context or is entirely fabricated
-""",
-        "scale_min": 1,
-        "scale_max": 5,
-        "enabled": True,
-        "metadata": {"category": "rag", "icon": "mdi-shield-check"}
-    },
-    {
         "name": "relevance",
         "type": MetricType.RAG,
         "description": "Measures if the response directly answers the user's question",
@@ -115,31 +93,6 @@ Scoring guide:
         "scale_max": 5,
         "enabled": True,
         "metadata": {"category": "rag", "icon": "mdi-spellcheck"}
-    },
-    {
-        "name": "overall_rag_score",
-        "type": MetricType.RAG,
-        "description": "Overall evaluation combining faithfulness, relevance, and language quality",
-        "evaluation_instructions": """
-Provide an OVERALL evaluation of the RAG response quality considering:
-1. Faithfulness: Does the response stay true to the context?
-2. Relevance: Does the response answer the question?
-3. Language Quality: Is the response well-written and clear?
-4. Grammar: Is the response grammatically correct and easy to understand?
-
-Give a holistic score considering all these factors.
-
-Scoring guide:
-- 5: Excellent - outstanding on all dimensions
-- 4: Good - strong on most dimensions with minor weaknesses
-- 3: Adequate - acceptable but with room for improvement
-- 2: Below average - significant issues in multiple dimensions
-- 1: Poor - fails on most or all dimensions
-""",
-        "scale_min": 1,
-        "scale_max": 5,
-        "enabled": True,
-        "metadata": {"category": "rag", "icon": "mdi-star"}
     }
 ]
 
