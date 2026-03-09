@@ -16,7 +16,7 @@ class BaseModelConfig(BaseModel):
     
     # Retry and timeout settings
     max_retries: int = Field(default=3, ge=0, le=10, description="Maximum retry attempts")
-    timeout: float = Field(default=30.0, gt=0, description="Request timeout in seconds")
+    timeout: float = Field(default=300.0, gt=0, description="Request timeout in seconds (default 5 minutes for larger models)")
     
     @validator('model_name')
     def validate_model_name(cls, v):

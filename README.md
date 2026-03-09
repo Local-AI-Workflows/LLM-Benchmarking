@@ -313,16 +313,29 @@ The REST API is available at `http://localhost:8000` when the server is running.
 
 | Variable | Default | Description |
 |----------|---------|-------------|
-| `MONGODB_URL` | `mongodb://localhost:27017` | MongoDB connection URL |
+| `MONGODB_URL` | `mongodb://localhost:27017` | MongoDB connection URL (include credentials if authentication is enabled) |
 | `MONGODB_DB_NAME` | `llm_benchmark` | Database name |
 | `API_HOST` | `0.0.0.0` | API server host |
 | `API_PORT` | `8000` | API server port |
 
-Create a `.env` file in the project root to override defaults:
+### Setup
+
+1. Copy the example environment file:
+   ```bash
+   cp .env.example .env
+   ```
+
+2. Edit `.env` and fill in your MongoDB credentials:
+   ```bash
+   MONGODB_URL=mongodb://your_username:your_password@localhost:27017
+   MONGODB_DB_NAME=llm_benchmark
+   ```
+
+Alternatively, you can export environment variables manually:
 
 ```bash
-MONGODB_URL=mongodb://localhost:27017
-MONGODB_DB_NAME=llm_benchmark
+export MONGODB_URL=mongodb://your_username:your_password@localhost:27017
+export MONGODB_DB_NAME=llm_benchmark
 API_HOST=0.0.0.0
 API_PORT=8000
 ```

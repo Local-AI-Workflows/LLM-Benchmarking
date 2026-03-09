@@ -18,7 +18,7 @@ class Database:
     async def connect(cls):
         """Connect to MongoDB."""
         if cls.client is None:
-            mongo_url = os.getenv("MONGODB_URL", "mongodb://localhost:27017")
+            mongo_url = os.getenv("MONGODB_URL", "mongodb://llm_benchmark_user:llm_benchmark_pass@localhost:27017")
             db_name = os.getenv("MONGODB_DB_NAME", "llm_benchmark")
             
             logger.info(f"Connecting to MongoDB at {mongo_url}")

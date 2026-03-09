@@ -261,7 +261,7 @@ async def run_benchmark_task(benchmark_id: str, request: BenchmarkCreateRequest)
             test_model = OllamaWithMCPModel(config=mcp_config)
         else:
             # Only pass base_url if it's provided (not None)
-            config_kwargs = {"model_name": request.model_name}
+            config_kwargs = {"model_name": request.model_name, "timeout": 300.0}
             if request.model_base_url:
                 config_kwargs["base_url"] = request.model_base_url
             test_model = OllamaModel(config=OllamaConfig(**config_kwargs))
@@ -277,15 +277,16 @@ async def run_benchmark_task(benchmark_id: str, request: BenchmarkCreateRequest)
                 evaluator_models = [
                     OllamaModel(config=OllamaConfig(
                         model_name=eval_config.model_name,
+                        timeout=300.0,
                         **({"base_url": eval_config.base_url} if eval_config.base_url else {})
                     ))
                     for eval_config in request.evaluator_models
                 ]
             else:
                 evaluator_models = [
-                    OllamaModel(config=OllamaConfig(model_name="deepseek-r1:1.5b")),
-                    OllamaModel(config=OllamaConfig(model_name="gemma3:1b")),
-                    OllamaModel(config=OllamaConfig(model_name="llama3.2:latest"))
+                    OllamaModel(config=OllamaConfig(model_name="deepseek-r1:1.5b", timeout=300.0)),
+                    OllamaModel(config=OllamaConfig(model_name="gemma3:1b", timeout=300.0)),
+                    OllamaModel(config=OllamaConfig(model_name="llama3.2:latest", timeout=300.0))
                 ]
             
             evaluator = EvaluatorFactory.create_evaluator(evaluator_models)
